@@ -1,12 +1,15 @@
 /**
  * ApprovalQueue — Review and approve/reject agent outputs.
+ * Now renders agent output as rich markdown with Streamdown.
  * Apple-style: glassy panels, soft interactions, polished typography.
  */
 import NeuralShell from "@/components/NeuralShell";
 import { useAgent } from "@/contexts/AgentContext";
 import { useState } from "react";
-import { Shield, CheckCircle2, XCircle, Eye, Clock } from "lucide-react";
+import { Shield, CheckCircle2, XCircle, Eye, Clock, Copy, Sparkles, EyeOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Streamdown } from "streamdown";
+import { toast } from "sonner";
 
 const spring = { type: "spring" as const, stiffness: 300, damping: 30 };
 
@@ -24,10 +27,17 @@ export default function ApprovalQueue() {
   const handleApprove = (id: string) => {
     setApproved((prev) => new Set(prev).add(id));
     setRejected((prev) => { const next = new Set(prev); next.delete(id); return next; });
+    toast.success("Output approved");
   };
   const handleReject = (id: string) => {
     setRejected((prev) => new Set(prev).add(id));
     setApproved((prev) => { const next = new Set(prev); next.delete(id); return next; });
+    toast("Output rejected", { description: "Marked for revision" });
+  };
+
+  const copyOutput = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard");
   };
 
   return (
@@ -69,7 +79,7 @@ export default function ApprovalQueue() {
               <Shield className="w-6 h-6 text-foreground/20" />
             </div>
             <p className="text-[15px] font-medium text-foreground/40">No agent outputs to review yet</p>
-            <p className="text-[13px] text-foreground/25 mt-1.5">Execute agents from the Swarm or Command Center to generate outputs.</p>
+            <p className="text-[13px] text-foreground/25 mt-1.5">Execute agents from the Swarm, Registry, or any Module page to generate outputs.</p>
           </div>
         ) : (
           <div className="glass rounded-2xl overflow-hidden">
@@ -78,28 +88,56 @@ export default function ApprovalQueue() {
             </div>
             <div className="divide-y divide-black/[0.04]">
               <AnimatePresence>
-                {pendingRuns.map((run) => (
-                  <motion.div key={run.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, height: 0 }} transition={spring} className="px-5 py-4">
-                    <div className="flex items-center gap-4 mb-2">
-                      <div className="w-2.5 h-2.5 rounded-full bg-amber-signal shrink-0" />
-                      <span className="text-[12px] font-mono text-foreground/25">#{run.promptId}</span>
-                      <span className="text-[14px] text-foreground/70 truncate flex-1">{run.promptText.slice(0, 60)}...</span>
-                      <button onClick={() => setExpandedId(expandedId === run.id ? null : run.id)} className="text-foreground/25 hover:text-foreground/50 transition-colors"><Eye className="w-4 h-4" /></button>
-                      <button onClick={() => handleApprove(run.id)} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold bg-emerald-signal/10 text-emerald-signal hover:bg-emerald-signal/15 transition-all"><CheckCircle2 className="w-3.5 h-3.5" /> Approve</button>
-                      <button onClick={() => handleReject(run.id)} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold bg-rose-signal/10 text-rose-signal hover:bg-rose-signal/15 transition-all"><XCircle className="w-3.5 h-3.5" /> Reject</button>
-                    </div>
-                    <AnimatePresence>
-                      {expandedId === run.id && (
-                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={spring} className="overflow-hidden">
-                          <div className="bg-black/[0.02] rounded-xl p-4 text-[13px] text-foreground/60 border border-black/[0.04] ml-7">
-                            <div className="text-[11px] font-semibold text-primary/60 mb-1.5 uppercase tracking-wide">Agent Output</div>
-                            {run.output}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                ))}
+                {pendingRuns.map((run) => {
+                  const isExpanded = expandedId === run.id;
+                  return (
+                    <motion.div key={run.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, height: 0 }} transition={spring} className="px-5 py-4">
+                      <div className="flex items-center gap-4 mb-2">
+                        <div className="w-2.5 h-2.5 rounded-full bg-amber-signal shrink-0" />
+                        <span className="text-[12px] font-mono text-foreground/25">#{run.promptId}</span>
+                        <span className="text-[14px] text-foreground/70 truncate flex-1">{run.promptText.slice(0, 80)}...</span>
+                        {run.durationMs && (
+                          <span className="text-[11px] text-foreground/25 flex items-center gap-1 shrink-0">
+                            <Clock className="w-3 h-3" />{(run.durationMs / 1000).toFixed(1)}s
+                          </span>
+                        )}
+                        <button
+                          onClick={() => setExpandedId(isExpanded ? null : run.id)}
+                          className="text-foreground/25 hover:text-foreground/50 transition-colors p-1"
+                          title={isExpanded ? "Collapse" : "Expand"}
+                        >
+                          {isExpanded ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                        <button onClick={() => handleApprove(run.id)} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold bg-emerald-signal/10 text-emerald-signal hover:bg-emerald-signal/15 transition-all"><CheckCircle2 className="w-3.5 h-3.5" /> Approve</button>
+                        <button onClick={() => handleReject(run.id)} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold bg-rose-signal/10 text-rose-signal hover:bg-rose-signal/15 transition-all"><XCircle className="w-3.5 h-3.5" /> Reject</button>
+                      </div>
+                      <AnimatePresence>
+                        {isExpanded && (
+                          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={spring} className="overflow-hidden">
+                            <div className="bg-gradient-to-br from-white to-blue-50/30 rounded-xl p-5 border border-black/[0.05] ml-7">
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="text-[11px] font-bold text-[#0091FF]/70 uppercase tracking-wider flex items-center gap-1.5">
+                                  <Sparkles className="w-3 h-3" />
+                                  Agent Output
+                                </div>
+                                <button
+                                  onClick={() => copyOutput(run.output || "")}
+                                  className="p-1.5 rounded-lg hover:bg-black/[0.04] text-foreground/25 hover:text-foreground/50 transition-colors"
+                                  title="Copy output"
+                                >
+                                  <Copy className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                              <div className="text-[13px] text-foreground/70 leading-relaxed prose prose-sm max-w-none prose-headings:text-foreground/80 prose-headings:font-semibold prose-strong:text-foreground/75 prose-li:text-foreground/65">
+                                <Streamdown>{run.output || ""}</Streamdown>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  );
+                })}
               </AnimatePresence>
               {pendingRuns.length === 0 && <div className="p-8 text-center text-[13px] text-foreground/30">All items reviewed.</div>}
             </div>
@@ -113,11 +151,51 @@ export default function ApprovalQueue() {
               <span className="text-[15px] font-semibold">Approved</span>
             </div>
             <div className="divide-y divide-black/[0.04]">
-              {approvedRuns.map((run) => (
+              {approvedRuns.map((run) => {
+                const isExpanded = expandedId === run.id;
+                return (
+                  <div key={run.id}>
+                    <div className="px-5 py-3.5 flex items-center gap-4">
+                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-signal shrink-0" />
+                      <span className="text-[12px] font-mono text-foreground/25">#{run.promptId}</span>
+                      <span className="text-[14px] text-foreground/60 truncate flex-1">{run.promptText.slice(0, 80)}...</span>
+                      <button
+                        onClick={() => setExpandedId(isExpanded ? null : run.id)}
+                        className="text-foreground/20 hover:text-foreground/40 transition-colors p-1"
+                      >
+                        {isExpanded ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                    <AnimatePresence>
+                      {isExpanded && (
+                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={spring} className="overflow-hidden">
+                          <div className="bg-gradient-to-br from-white to-emerald-50/20 rounded-xl p-5 border border-emerald-200/20 mx-5 mb-4">
+                            <div className="text-[13px] text-foreground/70 leading-relaxed prose prose-sm max-w-none prose-headings:text-foreground/80 prose-headings:font-semibold">
+                              <Streamdown>{run.output || ""}</Streamdown>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {rejectedRuns.length > 0 && (
+          <div className="glass rounded-2xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-black/[0.04] flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-xl bg-rose-signal/10 flex items-center justify-center"><XCircle className="w-3.5 h-3.5 text-rose-signal" /></div>
+              <span className="text-[15px] font-semibold">Rejected</span>
+            </div>
+            <div className="divide-y divide-black/[0.04]">
+              {rejectedRuns.map((run) => (
                 <div key={run.id} className="px-5 py-3.5 flex items-center gap-4">
-                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-signal shrink-0" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-rose-signal shrink-0" />
                   <span className="text-[12px] font-mono text-foreground/25">#{run.promptId}</span>
-                  <span className="text-[14px] text-foreground/60 truncate flex-1">{run.promptText.slice(0, 60)}...</span>
+                  <span className="text-[14px] text-foreground/45 truncate flex-1 line-through">{run.promptText.slice(0, 80)}...</span>
                 </div>
               ))}
             </div>

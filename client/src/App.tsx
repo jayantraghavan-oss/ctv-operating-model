@@ -5,7 +5,9 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AgentProvider } from "./contexts/AgentContext";
-import { lazy, Suspense } from "react";
+import CommandPalette from "./components/CommandPalette";
+import { lazy, Suspense, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 
 // Neural command center pages
 import NeuralCommand from "./pages/NeuralCommand";
@@ -27,10 +29,18 @@ const LearningLoops = lazy(() => import("./pages/LearningLoops"));
 function PageLoader() {
   return (
     <div className="flex items-center justify-center h-64 bg-background">
-      <div className="flex flex-col items-center gap-3">
-        <div className="w-6 h-6 border-2 border-neon border-t-transparent rounded-full animate-spin" />
-        <span className="text-xs font-mono text-muted-foreground">Loading module...</span>
-      </div>
+      <motion.div
+        className="flex flex-col items-center gap-3"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      >
+        <div className="relative">
+          <div className="w-8 h-8 border-2 border-primary/20 rounded-full" />
+          <div className="absolute inset-0 w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+        <span className="text-xs font-medium text-foreground/30">Loading module...</span>
+      </motion.div>
     </div>
   );
 }
@@ -38,38 +48,57 @@ function PageLoader() {
 function Router() {
   return (
     <Suspense fallback={<PageLoader />}>
-      <Switch>
-        {/* Neural command center */}
-        <Route path="/" component={NeuralCommand} />
-        <Route path="/swarm" component={AgentSwarm} />
-        <Route path="/approvals" component={ApprovalQueue} />
-        <Route path="/data-pulse" component={DataPulse} />
-        <Route path="/war-room" component={WarRoom} />
-        <Route path="/simulation" component={BuyerSim} />
+      <AnimatePresence mode="wait">
+        <Switch>
+          {/* Neural command center */}
+          <Route path="/" component={NeuralCommand} />
+          <Route path="/swarm" component={AgentSwarm} />
+          <Route path="/approvals" component={ApprovalQueue} />
+          <Route path="/data-pulse" component={DataPulse} />
+          <Route path="/war-room" component={WarRoom} />
+          <Route path="/simulation" component={BuyerSim} />
 
-        {/* Legacy module views */}
-        <Route path="/model" component={ModelOverview} />
-        <Route path="/module/:id" component={ModulePage} />
-        <Route path="/cluster/:id" component={ClusterPage} />
-        <Route path="/agents" component={AgentRegistry} />
-        <Route path="/weekly-prep" component={WeeklyPrep} />
-        <Route path="/conviction" component={ConvictionDashboard} />
-        <Route path="/learning-loops" component={LearningLoops} />
+          {/* Legacy module views */}
+          <Route path="/model" component={ModelOverview} />
+          <Route path="/module/:id" component={ModulePage} />
+          <Route path="/cluster/:id" component={ClusterPage} />
+          <Route path="/agents" component={AgentRegistry} />
+          <Route path="/weekly-prep" component={WeeklyPrep} />
+          <Route path="/conviction" component={ConvictionDashboard} />
+          <Route path="/learning-loops" component={LearningLoops} />
 
-        <Route path="/404" component={NotFound} />
-        <Route component={NotFound} />
-      </Switch>
+          <Route path="/404" component={NotFound} />
+          <Route component={NotFound} />
+        </Switch>
+      </AnimatePresence>
     </Suspense>
   );
 }
 
 function App() {
+  const [cmdOpen, setCmdOpen] = useState(false);
+
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <AgentProvider>
           <TooltipProvider>
-            <Toaster />
+            <Toaster
+              position="bottom-right"
+              toastOptions={{
+                style: {
+                  background: "oklch(1 0 0 / 0.92)",
+                  backdropFilter: "blur(20px) saturate(1.5)",
+                  WebkitBackdropFilter: "blur(20px) saturate(1.5)",
+                  border: "1px solid oklch(0 0 0 / 0.06)",
+                  boxShadow: "0 4px 24px oklch(0 0 0 / 0.08), 0 1px 3px oklch(0 0 0 / 0.04)",
+                  borderRadius: "16px",
+                  fontSize: "13px",
+                  fontWeight: "500",
+                },
+              }}
+            />
+            <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} />
             <Router />
           </TooltipProvider>
         </AgentProvider>

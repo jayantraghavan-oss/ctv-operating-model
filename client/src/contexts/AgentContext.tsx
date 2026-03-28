@@ -1,12 +1,13 @@
 /*
  * AgentContext — The "second brain" state engine
- * Now with REAL LLM execution — every agent fires a live cognitive call.
+ * REAL LLM execution with STREAMING — every agent fires a live cognitive call.
  * Manages: agent run history, sub-module statuses, cluster notes,
  * notifications, conviction scores, and learning loop events.
  * All state persisted to localStorage so Beth never loses context.
  */
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
-import { executeAgentPrompt } from "@/lib/llm";
+import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from "react";
+import { executeAgentPromptStream, executeAgentPrompt } from "@/lib/llm";
+import { toast } from "sonner";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -25,6 +26,7 @@ export interface AgentRun {
   durationMs?: number;
   agentType?: string;
   owner?: string;
+  streamingOutput?: string; // Progressive output during streaming
 }
 
 export interface ClusterNote {
@@ -79,6 +81,7 @@ interface AgentContextType extends AgentState {
   updateConviction: (goalId: string, conviction: number, evidence: string) => void;
   getModuleHealth: (moduleId: number) => { active: number; total: number; percent: number };
   getClusterHealth: (clusterId: number) => { active: number; total: number; percent: number };
+  getStreamingOutput: (runId: string) => string | undefined;
   unreadCount: number;
   recentRuns: AgentRun[];
   isExecuting: boolean;
@@ -236,11 +239,19 @@ export function AgentProvider({ children }: { children: ReactNode }) {
   });
 
   const [executionQueue, setExecutionQueue] = useState(0);
+  // Streaming outputs stored separately to avoid excessive re-renders of the full state
+  const streamingOutputs = useRef<Record<string, string>>({});
+  const [streamingTick, setStreamingTick] = useState(0);
 
-  // Persist on every change
+  // Persist on every change (debounced to avoid excessive writes)
   useEffect(() => {
-    saveState(state);
+    const timer = setTimeout(() => saveState(state), 300);
+    return () => clearTimeout(timer);
   }, [state]);
+
+  const getStreamingOutput = useCallback((runId: string) => {
+    return streamingOutputs.current[runId];
+  }, [streamingTick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const setSubModuleStatus = useCallback((key: string, status: SubModuleStatus) => {
     setState((prev) => {
@@ -261,8 +272,9 @@ export function AgentProvider({ children }: { children: ReactNode }) {
   }, []);
 
   /**
-   * Run an agent with REAL LLM execution.
-   * Fires the Forge API, streams the output back, updates state.
+   * Run an agent with REAL LLM execution + STREAMING.
+   * Fires the Forge API, streams the output back progressively, updates state.
+   * Shows toast notifications for start/complete/fail.
    */
   const runAgent = useCallback((
     promptId: number,
@@ -292,10 +304,43 @@ export function AgentProvider({ children }: { children: ReactNode }) {
     }));
     setExecutionQueue((q) => q + 1);
 
-    // Fire real LLM call
-    executeAgentPrompt(promptText, moduleId, subModuleName, agentType, owner)
+    // Toast: agent started
+    toast(`Agent #${promptId} started`, {
+      description: subModuleName,
+      duration: 2000,
+    });
+
+    // Initialize streaming output
+    streamingOutputs.current[runId] = "";
+
+    // Throttle streaming UI updates to every 100ms
+    let lastTick = 0;
+    const throttledTick = () => {
+      const now = Date.now();
+      if (now - lastTick > 100) {
+        lastTick = now;
+        setStreamingTick((t) => t + 1);
+      }
+    };
+
+    // Fire real LLM call with streaming
+    executeAgentPromptStream(
+      promptText,
+      moduleId,
+      subModuleName,
+      agentType,
+      owner,
+      (_chunk, accumulated) => {
+        streamingOutputs.current[runId] = accumulated;
+        throttledTick();
+      },
+    )
       .then((output) => {
         const durationMs = Date.now() - startTime;
+        // Clean up streaming output
+        delete streamingOutputs.current[runId];
+        setStreamingTick((t) => t + 1);
+
         setState((prev) => {
           const updatedRuns = prev.agentRuns.map((r) =>
             r.id === runId
@@ -317,18 +362,54 @@ export function AgentProvider({ children }: { children: ReactNode }) {
           };
         });
         setExecutionQueue((q) => Math.max(0, q - 1));
+
+        // Toast: agent complete
+        toast.success(`Agent #${promptId} complete`, {
+          description: `${subModuleName} — ${(durationMs / 1000).toFixed(1)}s`,
+          duration: 3000,
+        });
       })
       .catch((err) => {
         const durationMs = Date.now() - startTime;
-        setState((prev) => {
-          const updatedRuns = prev.agentRuns.map((r) =>
-            r.id === runId
-              ? { ...r, status: "failed" as const, completedAt: new Date().toISOString(), output: `Error: ${err.message}`, durationMs }
-              : r
-          );
-          return { ...prev, agentRuns: updatedRuns };
-        });
-        setExecutionQueue((q) => Math.max(0, q - 1));
+        // Clean up streaming output
+        delete streamingOutputs.current[runId];
+        setStreamingTick((t) => t + 1);
+
+        // Fallback: try non-streaming
+        executeAgentPrompt(promptText, moduleId, subModuleName, agentType, owner)
+          .then((output) => {
+            const totalDuration = Date.now() - startTime;
+            setState((prev) => {
+              const updatedRuns = prev.agentRuns.map((r) =>
+                r.id === runId
+                  ? { ...r, status: "completed" as const, completedAt: new Date().toISOString(), output, durationMs: totalDuration }
+                  : r
+              );
+              return { ...prev, agentRuns: updatedRuns };
+            });
+            setExecutionQueue((q) => Math.max(0, q - 1));
+            toast.success(`Agent #${promptId} complete (fallback)`, {
+              description: subModuleName,
+              duration: 3000,
+            });
+          })
+          .catch((fallbackErr) => {
+            setState((prev) => {
+              const updatedRuns = prev.agentRuns.map((r) =>
+                r.id === runId
+                  ? { ...r, status: "failed" as const, completedAt: new Date().toISOString(), output: `Error: ${fallbackErr.message || err.message || "Unknown error"}`, durationMs }
+                  : r
+              );
+              return { ...prev, agentRuns: updatedRuns };
+            });
+            setExecutionQueue((q) => Math.max(0, q - 1));
+
+            // Toast: agent failed
+            toast.error(`Agent #${promptId} failed`, {
+              description: err.message || "Unknown error",
+              duration: 4000,
+            });
+          });
       });
   }, []);
 
@@ -442,6 +523,7 @@ export function AgentProvider({ children }: { children: ReactNode }) {
         updateConviction,
         getModuleHealth,
         getClusterHealth,
+        getStreamingOutput,
         unreadCount,
         recentRuns,
         isExecuting,

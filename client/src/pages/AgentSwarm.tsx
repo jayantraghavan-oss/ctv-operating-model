@@ -7,12 +7,15 @@ import NeuralShell from "@/components/NeuralShell";
 import { useAgent } from "@/contexts/AgentContext";
 import { modules, prompts, type Prompt } from "@/lib/data";
 import { useState, useMemo, useCallback } from "react";
+import { Streamdown } from "streamdown";
 import {
   Play, Zap, Search, ChevronDown, ChevronUp, RotateCcw,
   Bot, UserCheck, Users, Cpu, Radio, Sparkles, CheckCircle2,
-  XCircle, Clock, Filter, LayoutGrid, List,
+  XCircle, Clock, Filter, LayoutGrid, List, ArrowRight,
+  Copy, ExternalLink,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 
 function getPromptMeta(prompt: Prompt) {
   for (const mod of modules) {
@@ -47,7 +50,7 @@ type OwnerFilter = "all" | "agent" | "agent-human" | "human-led";
 type ViewMode = "list" | "grid";
 
 export default function AgentSwarm() {
-  const { recentRuns, runAgent, isExecuting, executionQueue } = useAgent();
+  const { recentRuns, runAgent, isExecuting, executionQueue, getStreamingOutput } = useAgent();
   const [search, setSearch] = useState("");
   const [moduleFilter, setModuleFilter] = useState<number | "all">("all");
   const [typeFilter, setTypeFilter] = useState<FilterType>("all");
@@ -81,34 +84,41 @@ export default function AgentSwarm() {
     setRunningIds((prev) => new Set(prev).add(prompt.id));
     const meta = getPromptMeta(prompt);
     runAgent(prompt.id, prompt.text, prompt.moduleId, meta.subModule, prompt.agentType, meta.owner);
-    // Keep running indicator until the actual run completes (tracked by AgentContext)
-    const checkDone = setInterval(() => {
-      setRunningIds((prev) => {
-        // We'll clear it after a reasonable time — the context tracks the real state
-        return prev;
-      });
-    }, 1000);
+    // Auto-expand to show streaming output
+    setExpandedPrompt(prompt.id);
     setTimeout(() => {
-      clearInterval(checkDone);
       setRunningIds((prev) => { const next = new Set(prev); next.delete(prompt.id); return next; });
-    }, 30000); // Max 30s timeout
+    }, 60000); // 60s max timeout
   }, [runAgent]);
 
   const executeAll = useCallback(() => {
     const batch = filtered.slice(0, 10);
     batch.forEach((p, i) => {
-      setTimeout(() => executeAgent(p), i * 800);
+      setTimeout(() => executeAgent(p), i * 1200);
+    });
+    toast(`Deploying ${batch.length} agents`, {
+      description: "Watch them think in real-time below",
+      duration: 3000,
     });
   }, [filtered, executeAgent]);
 
   const executeBatch = useCallback((moduleId: number) => {
     const batch = filtered.filter((p) => p.moduleId === moduleId).slice(0, 5);
     batch.forEach((p, i) => {
-      setTimeout(() => executeAgent(p), i * 800);
+      setTimeout(() => executeAgent(p), i * 1000);
+    });
+    toast(`Deploying M${moduleId} agents`, {
+      description: `${batch.length} agents from Module ${moduleId}`,
+      duration: 2000,
     });
   }, [filtered, executeAgent]);
 
   const getRunForPrompt = (promptId: number) => recentRuns.find((r) => r.promptId === promptId);
+
+  const copyOutput = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard");
+  };
 
   return (
     <NeuralShell>
@@ -118,7 +128,7 @@ export default function AgentSwarm() {
           <div>
             <h1 className="text-2xl sm:text-[28px] font-bold tracking-tight">Agent Swarm</h1>
             <p className="text-[14px] text-foreground/40 mt-1">
-              Click any agent to execute with real AI reasoning
+              {stats.completed > 0 ? `${stats.completed} executed · ${stats.running} running` : "Click any agent to execute with real AI reasoning"} · <span className="text-foreground/25">⌘K to search</span>
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -238,16 +248,23 @@ export default function AgentSwarm() {
         {viewMode === "list" ? (
           <div className="glass rounded-2xl overflow-hidden">
             <div className="divide-y divide-black/[0.04]">
-              {filtered.slice(0, 60).map((prompt) => {
+              {filtered.slice(0, 60).map((prompt, idx) => {
                 const run = getRunForPrompt(prompt.id);
                 const isRunning = runningIds.has(prompt.id) || run?.status === "running";
                 const isExpanded = expandedPrompt === prompt.id;
                 const meta = getPromptMeta(prompt);
+                // Get streaming output if running
+                const streamingOutput = run?.id ? getStreamingOutput(run.id) : undefined;
+                const displayOutput = run?.output || streamingOutput;
+
                 return (
                   <motion.div
                     key={prompt.id}
                     layout
                     className="hover:bg-black/[0.015] transition-colors"
+                    initial={idx < 10 ? { opacity: 0, y: 8 } : false}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx < 10 ? idx * 0.03 : 0, type: "spring", stiffness: 400, damping: 30 }}
                   >
                     <div className="px-4 sm:px-5 py-3.5 flex items-center gap-3 sm:gap-4">
                       {/* Status dot */}
@@ -345,35 +362,66 @@ export default function AgentSwarm() {
                             </div>
 
                             {/* Output */}
-                            {run?.output ? (
+                            {displayOutput ? (
                               <div className="bg-gradient-to-br from-white to-blue-50/30 rounded-2xl p-5 border border-black/[0.05] shadow-sm">
                                 <div className="flex items-center justify-between mb-3">
                                   <div className="text-[11px] font-bold text-blue-600/70 uppercase tracking-wider flex items-center gap-1.5">
-                                    <Sparkles className="w-3 h-3" />Agent Output
+                                    <Sparkles className="w-3 h-3" />
+                                    {isRunning ? "Streaming Output" : "Agent Output"}
+                                    {isRunning && <span className="inline-block w-1.5 h-4 bg-blue-500 animate-blink ml-1 rounded-sm" />}
                                   </div>
-                                  {run.durationMs && (
-                                    <div className="text-[11px] text-foreground/25 flex items-center gap-1">
-                                      <Clock className="w-3 h-3" />{(run.durationMs / 1000).toFixed(1)}s
-                                    </div>
-                                  )}
+                                  <div className="flex items-center gap-2">
+                                    {run?.durationMs && (
+                                      <div className="text-[11px] text-foreground/25 flex items-center gap-1">
+                                        <Clock className="w-3 h-3" />{(run.durationMs / 1000).toFixed(1)}s
+                                      </div>
+                                    )}
+                                    {!isRunning && displayOutput && (
+                                      <button
+                                        onClick={() => copyOutput(displayOutput)}
+                                        className="p-1.5 rounded-lg hover:bg-black/[0.04] text-foreground/25 hover:text-foreground/50 transition-colors"
+                                        title="Copy output"
+                                      >
+                                        <Copy className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
+                                  </div>
                                 </div>
-                                <div className="text-[13px] text-foreground/70 leading-relaxed whitespace-pre-wrap font-[system-ui]">
-                                  {run.output}
+                                <div className="text-[13px] text-foreground/70 leading-relaxed prose prose-sm max-w-none prose-headings:text-foreground/80 prose-headings:font-semibold prose-strong:text-foreground/75 prose-li:text-foreground/65 prose-p:text-foreground/65">
+                                  <Streamdown>{displayOutput}</Streamdown>
                                 </div>
                               </div>
                             ) : isRunning ? (
                               <div className="bg-amber-50/50 rounded-2xl p-5 border border-amber-200/30">
                                 <div className="flex items-center gap-3">
-                                  <div className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                                  <div className="relative">
+                                    <div className="w-6 h-6 border-2 border-amber-500/20 rounded-full" />
+                                    <div className="absolute inset-0 w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                                  </div>
                                   <div>
                                     <div className="text-[13px] font-semibold text-amber-700">Agent is thinking...</div>
                                     <div className="text-[12px] text-amber-600/60 mt-0.5">Pulling context, reasoning over data, generating output</div>
                                   </div>
                                 </div>
+                                {/* Shimmer loading skeleton */}
+                                <div className="mt-4 space-y-2.5">
+                                  <div className="h-3 rounded-full animate-shimmer w-full" />
+                                  <div className="h-3 rounded-full animate-shimmer w-4/5" style={{ animationDelay: "0.1s" }} />
+                                  <div className="h-3 rounded-full animate-shimmer w-3/5" style={{ animationDelay: "0.2s" }} />
+                                  <div className="h-3 rounded-full animate-shimmer w-5/6" style={{ animationDelay: "0.3s" }} />
+                                </div>
                               </div>
                             ) : (
-                              <div className="text-[13px] text-foreground/25 italic py-4 text-center">
-                                Click Execute to fire this agent with real AI reasoning
+                              <div className="text-center py-8">
+                                <motion.button
+                                  onClick={() => executeAgent(prompt)}
+                                  whileHover={{ scale: 1.03 }}
+                                  whileTap={{ scale: 0.97 }}
+                                  className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-primary/8 text-primary text-[13px] font-semibold hover:bg-primary/12 transition-all"
+                                >
+                                  <Play className="w-4 h-4" />
+                                  Execute this agent with real AI reasoning
+                                </motion.button>
                               </div>
                             )}
                           </div>
@@ -400,13 +448,19 @@ export default function AgentSwarm() {
         ) : (
           /* Grid View */
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.slice(0, 30).map((prompt) => {
+            {filtered.slice(0, 30).map((prompt, idx) => {
               const run = getRunForPrompt(prompt.id);
               const isRunning = runningIds.has(prompt.id) || run?.status === "running";
               const meta = getPromptMeta(prompt);
+              const streamingOutput = run?.id ? getStreamingOutput(run.id) : undefined;
+              const displayOutput = run?.output || streamingOutput;
+
               return (
                 <motion.div
                   key={prompt.id}
+                  initial={idx < 12 ? { opacity: 0, y: 12, scale: 0.97 } : false}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ delay: idx < 12 ? idx * 0.04 : 0, type: "spring", stiffness: 300, damping: 25 }}
                   whileHover={{ scale: 1.01, y: -2 }}
                   className={`glass rounded-2xl p-5 border transition-all cursor-pointer ${
                     isRunning ? "border-amber-300/30 shadow-lg shadow-amber-500/10" :
@@ -426,7 +480,7 @@ export default function AgentSwarm() {
                       "bg-foreground/12"
                     }`} />
                   </div>
-                  <div className="text-[13px] text-foreground/70 leading-snug line-clamp-3 mb-3">{prompt.text}</div>
+                  <div className="text-[13px] text-foreground/70 leading-snug line-clamp-2 mb-3 min-h-[40px]">{prompt.text}</div>
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] text-foreground/30 truncate max-w-[150px]">{meta.subModule}</span>
                     <motion.button
@@ -446,15 +500,15 @@ export default function AgentSwarm() {
 
                   {/* Grid expanded output */}
                   <AnimatePresence>
-                    {expandedPrompt === prompt.id && run?.output && (
+                    {expandedPrompt === prompt.id && displayOutput && (
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         className="overflow-hidden"
                       >
-                        <div className="mt-3 pt-3 border-t border-black/[0.05] text-[12px] text-foreground/55 leading-relaxed whitespace-pre-wrap max-h-[200px] overflow-y-auto">
-                          {run.output}
+                        <div className="mt-3 pt-3 border-t border-black/[0.05] text-[12px] text-foreground/55 leading-relaxed max-h-[200px] overflow-y-auto prose prose-xs max-w-none">
+                          <Streamdown>{displayOutput}</Streamdown>
                         </div>
                       </motion.div>
                     )}

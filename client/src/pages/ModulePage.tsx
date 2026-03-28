@@ -1,11 +1,14 @@
-/*
+/**
  * ModulePage — Deep-dive into a single work module
  * Each sub-module row is clickable → opens a rich operational detail panel
  * showing inputs, outputs, workflow, data sources, handoff points, and linked prompts.
+ * EVERY PROMPT IS CLICKABLE → fires real LLM execution with streaming output.
  */
 import Layout from "@/components/Layout";
+import { useAgent } from "@/contexts/AgentContext";
 import { useParams, Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
+import { Streamdown } from "streamdown";
 import {
   modules,
   clusters,
@@ -36,13 +39,21 @@ import {
   X,
   Users2,
   Layers,
+  Play,
+  Cpu,
+  RotateCcw,
+  Copy,
+  Sparkles,
+  CheckCircle2,
 } from "lucide-react";
 import { useState, useCallback } from "react";
+import { toast } from "sonner";
 
 export default function ModulePage() {
   const params = useParams<{ id: string }>();
   const moduleId = parseInt(params.id || "1", 10);
   const mod = modules.find((m) => m.id === moduleId);
+  const { recentRuns, runAgent, getStreamingOutput } = useAgent();
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(mod?.sections.map((s) => s.key) || [])
   );
@@ -235,9 +246,28 @@ export default function ModulePage() {
                                     >
                                       <div className="bg-[#FAFBFC] border-t border-border">
                                         {ops ? (
-                                          <OpsDetailPanel ops={ops} sm={sm} prompts={smPrompts} />
+                                          <OpsDetailPanel
+                                            ops={ops}
+                                            sm={sm}
+                                            prompts={smPrompts}
+                                            recentRuns={recentRuns}
+                                            runAgent={runAgent}
+                                            getStreamingOutput={getStreamingOutput}
+                                            selectedPrompt={selectedPrompt}
+                                            setSelectedPrompt={setSelectedPrompt}
+                                            moduleId={moduleId}
+                                          />
                                         ) : (
-                                          <BasicDetailPanel sm={sm} prompts={smPrompts} />
+                                          <BasicDetailPanel
+                                            sm={sm}
+                                            prompts={smPrompts}
+                                            recentRuns={recentRuns}
+                                            runAgent={runAgent}
+                                            getStreamingOutput={getStreamingOutput}
+                                            selectedPrompt={selectedPrompt}
+                                            setSelectedPrompt={setSelectedPrompt}
+                                            moduleId={moduleId}
+                                          />
                                         )}
                                       </div>
                                     </motion.div>
@@ -261,6 +291,184 @@ export default function ModulePage() {
 }
 
 // ============================================================================
+// Clickable Prompt Card — fires real LLM execution
+// ============================================================================
+
+function PromptCard({
+  prompt,
+  recentRuns,
+  runAgent,
+  getStreamingOutput,
+  isExpanded,
+  onToggle,
+  moduleId,
+  subModuleName,
+}: {
+  prompt: Prompt;
+  recentRuns: any[];
+  runAgent: any;
+  getStreamingOutput: (id: string) => string | undefined;
+  isExpanded: boolean;
+  onToggle: () => void;
+  moduleId: number;
+  subModuleName: string;
+}) {
+  const run = recentRuns.find((r: any) => r.promptId === prompt.id);
+  const isRunning = run?.status === "running";
+  const streamingOutput = run?.id ? getStreamingOutput(run.id) : undefined;
+  const displayOutput = run?.output || streamingOutput;
+
+  const handleExecute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Find the section/owner info
+    let owner = "agent";
+    for (const mod of modules) {
+      if (mod.id !== prompt.moduleId) continue;
+      for (const section of mod.sections) {
+        for (const sub of section.subModules) {
+          if (sub.prompts.includes(prompt.id)) {
+            owner = sub.owner;
+          }
+        }
+      }
+    }
+    runAgent(prompt.id, prompt.text, moduleId, subModuleName, prompt.agentType, owner);
+  };
+
+  const copyOutput = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard");
+  };
+
+  return (
+    <div className="rounded-lg border border-border bg-white overflow-hidden transition-all hover:border-[#0091FF]/20 hover:shadow-sm">
+      {/* Prompt header — clickable to expand */}
+      <div
+        className="flex items-start gap-3 px-4 py-3 cursor-pointer group"
+        onClick={onToggle}
+      >
+        {/* Status indicator */}
+        <div className={`w-2 h-2 rounded-full mt-2 shrink-0 transition-all ${
+          isRunning ? "bg-amber-500 shadow-lg shadow-amber-500/40 animate-pulse" :
+          run?.status === "completed" ? "bg-emerald-500 shadow-sm shadow-emerald-500/30" :
+          run?.status === "failed" ? "bg-rose-500" :
+          getStatusColor(prompt.status)
+        }`} />
+
+        <div className="flex-1 min-w-0">
+          <div className="text-xs text-foreground leading-relaxed">{prompt.text}</div>
+          <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+            <span
+              className={`text-[10px] px-1.5 py-0.5 rounded border ${getAgentTypeBg(prompt.agentType)}`}
+            >
+              {getAgentTypeLabel(prompt.agentType)}
+            </span>
+            <span className="text-[10px] text-muted-foreground font-mono">
+              #{prompt.id}
+            </span>
+            {run?.durationMs && (
+              <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                <Clock className="w-2.5 h-2.5" />{(run.durationMs / 1000).toFixed(1)}s
+              </span>
+            )}
+            {run?.status === "completed" && (
+              <span className="text-[10px] text-emerald-600 flex items-center gap-0.5">
+                <CheckCircle2 className="w-2.5 h-2.5" />Complete
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Execute button */}
+        <motion.button
+          onClick={handleExecute}
+          disabled={isRunning}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all shrink-0 ${
+            isRunning ? "bg-amber-500/10 text-amber-600 cursor-wait" :
+            run?.status === "completed" ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/15" :
+            "bg-[#0091FF]/8 text-[#0091FF] hover:bg-[#0091FF]/12"
+          }`}
+        >
+          {isRunning ? (
+            <><Cpu className="w-3 h-3 animate-spin" />Thinking...</>
+          ) : run?.status === "completed" ? (
+            <><RotateCcw className="w-3 h-3" />Re-run</>
+          ) : (
+            <><Play className="w-3 h-3" />Execute</>
+          )}
+        </motion.button>
+      </div>
+
+      {/* Expanded output panel */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 pb-4 pt-1 border-t border-border/50">
+              {displayOutput ? (
+                <div className="bg-gradient-to-br from-white to-blue-50/30 rounded-lg p-4 border border-black/[0.05]">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-[10px] font-bold text-[#0091FF]/70 uppercase tracking-wider flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" />
+                      {isRunning ? "Streaming..." : "Agent Output"}
+                      {isRunning && <span className="inline-block w-1 h-3.5 bg-[#0091FF] animate-pulse ml-1 rounded-sm" />}
+                    </div>
+                    {!isRunning && displayOutput && (
+                      <button
+                        onClick={() => copyOutput(displayOutput)}
+                        className="p-1 rounded hover:bg-black/[0.04] text-muted-foreground hover:text-foreground transition-colors"
+                        title="Copy output"
+                      >
+                        <Copy className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="text-[12px] text-foreground/70 leading-relaxed prose prose-xs max-w-none prose-headings:text-foreground/80 prose-headings:font-semibold">
+                    <Streamdown>{displayOutput}</Streamdown>
+                  </div>
+                </div>
+              ) : isRunning ? (
+                <div className="bg-amber-50/50 rounded-lg p-4 border border-amber-200/30">
+                  <div className="flex items-center gap-2">
+                    <div className="relative">
+                      <div className="w-5 h-5 border-2 border-amber-500/20 rounded-full" />
+                      <div className="absolute inset-0 w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                    </div>
+                    <div className="text-[12px] font-medium text-amber-700">Agent is thinking...</div>
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    <div className="h-2.5 rounded-full bg-amber-200/40 animate-pulse w-full" />
+                    <div className="h-2.5 rounded-full bg-amber-200/40 animate-pulse w-4/5" style={{ animationDelay: "0.1s" }} />
+                    <div className="h-2.5 rounded-full bg-amber-200/40 animate-pulse w-3/5" style={{ animationDelay: "0.2s" }} />
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <button
+                    onClick={handleExecute}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#0091FF]/8 text-[#0091FF] text-[12px] font-semibold hover:bg-[#0091FF]/12 transition-all"
+                  >
+                    <Play className="w-3.5 h-3.5" />
+                    Execute with real AI reasoning
+                  </button>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ============================================================================
 // Rich Operational Detail Panel
 // ============================================================================
 
@@ -268,12 +476,24 @@ function OpsDetailPanel({
   ops,
   sm,
   prompts,
+  recentRuns,
+  runAgent,
+  getStreamingOutput,
+  selectedPrompt,
+  setSelectedPrompt,
+  moduleId,
 }: {
   ops: SubModuleOps;
   sm: SubModule;
   prompts: Prompt[];
+  recentRuns: any[];
+  runAgent: any;
+  getStreamingOutput: (id: string) => string | undefined;
+  selectedPrompt: number | null;
+  setSelectedPrompt: (id: number | null) => void;
+  moduleId: number;
 }) {
-  const [showPrompts, setShowPrompts] = useState(false);
+  const [showPrompts, setShowPrompts] = useState(true); // Default open
 
   return (
     <div className="px-6 py-5 space-y-5">
@@ -414,7 +634,7 @@ function OpsDetailPanel({
         </div>
       )}
 
-      {/* Linked Prompts — collapsible */}
+      {/* Linked Prompts — clickable with real execution */}
       {prompts.length > 0 && (
         <div>
           <button
@@ -422,7 +642,7 @@ function OpsDetailPanel({
             className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
           >
             <Bot className="w-3.5 h-3.5" />
-            Agent Prompts ({prompts.length})
+            Agent Prompts ({prompts.length}) — Click to Execute
             <ChevronDown
               className={`w-3 h-3 transition-transform ${showPrompts ? "rotate-180" : ""}`}
             />
@@ -434,30 +654,20 @@ function OpsDetailPanel({
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="mt-2 space-y-1.5"
+                className="mt-3 space-y-2"
               >
                 {prompts.map((prompt) => (
-                  <div
+                  <PromptCard
                     key={prompt.id}
-                    className="flex items-start gap-3 px-3 py-2 rounded-md bg-white border border-border"
-                  >
-                    <div
-                      className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${getStatusColor(prompt.status)}`}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs text-foreground leading-relaxed">{prompt.text}</div>
-                      <div className="mt-1 flex items-center gap-2">
-                        <span
-                          className={`text-[10px] px-1.5 py-0.5 rounded border ${getAgentTypeBg(prompt.agentType)}`}
-                        >
-                          {getAgentTypeLabel(prompt.agentType)}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground font-mono">
-                          #{prompt.id}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                    prompt={prompt}
+                    recentRuns={recentRuns}
+                    runAgent={runAgent}
+                    getStreamingOutput={getStreamingOutput}
+                    isExpanded={selectedPrompt === prompt.id}
+                    onToggle={() => setSelectedPrompt(selectedPrompt === prompt.id ? null : prompt.id)}
+                    moduleId={moduleId}
+                    subModuleName={sm.name}
+                  />
                 ))}
               </motion.div>
             )}
@@ -475,9 +685,21 @@ function OpsDetailPanel({
 function BasicDetailPanel({
   sm,
   prompts,
+  recentRuns,
+  runAgent,
+  getStreamingOutput,
+  selectedPrompt,
+  setSelectedPrompt,
+  moduleId,
 }: {
   sm: SubModule;
   prompts: Prompt[];
+  recentRuns: any[];
+  runAgent: any;
+  getStreamingOutput: (id: string) => string | undefined;
+  selectedPrompt: number | null;
+  setSelectedPrompt: (id: number | null) => void;
+  moduleId: number;
 }) {
   return (
     <div className="px-6 py-5 space-y-4">
@@ -486,32 +708,22 @@ function BasicDetailPanel({
       </div>
       {prompts.length > 0 && (
         <div>
-          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-            Agent Prompts ({prompts.length})
+          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            Agent Prompts ({prompts.length}) — Click to Execute
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             {prompts.map((prompt) => (
-              <div
+              <PromptCard
                 key={prompt.id}
-                className="flex items-start gap-3 px-3 py-2 rounded-md bg-white border border-border"
-              >
-                <div
-                  className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${getStatusColor(prompt.status)}`}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs text-foreground leading-relaxed">{prompt.text}</div>
-                  <div className="mt-1 flex items-center gap-2">
-                    <span
-                      className={`text-[10px] px-1.5 py-0.5 rounded border ${getAgentTypeBg(prompt.agentType)}`}
-                    >
-                      {getAgentTypeLabel(prompt.agentType)}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground font-mono">
-                      #{prompt.id}
-                    </span>
-                  </div>
-                </div>
-              </div>
+                prompt={prompt}
+                recentRuns={recentRuns}
+                runAgent={runAgent}
+                getStreamingOutput={getStreamingOutput}
+                isExpanded={selectedPrompt === prompt.id}
+                onToggle={() => setSelectedPrompt(selectedPrompt === prompt.id ? null : prompt.id)}
+                moduleId={moduleId}
+                subModuleName={sm.name}
+              />
             ))}
           </div>
         </div>
