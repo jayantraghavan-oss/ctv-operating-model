@@ -1,0 +1,10 @@
+Demo Mode Test (2026-03-28):
+
+Clicked the Demo button. The walkthrough overlay is still showing (step 2 of 5), which may be blocking the demo from starting. The demo mode should dismiss the walkthrough first, then start the cascading activation.
+
+Looking at the screenshot, the nodes don't appear to have changed color/state from the demo activation yet. This could be because:
+1. The walkthrough overlay is blocking the demo
+2. The demo needs the walkthrough to be dismissed first
+3. The animation may be happening but not visible in the static screenshot
+
+Need to dismiss the walkthrough first, then try demo again.

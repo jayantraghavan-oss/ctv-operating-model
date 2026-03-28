@@ -177,3 +177,28 @@
 ## Phase 24: Clear Stale Errors from Earlier Versions
 - [x] Investigated: errors were stale from earlier HMR/build cycles (157+ min old), not present in current code
 - [x] Verified: all 5 pages load cleanly with zero console errors after server restart (Dashboard, AI Assistants, BuyerSim, Competitive Sims, Insights)
+
+## Phase 25: Interactive Org Chart + Reference Guide
+- [x] Build OrgChart page replicating the source document's AI-First Org Map structure
+- [x] Cluster 5 (DRI/XFN) at top with Module 4 sub-modules branching down
+- [x] 4 cluster cards (C1-C4) below in grid with color-coded borders matching source image
+- [x] Each cluster shows its module sections as clickable agent nodes
+- [x] Ownership badges (A, A+H, H) on every node matching source image
+- [x] Color coding: blue=Agent, green=Human-led, amber=Agent+Human, slate=DRI Cluster
+- [x] Connecting gradient line from C5 to C1-C4 grid
+- [x] Click any agent node → navigate to that agent's Module Page
+- [x] Agent status indicators (green pulse for active/running) on each node
+- [x] Demo mode button that activates agents in sequence with cascading animations (C5→C1→C2→C3→C4)
+- [x] Demo mode shows 80ms stagger per node, 400ms pause between clusters
+- [x] Legend matching source image (AI-Driven, AI+Review, Human-Led, Active)
+- [x] Build Reference Guide tab with source-to-feature mapping (modules, principles, clusters, interactive features)
+- [x] Reference Guide uses cross-reference doc structure
+- [x] Add route /org-chart and sidebar nav entry under REFERENCE as "Org Map"
+- [x] Integrate with AgentContext to show real-time agent run status on org chart nodes
+- [x] Polish: Framer Motion spring entrance animations, hover scale effects, smooth transitions
+- [x] 5-step guided walkthrough overlay with auto-show on first visit
+- [x] Demo auto-dismisses walkthrough when started
+- [x] Fixed duplicate "Competitor Intelligence" node → renamed to "Competitive Signal Detection"
+- [x] All 48 vitest tests passing, zero TypeScript errors, zero console errors
+- [x] Added animated data-flow particles during demo mode (green pulse traveling down connector + branching dots)
+- [x] Updated node click to deep-link with section and sub-module query params (/module/:id?section=...&sub=...)

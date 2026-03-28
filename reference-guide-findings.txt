@@ -1,0 +1,15 @@
+Reference Guide Tab Findings (2026-03-28):
+
+1. Tab switches correctly between "Org Chart" and "Reference Guide"
+2. Header: "Source Document → App Mapping" with description
+3. Stats row: 4 MODULES | 5 CLUSTERS | 97 SUB-MODULES | 200 AI AGENTS
+4. Module 1 section visible: "Market Intelligence & Positioning Engine"
+   - Shows: 4 sections, 12 sub-modules, 37 executable agents
+   - Description text about intelligence backbone
+   - Lists sections: Industry Landscape Monitoring (2 sub-modules), Competitor Intelligence (2), Customer Voice/Win-Loss (2), Analyst & Thought Leader Tracking (6 sub-modules)
+   - Agent counts on right side (5 agents, 10 agents, etc.)
+5. Module 2 section starting: "Distribution & Activation"
+   - Shows: 10 sections, 41 sub-modules, 80 executable agents
+   - Lists ICP Intelligence, AI-Native Outbounding, Channel & Message Optimization, Digital Awareness, Pitch & Sales, Partnership, Content Engine, Website & Digital
+
+LOOKS GREAT - clean, well-structured reference guide that maps source doc to app features.

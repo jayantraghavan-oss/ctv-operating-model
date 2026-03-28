@@ -1,0 +1,19 @@
+OrgChart Page Findings (2026-03-28):
+
+1. Page renders correctly with full hierarchy
+2. Cluster 5 (DRI/XFN) at top with dark background - all 11 sub-modules visible with A+H/H badges
+3. Walkthrough overlay appears at bottom with step 1/5 - working correctly
+4. Sidebar shows "Org Map" under REFERENCE section with active indicator
+5. Legend bar shows all 4 ownership types correctly
+6. Tabs visible: "Org Chart" and "Reference Guide"
+7. Guide and Demo buttons visible in header
+
+ISSUE: Cluster 2 (Growth & Demand) is showing DUPLICATE nodes - the demand sections appear twice.
+This is because the ClusterCard component for Cluster 2 gets nodes from getClusterNodes(2) which filters by demand sections,
+BUT the ClusterCard also tries to add Module 2 demand sections internally. Need to fix the ClusterCard logic.
+
+The ClusterCard has internal logic to add sections for C2 and C3, but getClusterNodes already returns the correct nodes.
+The problem is that ClusterCard groups nodes by section from the module, AND also adds sections manually.
+Need to remove the duplicate section-adding logic from ClusterCard.
+
+FIX: The ClusterCard should just use the nodes passed to it, not try to re-fetch them from modules.

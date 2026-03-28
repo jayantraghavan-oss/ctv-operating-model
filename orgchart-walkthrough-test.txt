@@ -1,0 +1,13 @@
+Walkthrough Test Results (2026-03-28):
+
+Step 1/5: "Welcome to the AI-First Org Map" - WORKING
+- Shows intro text about 2 humans orchestrating 200 AI assistants
+- Tip: "Think of this as your org chart, except most of the employees are AI agents"
+
+Step 2/5: "The DRI Sits at the Top" - WORKING  
+- Cluster 5 highlighted with dark background
+- Text: "Cluster 5 is the executive layer — Module 4 (Governance & BI) feeds the DRI with pipeline visibility, conviction tracking, and operating rhythm."
+- Tip: "Click any sub-module in the DRI cluster to see the AI assistants that generate executive reports."
+- Cluster 5 area is visually highlighted
+
+Both steps advance correctly with Next/Back buttons. Step counter shows "2 of 5".

@@ -373,7 +373,7 @@ export const modules: Module[] = [
         description: "Continuously scans publications, trade press, earnings calls for CTV market shifts.",
         subModules: [
           { name: "Industry Landscape Monitoring", owner: "agent", description: "Continuously scans publications, trade press, earnings calls for CTV market shifts.", prompts: [1, 2, 3, 4, 5] },
-          { name: "Competitor Intelligence", owner: "agent", description: "Company-by-company tracking: capabilities, talent, tech quality. Generates and maintains battlecards.", prompts: [8, 10] },
+          { name: "Competitive Signal Detection", owner: "agent", description: "Detects when competitor features become table stakes and surfaces strategic threats and opportunities.", prompts: [8, 10] },
         ],
       },
       {

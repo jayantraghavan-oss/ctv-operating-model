@@ -1,0 +1,17 @@
+OrgChart Scrolled View Findings (2026-03-28):
+
+1. All 4 clusters visible side by side: C1 (Market Intel), C2 (Growth & Demand), C3 (Commercial Sales), C4 (Customer Success)
+2. NO DUPLICATES - the fix worked. Each sub-module appears exactly once.
+3. Cluster 3 correctly shows CTV-to-App / CTV-to-Web mode tabs
+4. Section headers visible within clusters (e.g., "ICP INTELLIGENCE", "AI-NATIVE OUTBOUNDING", "PITCH & SALES ENGAGEMENT")
+5. Ownership badges (A, A+H, H) correctly color-coded on each node
+6. Agent counts shown on nodes that have multiple prompts
+7. Walkthrough overlay still visible at bottom
+8. All 4 clusters render correctly with proper hierarchy
+
+REMAINING ISSUES:
+- Some sections in C2 appear to be missing nodes (Digital Awareness, Content Engine, Website sections show section headers but fewer nodes visible)
+- Need to scroll more to see C4 fully
+- The walkthrough overlay blocks some bottom content
+
+LOOKS GREAT OVERALL - faithful to the source image structure.

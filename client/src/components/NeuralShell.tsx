@@ -27,6 +27,7 @@ import {
   Bell,
   Activity,
   LogIn,
+  Network,
 } from "lucide-react";
 import { useState, useEffect, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -57,6 +58,7 @@ const intelligenceNav: NavItem[] = [
 ];
 
 const legacyNav: NavItem[] = [
+  { path: "/org-chart", label: "Org Map", icon: Network },
   { path: "/model", label: "Operating Model", icon: BookOpen },
   { path: "/agents", label: "Assistant Registry", icon: Target },
 ];

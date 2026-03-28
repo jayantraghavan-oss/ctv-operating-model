@@ -1,0 +1,19 @@
+OrgChart Scrolled View 2 Findings (2026-03-28):
+
+1. Cluster 2 (Growth & Demand) fully visible - all sections present:
+   - Digital Awareness section: Consideration Nurture, Effectiveness Analysis & Learning Loop
+   - Content Engine: Content Strategy & Calendar, Content Production, Case Study Dev, Content Personalization, Content Performance Tracking
+   - Website & Digital: Landing Page Strategy, CTA & Conversion Path, Visitor Intelligence, SEO & Organic Discovery
+   
+2. Cluster 4 (Customer Success) fully visible with all sections:
+   - Churn Prevention: Leading Indicator Monitoring, Intervention Trigger, Churn Pattern Analysis
+   - Cross-Account Intelligence: Pattern Recognition, Competitive Performance Database, Learnings Synthesis
+   - Case Study Dev Pipeline: Case Study Trigger & Draft, Customer Interview & Approval, Multi-Channel Distribution
+   - Long-Term Health & Product Co-Dev: Monthly Customer Health Check, Automated Sentiment Capture, Confidence Driver Analysis, Virtual Customer Advisory Board, Product Hypothesis Validation Pipeline
+
+3. NO DUPLICATES confirmed across all clusters
+4. All ownership badges (A, A+H, H) correctly displayed
+5. Walkthrough overlay still working at bottom
+
+VERDICT: Org chart is complete and faithful to the source image. All clusters, sections, and sub-modules present.
+Need to also check: Feedback Routing section at very bottom of C4, and the footer.
