@@ -220,3 +220,11 @@
 - [x] HelpButton "Reset Onboarding" clears org chart tour key + tip banners
 - [x] All 48 vitest tests passing
 - [x] Added animated pointer-hint gestures (bouncing MousePointer icon + directional text) to tour steps 2-4 and 6
+
+## Phase 27: Fix Notifications + Add Refresh Button
+- [x] Fix notifications button (bell icon) — now opens polished dropdown with notification list, mark-all-read, and empty state
+- [x] Add refresh button (↺ icon) to desktop header bar, left of the bell
+- [x] Notification dropdown: animated spring entrance, glassmorphism backdrop, click-away dismissal, Escape key close
+- [x] Notification items: unread indicator dot, title/description/timestamp, click to mark read
+- [x] Both mobile and desktop bell buttons wired to the same dropdown
+- [x] All 48 tests passing

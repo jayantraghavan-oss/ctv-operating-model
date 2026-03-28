@@ -28,8 +28,9 @@ import {
   Activity,
   LogIn,
   Network,
+  RotateCcw,
 } from "lucide-react";
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { modules, getTotalStats } from "@/lib/data";
 import { getLoginUrl } from "@/const";
@@ -76,7 +77,9 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { recentRuns, unreadCount } = useAgent();
+  const { recentRuns, unreadCount, notifications, markNotificationRead, clearNotifications } = useAgent();
+  const [showNotifs, setShowNotifs] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const { user, isAuthenticated } = useAuth();
 
@@ -88,10 +91,20 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
     : "?";
   const userName = user?.name || "Guest";
 
-  // Close mobile menu on navigation
+  // Close mobile menu and notifications on navigation
   useEffect(() => {
     setMobileMenuOpen(false);
+    setShowNotifs(false);
   }, [location]);
+
+  // Close notifications on Escape
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowNotifs(false);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   function NavLink({ item, compact }: { item: NavItem; compact?: boolean }) {
     const active = location === item.path;
@@ -170,14 +183,66 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
               </span>
             </div>
             {/* Notifications */}
-            <button className="relative p-2 rounded-xl hover:bg-black/[0.03] transition-colors">
-              <Bell className="w-4 h-4 text-foreground/40" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-rose-signal text-[9px] font-bold text-white flex items-center justify-center">
-                  {unreadCount > 9 ? "9+" : unreadCount}
-                </span>
-              )}
-            </button>
+            <div className="relative" ref={isMobile ? notifRef : undefined}>
+              <button
+                onClick={() => setShowNotifs(!showNotifs)}
+                className="relative p-2 rounded-xl hover:bg-black/[0.03] transition-colors"
+              >
+                <Bell className="w-4 h-4 text-foreground/40" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-rose-signal text-[9px] font-bold text-white flex items-center justify-center">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </button>
+              <AnimatePresence>
+                {showNotifs && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    className="absolute right-0 top-12 w-80 max-h-96 bg-white border border-black/[0.08] rounded-2xl shadow-xl z-50 overflow-hidden"
+                    style={{ backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}
+                  >
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-black/[0.06]">
+                      <span className="text-[13px] font-bold text-foreground">Notifications</span>
+                      <button onClick={clearNotifications} className="text-[11px] text-primary hover:underline font-medium">Mark all read</button>
+                    </div>
+                    <div className="overflow-y-auto max-h-72">
+                      {notifications.length === 0 ? (
+                        <div className="p-6 text-center">
+                          <Bell className="w-8 h-8 text-foreground/15 mx-auto mb-2" />
+                          <div className="text-[13px] text-foreground/40">No notifications yet</div>
+                          <div className="text-[11px] text-foreground/25 mt-1">Run an AI assistant to see updates here</div>
+                        </div>
+                      ) : (
+                        notifications.slice(0, 10).map((n) => (
+                          <div
+                            key={n.id}
+                            onClick={() => markNotificationRead(n.id)}
+                            className={`px-4 py-3 border-b border-black/[0.04] cursor-pointer hover:bg-black/[0.02] transition-colors ${
+                              !n.read ? "bg-primary/5" : ""
+                            }`}
+                          >
+                            <div className="flex items-start gap-2.5">
+                              {!n.read && <div className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />}
+                              <div className={!n.read ? "" : "ml-[18px]"}>
+                                <div className="text-[12px] font-semibold text-foreground">{n.title}</div>
+                                <div className="text-[11px] text-foreground/50 mt-0.5 line-clamp-2">{n.description}</div>
+                                <div className="text-[10px] text-foreground/25 mt-1 font-mono">
+                                  {new Date(n.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
             {/* Hamburger */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -473,19 +538,79 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
             </span>
           </div>
           <div className="flex items-center gap-4 text-[13px]">
-            {/* Notifications */}
-            <button className="relative p-1.5 rounded-lg hover:bg-black/[0.03] transition-colors">
-              <Bell className="w-4 h-4 text-foreground/35" />
-              {unreadCount > 0 && (
-                <motion.span
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-rose-signal text-[9px] font-bold text-white flex items-center justify-center"
-                >
-                  {unreadCount > 9 ? "9+" : unreadCount}
-                </motion.span>
-              )}
+            {/* Refresh */}
+            <button
+              onClick={() => window.location.reload()}
+              className="p-1.5 rounded-lg hover:bg-black/[0.03] transition-colors group"
+              title="Refresh"
+            >
+              <RotateCcw className="w-4 h-4 text-foreground/35 group-hover:text-foreground/60 transition-colors" />
             </button>
+            {/* Notifications */}
+            <div className="relative" ref={!isMobile ? notifRef : undefined}>
+              <button
+                onClick={() => setShowNotifs(!showNotifs)}
+                className="relative p-1.5 rounded-lg hover:bg-black/[0.03] transition-colors"
+              >
+                <Bell className="w-4 h-4 text-foreground/35" />
+                {unreadCount > 0 && (
+                  <motion.span
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-rose-signal text-[9px] font-bold text-white flex items-center justify-center"
+                  >
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </motion.span>
+                )}
+              </button>
+              <AnimatePresence>
+                {showNotifs && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    className="absolute right-0 top-10 w-80 max-h-96 bg-white border border-black/[0.08] rounded-2xl shadow-xl z-50 overflow-hidden"
+                    style={{ backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}
+                  >
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-black/[0.06]">
+                      <span className="text-[13px] font-bold text-foreground">Notifications</span>
+                      <button onClick={clearNotifications} className="text-[11px] text-primary hover:underline font-medium">Mark all read</button>
+                    </div>
+                    <div className="overflow-y-auto max-h-72">
+                      {notifications.length === 0 ? (
+                        <div className="p-6 text-center">
+                          <Bell className="w-8 h-8 text-foreground/15 mx-auto mb-2" />
+                          <div className="text-[13px] text-foreground/40">No notifications yet</div>
+                          <div className="text-[11px] text-foreground/25 mt-1">Run an AI assistant to see updates here</div>
+                        </div>
+                      ) : (
+                        notifications.slice(0, 10).map((n) => (
+                          <div
+                            key={n.id}
+                            onClick={() => markNotificationRead(n.id)}
+                            className={`px-4 py-3 border-b border-black/[0.04] cursor-pointer hover:bg-black/[0.02] transition-colors ${
+                              !n.read ? "bg-primary/5" : ""
+                            }`}
+                          >
+                            <div className="flex items-start gap-2.5">
+                              {!n.read && <div className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />}
+                              <div className={!n.read ? "" : "ml-[18px]"}>
+                                <div className="text-[12px] font-semibold text-foreground">{n.title}</div>
+                                <div className="text-[11px] text-foreground/50 mt-0.5 line-clamp-2">{n.description}</div>
+                                <div className="text-[10px] text-foreground/25 mt-1 font-mono">
+                                  {new Date(n.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
             {/* Status */}
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full transition-colors ${activeRuns > 0 ? "bg-primary animate-pulse-neon" : "bg-emerald-signal"}`} />
@@ -502,6 +627,11 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
         {/* Page content */}
         <div className="p-6 lg:p-8 xl:p-10 max-w-[1440px]">{children}</div>
       </main>
+
+      {/* Click-away for notifications */}
+      {showNotifs && (
+        <div className="fixed inset-0 z-40" onClick={() => setShowNotifs(false)} />
+      )}
     </div>
   );
 }
