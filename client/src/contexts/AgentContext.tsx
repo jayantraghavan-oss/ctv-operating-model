@@ -82,6 +82,7 @@ interface AgentContextType extends AgentState {
   getModuleHealth: (moduleId: number) => { active: number; total: number; percent: number };
   getClusterHealth: (clusterId: number) => { active: number; total: number; percent: number };
   getStreamingOutput: (runId: string) => string | undefined;
+  resetAgentRuns: () => void;
   unreadCount: number;
   recentRuns: AgentRun[];
   isExecuting: boolean;
@@ -496,6 +497,20 @@ export function AgentProvider({ children }: { children: ReactNode }) {
     return { active, total, percent: total > 0 ? Math.round((active / total) * 100) : 0 };
   }, [state.subModuleStatuses]);
 
+  const resetAgentRuns = useCallback(() => {
+    setState((prev) => ({
+      ...prev,
+      agentRuns: [],
+    }));
+    streamingOutputs.current = {};
+    setStreamingTick((t) => t + 1);
+    setExecutionQueue(0);
+    toast.success("Agent history cleared", {
+      description: "All run history has been reset.",
+      duration: 2000,
+    });
+  }, []);
+
   const getClusterHealth = useCallback((clusterId: number) => {
     const keys = getAllSubModuleKeysForCluster(clusterId);
     const total = keys.length;
@@ -516,6 +531,7 @@ export function AgentProvider({ children }: { children: ReactNode }) {
         ...state,
         setSubModuleStatus,
         runAgent,
+        resetAgentRuns,
         addClusterNote,
         deleteClusterNote,
         markNotificationRead,

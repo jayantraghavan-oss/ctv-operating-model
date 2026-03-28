@@ -50,7 +50,7 @@ type OwnerFilter = "all" | "agent" | "agent-human" | "human-led";
 type ViewMode = "list" | "grid";
 
 export default function AgentSwarm() {
-  const { recentRuns, runAgent, isExecuting, executionQueue, getStreamingOutput } = useAgent();
+  const { recentRuns, runAgent, resetAgentRuns, isExecuting, executionQueue, getStreamingOutput } = useAgent();
   const [search, setSearch] = useState("");
   const [moduleFilter, setModuleFilter] = useState<number | "all">("all");
   const [typeFilter, setTypeFilter] = useState<FilterType>("all");
@@ -132,6 +132,17 @@ export default function AgentSwarm() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            {stats.failed > 0 && (
+              <motion.button
+                onClick={resetAgentRuns}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-2xl border border-rose-200 bg-rose-50 text-rose-600 text-[13px] font-medium hover:bg-rose-100 transition-all"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Clear History
+              </motion.button>
+            )}
             <motion.button
               onClick={executeAll}
               disabled={isExecuting}

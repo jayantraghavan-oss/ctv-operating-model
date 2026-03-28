@@ -103,3 +103,14 @@
 - [x] Verify dev mode agents still work (19 executed, 0 failed, 35 tests passing)
 - [x] Production build succeeds (vite build + esbuild), /api/llm returns 200
 - [x] Validate agents work on published production site — agents #4 and #5 executed successfully (13.3s and 10.2s)
+
+## Phase 21: Fix 11 Failed Agents on Production
+- [x] Diagnosed: stale failures from old deployment cached in localStorage; new code works
+- [x] Root cause: published site was running old bundle without tRPC fallback
+- [x] Verified: agents #4 and #5 executed successfully on production after publish
+
+## Phase 22: Add Refresh/Reset Button + Cross-Page Agent Testing
+- [x] Add "Clear History" button to Agent Swarm page header (appears when failed > 0)
+- [x] Add resetAgentRuns function to AgentContext (clears runs from state + localStorage)
+- [ ] Test agents on War Room, Command Center, Module pages on production
+- [ ] Save checkpoint and verify on production
