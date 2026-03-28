@@ -173,3 +173,7 @@
 - [x] Update AgentRegistry.tsx: soften labels
 - [x] Update ApprovalQueue.tsx: soften empty state and output label
 - [x] All 48 vitest tests passing
+
+## Phase 24: Clear Stale Errors from Earlier Versions
+- [x] Investigated: errors were stale from earlier HMR/build cycles (157+ min old), not present in current code
+- [x] Verified: all 5 pages load cleanly with zero console errors after server restart (Dashboard, AI Assistants, BuyerSim, Competitive Sims, Insights)
