@@ -4,6 +4,8 @@
  * Shows: system health, module stats, cluster map, agent breakdown, key metrics.
  */
 import Layout from "@/components/Layout";
+import TipBanner from "@/components/TipBanner";
+import GlossaryTip from "@/components/GlossaryTip";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import {
@@ -45,13 +47,20 @@ export default function Home() {
   return (
     <Layout>
       <div className="p-6 lg:p-8 max-w-[1400px]">
+        {/* Welcome Tip */}
+        <div className="mb-6">
+          <TipBanner tipId="home-welcome" variant="welcome" sparkle>
+            Welcome to the CTV AI Operating Model. This dashboard shows how <strong>200 AI assistants</strong> are organized across 4 modules. Click any module card to explore its assistants, or use the sidebar to jump to specific tools.
+          </TipBanner>
+        </div>
+
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Command Center
+            Dashboard
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            CTV AI Commercial Engine — 2 FTEs, {stats.totalPrompts} agents, {stats.modules} modules
+            CTV AI Commercial Engine — 2 FTEs, {stats.totalPrompts} AI assistants, {stats.modules} modules
           </p>
         </div>
 
@@ -65,23 +74,23 @@ export default function Home() {
             color="text-[#0091FF]"
           />
           <KpiCard
-            label="Agent Prompts"
+            label="AI Assistants"
             value={stats.totalPrompts}
-            sub={`${stats.persistent} persistent · ${stats.triggered} triggered`}
+            sub={`${stats.persistent} always-on · ${stats.triggered} on-demand`}
             icon={<Bot className="w-4 h-4" />}
             color="text-emerald-600"
           />
           <KpiCard
-            label="Orchestrator Clusters"
+            label="Coordination Groups"
             value={stats.clusters}
-            sub={`${stats.orchestrator} orchestrator prompts`}
+            sub={`${stats.orchestrator} coordinator prompts`}
             icon={<Shield className="w-4 h-4" />}
             color="text-violet-600"
           />
           <KpiCard
             label="Ownership Split"
-            value={`${stats.totalAgents}A`}
-            sub={`${stats.totalAgentHuman} A+H · ${stats.totalHumanLed} Human`}
+            value={`${stats.totalAgents}AI`}
+            sub={`${stats.totalAgentHuman} AI+Review · ${stats.totalHumanLed} Human`}
             icon={<UserCheck className="w-4 h-4" />}
             color="text-amber-600"
           />
@@ -91,9 +100,9 @@ export default function Home() {
         <motion.div {...fade} transition={{ delay: 0.05 }} className="mb-8">
           <div className="border border-border rounded-lg bg-white overflow-hidden">
             <div className="px-5 py-4 border-b border-border">
-              <h2 className="text-sm font-semibold text-foreground">System Architecture</h2>
+              <h2 className="text-sm font-semibold text-foreground">System Overview</h2>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Agents as discrete modules reporting to human orchestrators. Two modes of operation for CTV-to-App and CTV-to-Web.
+                AI assistants organized into modules, each supervised by a human coordinator. Two modes: CTV-to-App and CTV-to-Web.
               </p>
             </div>
             <div className="p-5">
@@ -127,7 +136,7 @@ export default function Home() {
                             <span className="font-mono">{mStats.subModules}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span>Agent prompts</span>
+                            <span>AI assistants</span>
                             <span className="font-mono">{mStats.prompts}</span>
                           </div>
                         </div>
@@ -158,9 +167,9 @@ export default function Home() {
           <motion.div {...fade} transition={{ delay: 0.1 }}>
             <div className="border border-border rounded-lg bg-white overflow-hidden h-full">
               <div className="px-5 py-4 border-b border-border">
-                <h2 className="text-sm font-semibold text-foreground">Human Orchestrator Clusters</h2>
+                <h2 className="text-sm font-semibold text-foreground">Coordination Groups</h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Coherent sets of agents under single human orchestrators
+                  Groups of AI assistants supervised by a single human coordinator
                 </p>
               </div>
               <div className="divide-y divide-border">
@@ -200,16 +209,16 @@ export default function Home() {
           <motion.div {...fade} transition={{ delay: 0.15 }}>
             <div className="border border-border rounded-lg bg-white overflow-hidden h-full">
               <div className="px-5 py-4 border-b border-border">
-                <h2 className="text-sm font-semibold text-foreground">Agent Architecture</h2>
+                <h2 className="text-sm font-semibold text-foreground">AI Assistant Architecture</h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  200 prompts across 3 agent types and 3 ownership models
+                  200 assistants across 3 types and 3 ownership models
                 </p>
               </div>
               <div className="p-5 space-y-5">
                 {/* By agent type */}
                 <div>
                   <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                    By Agent Type
+                    By Assistant Type
                   </div>
                   <div className="space-y-2">
                     {(["persistent", "triggered", "orchestrator"] as const).map((type) => {
@@ -273,11 +282,11 @@ export default function Home() {
                   <div className="space-y-2 text-xs text-muted-foreground">
                     <div className="flex items-start gap-2">
                       <Zap className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" />
-                      <span>Agents generate, recommend, and surface insights — humans approve all content going to market</span>
+                      <span>AI assistants generate, recommend, and surface insights — humans approve all content going to market</span>
                     </div>
                     <div className="flex items-start gap-2">
                       <Activity className="w-3.5 h-3.5 text-emerald-500 mt-0.5 shrink-0" />
-                      <span>Persistent agents monitor 24/7; triggered agents fire on events or cycles</span>
+                      <span>Always-on assistants monitor 24/7; on-demand assistants run on events or schedules</span>
                     </div>
                     <div className="flex items-start gap-2">
                       <TrendingUp className="w-3.5 h-3.5 text-[#0091FF] mt-0.5 shrink-0" />
@@ -294,7 +303,7 @@ export default function Home() {
         <motion.div {...fade} transition={{ delay: 0.2 }}>
           <div className="border border-border rounded-lg bg-white overflow-hidden mb-8">
             <div className="px-5 py-4 border-b border-border">
-              <h2 className="text-sm font-semibold text-foreground">Prompt Distribution by Module</h2>
+              <h2 className="text-sm font-semibold text-foreground">Assistant Distribution by Module</h2>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -303,9 +312,9 @@ export default function Home() {
                     <th className="text-left px-5 py-2.5 text-xs font-semibold text-muted-foreground">Module</th>
                     <th className="text-center px-3 py-2.5 text-xs font-semibold text-muted-foreground">Sections</th>
                     <th className="text-center px-3 py-2.5 text-xs font-semibold text-muted-foreground">Sub-modules</th>
-                    <th className="text-center px-3 py-2.5 text-xs font-semibold text-muted-foreground">Prompts</th>
-                    <th className="text-center px-3 py-2.5 text-xs font-semibold text-muted-foreground">Agent</th>
-                    <th className="text-center px-3 py-2.5 text-xs font-semibold text-muted-foreground">A+H</th>
+                    <th className="text-center px-3 py-2.5 text-xs font-semibold text-muted-foreground">Assistants</th>
+                    <th className="text-center px-3 py-2.5 text-xs font-semibold text-muted-foreground">AI-Driven</th>
+                    <th className="text-center px-3 py-2.5 text-xs font-semibold text-muted-foreground">AI+Review</th>
                     <th className="text-center px-3 py-2.5 text-xs font-semibold text-muted-foreground">Human</th>
                     <th className="px-3 py-2.5"></th>
                   </tr>
@@ -351,7 +360,7 @@ export default function Home() {
                       <div className="flex items-center gap-2.5">
                         <Shield className="w-4 h-4 text-rose-500" />
                         <div>
-                          <div className="font-medium text-foreground">Orchestration Layer</div>
+                          <div className="font-medium text-foreground">Coordination Layer</div>
                           <div className="text-xs text-muted-foreground">Cross-module</div>
                         </div>
                       </div>
@@ -377,6 +386,7 @@ export default function Home() {
         {/* Footer */}
         <div className="text-center text-xs text-muted-foreground pb-8">
           <span className="font-mono">CTV AI Commercial Engine</span> · Moloco · Draft for POC & Feedback · Mar 2026
+          <br /><span className="text-foreground/30">Hover any label for technical terminology</span>
         </div>
       </div>
     </Layout>

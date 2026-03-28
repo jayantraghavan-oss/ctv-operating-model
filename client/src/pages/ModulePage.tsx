@@ -98,7 +98,7 @@ export default function ModulePage() {
         <Link href="/">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer mb-4">
             <ArrowLeft className="w-3 h-3" />
-            Command Center
+            Dashboard
           </div>
         </Link>
 
@@ -396,7 +396,7 @@ function PromptCard({
           ) : run?.status === "completed" ? (
             <><RotateCcw className="w-3 h-3" />Re-run</>
           ) : (
-            <><Play className="w-3 h-3" />Execute</>
+            <><Play className="w-3 h-3" />Run</>
           )}
         </motion.button>
       </div>
@@ -417,7 +417,7 @@ function PromptCard({
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-[10px] font-bold text-[#0091FF]/70 uppercase tracking-wider flex items-center gap-1">
                       <Sparkles className="w-3 h-3" />
-                      {isRunning ? "Streaming..." : "Agent Output"}
+                      {isRunning ? "Streaming..." : "AI Output"}
                       {isRunning && <span className="inline-block w-1 h-3.5 bg-[#0091FF] animate-pulse ml-1 rounded-sm" />}
                     </div>
                     {!isRunning && displayOutput && (
@@ -441,7 +441,7 @@ function PromptCard({
                       <div className="w-5 h-5 border-2 border-amber-500/20 rounded-full" />
                       <div className="absolute inset-0 w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
                     </div>
-                    <div className="text-[12px] font-medium text-amber-700">Agent is thinking...</div>
+                    <div className="text-[12px] font-medium text-amber-700">AI is thinking...</div>
                   </div>
                   <div className="mt-3 space-y-2">
                     <div className="h-2.5 rounded-full bg-amber-200/40 animate-pulse w-full" />
@@ -456,7 +456,7 @@ function PromptCard({
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#0091FF]/8 text-[#0091FF] text-[12px] font-semibold hover:bg-[#0091FF]/12 transition-all"
                   >
                     <Play className="w-3.5 h-3.5" />
-                    Execute with real AI reasoning
+                    Run with AI reasoning
                   </button>
                 </div>
               )}
@@ -642,7 +642,7 @@ function OpsDetailPanel({
             className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
           >
             <Bot className="w-3.5 h-3.5" />
-            Agent Prompts ({prompts.length}) — Click to Execute
+            AI Assistants ({prompts.length}) — Click to Run
             <ChevronDown
               className={`w-3 h-3 transition-transform ${showPrompts ? "rotate-180" : ""}`}
             />
@@ -709,7 +709,7 @@ function BasicDetailPanel({
       {prompts.length > 0 && (
         <div>
           <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-            Agent Prompts ({prompts.length}) — Click to Execute
+            AI Assistants ({prompts.length}) — Click to Run
           </div>
           <div className="space-y-2">
             {prompts.map((prompt) => (

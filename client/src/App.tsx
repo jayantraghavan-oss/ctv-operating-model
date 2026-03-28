@@ -6,6 +6,8 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AgentProvider } from "./contexts/AgentContext";
 import CommandPalette from "./components/CommandPalette";
+import WelcomeModal from "./components/WelcomeModal";
+import HelpButton from "./components/HelpButton";
 import { lazy, Suspense, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -99,6 +101,8 @@ function App() {
               }}
             />
             <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} />
+            <WelcomeModal />
+            <HelpButton />
             <Router />
           </TooltipProvider>
         </AgentProvider>

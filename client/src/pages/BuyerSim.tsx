@@ -4,6 +4,7 @@
  * Each turn shows which agents/modules activate. Apple glassy UX.
  */
 import NeuralShell from "@/components/NeuralShell";
+import TipBanner from "@/components/TipBanner";
 import { useAgent } from "@/contexts/AgentContext";
 import { useState, useRef, useEffect, useMemo } from "react";
 import {
@@ -442,7 +443,7 @@ export default function BuyerSim() {
     setTotalAgentsActivated(0);
     setMessages([{
       id: genId(), role: "system",
-      text: `Simulation initialized. You are ${PERSONAS.find(p => p.id === id)?.name}, ${PERSONAS.find(p => p.id === id)?.title} at ${PERSONAS.find(p => p.id === id)?.company}. The Moloco CTV sales team is about to pitch you. Watch how every agent in the operating model activates to support this deal.`,
+      text: `Roleplay started. You are ${PERSONAS.find(p => p.id === id)?.name}, ${PERSONAS.find(p => p.id === id)?.title} at ${PERSONAS.find(p => p.id === id)?.company}. The Moloco CTV sales team is about to pitch you. Watch how AI assistants activate to support each stage of the deal.`,
       timestamp: new Date(),
     }]);
     setShowSelect(false);
@@ -517,6 +518,11 @@ export default function BuyerSim() {
   return (
     <NeuralShell>
       <div className="space-y-5">
+        {/* Contextual Tip */}
+        <TipBanner tipId="buyersim-intro" variant="welcome" sparkle>
+          Choose a buyer persona to start a realistic CTV sales roleplay. Click <strong>"Next Turn"</strong> to advance the conversation, or enable <strong>"Auto-Play"</strong> to watch it unfold. Toggle <strong>"AI Activity"</strong> to see which assistants activate at each step.
+        </TipBanner>
+
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -524,14 +530,14 @@ export default function BuyerSim() {
               <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500/10 to-purple-500/10 border border-violet-200/50 flex items-center justify-center">
                 <MessageSquare className="w-4.5 h-4.5 text-violet-600" />
               </div>
-              <h1 className="text-xl font-semibold tracking-tight text-foreground">Buyer Simulation</h1>
+              <h1 className="text-xl font-semibold tracking-tight text-foreground">Buyer Roleplay</h1>
             </div>
             <p className="text-sm text-muted-foreground ml-12">Experience the full Moloco CTV pitch from the buyer's side. Watch every agent activate in real-time.</p>
           </div>
           {!showSelect && (
             <div className="flex items-center gap-2">
               <button onClick={() => setShowTraces(!showTraces)} className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${showTraces ? "bg-violet-50 border-violet-200 text-violet-700" : "bg-white border-gray-200 text-gray-500 hover:text-gray-700"}`}>
-                <Brain className="w-3 h-3 inline mr-1" /> Agent Traces
+                <Brain className="w-3 h-3 inline mr-1" /> AI Activity
               </button>
               <button onClick={reset} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-all">
                 <RotateCcw className="w-3 h-3" /> Reset
@@ -545,7 +551,7 @@ export default function BuyerSim() {
           <div className="space-y-5">
             <div className="glass-card rounded-xl p-5">
               <div className="text-sm font-medium text-foreground mb-1">Choose Your Buyer Persona</div>
-              <p className="text-xs text-muted-foreground">Each simulation runs a 20+ turn deep technical CTV sales conversation. Every turn shows which agents activate, what data they pull, and how the operating model supports the deal.</p>
+              <p className="text-xs text-muted-foreground">Each roleplay runs a 20+ turn deep technical CTV sales conversation. Every turn shows which AI assistants activate, what data they pull, and how the system supports the deal.</p>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {PERSONAS.map(per => (
@@ -713,7 +719,7 @@ export default function BuyerSim() {
                       className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg bg-gradient-to-r from-violet-500 to-purple-600 text-white text-xs sm:text-sm font-medium hover:from-violet-600 hover:to-purple-700 transition-all disabled:opacity-40 shadow-sm"
                     >
                       <ChevronRight className="w-4 h-4" />
-                      <span className="hidden sm:inline">{currentTurn >= script.length ? "Simulation Complete" : "Next Turn"}</span>
+                      <span className="hidden sm:inline">{currentTurn >= script.length ? "Roleplay Complete" : "Next Turn"}</span>
                       <span className="sm:hidden">{currentTurn >= script.length ? "Done" : "Next"}</span>
                     </button>
                     <button
@@ -803,8 +809,8 @@ export default function BuyerSim() {
                   {currentTurn >= script.length && script.length > 0 && (
                     <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-200 rounded-lg p-3 text-center">
                       <CheckCircle2 className="w-6 h-6 text-emerald-500 mx-auto mb-1" />
-                      <div className="text-xs font-semibold text-emerald-700">Simulation Complete</div>
-                      <div className="text-[10px] text-emerald-600 mt-0.5">{totalAgentsActivated} agents activated across {script.length} turns</div>
+                      <div className="text-xs font-semibold text-emerald-700">Roleplay Complete</div>
+                      <div className="text-[10px] text-emerald-600 mt-0.5">{totalAgentsActivated} AI assistants activated across {script.length} turns</div>
                     </motion.div>
                   )}
                 </div>

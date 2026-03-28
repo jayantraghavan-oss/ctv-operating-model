@@ -38,7 +38,7 @@ export default function ModelOverview() {
         <Link href="/">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer mb-4">
             <ArrowLeft className="w-3 h-3" />
-            Command Center
+            Dashboard
           </div>
         </Link>
 
@@ -49,8 +49,8 @@ export default function ModelOverview() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed max-w-2xl">
             The strategic architecture for running Moloco's CTV commercial operation
-            at scale with 2 FTEs and 200 AI agents. This is the system design document
-            that underpins every module, cluster, and prompt.
+            at scale with 2 FTEs and 200 AI assistants. This is the system design document
+            that underpins every module, coordination group, and assistant.
           </p>
         </div>
 
@@ -61,11 +61,11 @@ export default function ModelOverview() {
             title="Core Thesis"
           >
             <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-              Moloco CTV is building an AI-first commercial operation that treats agents
-              as the primary workforce and humans as orchestrators. The model is designed
+              Moloco CTV is building an AI-first commercial operation that treats AI assistants
+              as the primary workforce and humans as coordinators. The model is designed
               to run the full go-to-market motion — from market intelligence through
               customer success to executive governance — with only 2 dedicated FTEs,
-              augmented by 200 purpose-built AI agent prompts.
+              augmented by 200 purpose-built AI assistants.
             </p>
             <p className="text-sm text-muted-foreground leading-relaxed mb-4">
               This is not "AI-assisted" — it is "AI-first." The agents do the work.
@@ -75,7 +75,7 @@ export default function ModelOverview() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-5">
               <MetricCard label="Target" value="$200M" sub="App ARR + Web validation" />
               <MetricCard label="Decision Point" value="EOQ2" sub="Go/no-go investment" />
-              <MetricCard label="Operating Model" value="2 FTEs" sub="+ 200 AI agents" />
+              <MetricCard label="Operating Model" value="2 FTEs" sub="+ 200 AI assistants" />
             </div>
           </Section>
         </motion.div>
@@ -89,12 +89,12 @@ export default function ModelOverview() {
             <div className="space-y-4">
               <Principle
                 number={1}
-                title="Agents as Discrete Modules"
-                description="Each agent prompt is a specific, actionable, system-level instruction. Agents are organized into persistent (always-on monitoring), triggered (event-driven), and orchestrator (cross-module synthesis) types. They report to human orchestrators, not to each other."
+                title="AI Assistants as Discrete Modules"
+                description="Each AI assistant is a specific, actionable, system-level instruction. Assistants are organized into always-on (continuous monitoring), on-demand (event-driven), and coordinator (cross-module synthesis) types. They report to human coordinators, not to each other."
               />
               <Principle
                 number={2}
-                title="Human Orchestrators, Not Operators"
+                title="Human Coordinators, Not Operators"
                 description="Humans don't do the repetitive work — they provide judgment, build relationships, synthesize across modules, and make the strategic calls that agents can't. The human role is to connect dots, not to push buttons."
               />
               <Principle
@@ -129,7 +129,7 @@ export default function ModelOverview() {
           >
             <p className="text-sm text-muted-foreground leading-relaxed mb-5">
               The operating model is organized into 4 work modules, each mapped to a
-              human orchestrator cluster. A 5th cluster (DRI) sits on top, providing
+              human coordination group. A 5th group (DRI) sits on top, providing
               executive governance and cross-functional synthesis.
             </p>
             <div className="space-y-3">
@@ -164,7 +164,7 @@ export default function ModelOverview() {
               <div className="border border-rose-200 rounded-lg p-4 bg-rose-50/50">
                 <div className="flex items-center gap-2 mb-1">
                   <Brain className="w-4 h-4 text-rose-500" />
-                  <span className="text-sm font-medium text-rose-800">Orchestration Layer</span>
+                  <span className="text-sm font-medium text-rose-800">Coordination Layer</span>
                   <span className="text-xs font-mono text-rose-500 ml-auto">20 prompts</span>
                 </div>
                 <p className="text-xs text-rose-600/80 leading-relaxed">
@@ -370,12 +370,12 @@ export default function ModelOverview() {
           <Link href="/">
             <span className="text-sm text-[#0091FF] hover:underline cursor-pointer flex items-center gap-1.5">
               <ArrowLeft className="w-3.5 h-3.5" />
-              Back to Command Center
+              Back to Dashboard
             </span>
           </Link>
           <Link href="/agents">
             <span className="text-sm text-[#0091FF] hover:underline cursor-pointer flex items-center gap-1.5">
-              View All 200 Agents
+              View All 200 Assistants
               <ArrowRight className="w-3.5 h-3.5" />
             </span>
           </Link>

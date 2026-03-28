@@ -45,29 +45,29 @@ interface NavItem {
 }
 
 const commandNav: NavItem[] = [
-  { path: "/", label: "Command", shortLabel: "Command", icon: Brain },
-  { path: "/swarm", label: "Agent Swarm", shortLabel: "Swarm", icon: Zap },
+  { path: "/", label: "Dashboard", shortLabel: "Home", icon: Brain },
+  { path: "/swarm", label: "AI Assistants", shortLabel: "Assistants", icon: Zap },
   { path: "/approvals", label: "Approvals", shortLabel: "Approve", icon: Shield },
 ];
 
 const intelligenceNav: NavItem[] = [
-  { path: "/data-pulse", label: "Data Pulse", shortLabel: "Data", icon: Radio },
-  { path: "/war-room", label: "War Room", shortLabel: "War", icon: Crosshair },
-  { path: "/simulation", label: "Buyer Sim", shortLabel: "Sim", icon: MessageSquare },
+  { path: "/data-pulse", label: "Insights", shortLabel: "Insights", icon: Radio },
+  { path: "/war-room", label: "Competitive Sims", shortLabel: "Compete", icon: Crosshair },
+  { path: "/simulation", label: "Buyer Roleplay", shortLabel: "Roleplay", icon: MessageSquare },
 ];
 
 const legacyNav: NavItem[] = [
   { path: "/model", label: "Operating Model", icon: BookOpen },
-  { path: "/agents", label: "Agent Registry", icon: Target },
+  { path: "/agents", label: "Assistant Registry", icon: Target },
 ];
 
 // Bottom nav items for mobile — most important screens
 const bottomNav: NavItem[] = [
-  { path: "/", label: "Command", icon: Brain },
-  { path: "/swarm", label: "Swarm", icon: Zap },
-  { path: "/simulation", label: "Sim", icon: MessageSquare },
-  { path: "/data-pulse", label: "Data", icon: Radio },
-  { path: "/war-room", label: "War", icon: Crosshair },
+  { path: "/", label: "Home", icon: Brain },
+  { path: "/swarm", label: "Assistants", icon: Zap },
+  { path: "/simulation", label: "Roleplay", icon: MessageSquare },
+  { path: "/data-pulse", label: "Insights", icon: Radio },
+  { path: "/war-room", label: "Compete", icon: Crosshair },
 ];
 
 export default function NeuralShell({ children }: { children: ReactNode }) {
@@ -155,7 +155,7 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
             <div>
               <div className="text-[14px] font-bold tracking-tight text-foreground">CTV AI Engine</div>
               <div className="text-[10px] font-medium text-foreground/35">
-                {activeRuns > 0 ? `${activeRuns} running` : "Ready"}
+                {activeRuns > 0 ? `${activeRuns} working` : "Ready"}
               </div>
             </div>
           </div>
@@ -215,8 +215,8 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
                       <X className="w-5 h-5 text-foreground/40" />
                     </button>
                   </div>
-                  <NavGroup label="Command" items={commandNav} />
-                  <NavGroup label="Intelligence" items={intelligenceNav} />
+                  <NavGroup label="Home" items={commandNav} />
+                  <NavGroup label="Tools" items={intelligenceNav} />
                   {/* Module links */}
                   <div className="mb-4">
                     <div className="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/25">
@@ -358,7 +358,7 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
           >
             <div className="text-center">
               <div className="text-[15px] font-bold text-foreground">{getTotalStats().totalPrompts}</div>
-              <div className="text-[9px] font-bold text-foreground/25 uppercase tracking-wider">Agents</div>
+              <div className="text-[9px] font-bold text-foreground/25 uppercase tracking-wider">Assistants</div>
             </div>
             <div className="w-px h-6 bg-black/[0.06]" />
             <div className="text-center">
@@ -375,8 +375,8 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-1 px-3">
-          <NavGroup label="Command" items={commandNav} compact={collapsed} />
-          <NavGroup label="Intelligence" items={intelligenceNav} compact={collapsed} />
+          <NavGroup label="Home" items={commandNav} compact={collapsed} />
+          <NavGroup label="Tools" items={intelligenceNav} compact={collapsed} />
 
           {/* Module links */}
           {!collapsed && (
@@ -462,7 +462,7 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
             <span className="text-foreground/15">/</span>
             <span className="font-medium">
               {location === "/"
-                ? "Command"
+                ? "Dashboard"
                 : location
                     .slice(1)
                     .split(/[-/]/)
@@ -488,7 +488,7 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full transition-colors ${activeRuns > 0 ? "bg-primary animate-pulse-neon" : "bg-emerald-signal"}`} />
               <span className={`font-semibold ${activeRuns > 0 ? "text-primary" : "text-emerald-signal"}`}>
-                {activeRuns > 0 ? "Processing" : "Ready"}
+                {activeRuns > 0 ? "Working..." : "Ready"}
               </span>
             </div>
             <span className="text-foreground/20 font-medium">

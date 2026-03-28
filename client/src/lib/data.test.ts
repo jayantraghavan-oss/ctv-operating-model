@@ -139,9 +139,9 @@ describe("getModuleStats", () => {
 
 describe("Helper Functions", () => {
   it("getOwnerLabel returns correct labels", () => {
-    expect(getOwnerLabel("agent")).toBe("Agent");
-    expect(getOwnerLabel("agent-human")).toBe("Agent + Human");
-    expect(getOwnerLabel("human-led")).toBe("Human-led");
+    expect(getOwnerLabel("agent")).toBe("AI-Driven");
+    expect(getOwnerLabel("agent-human")).toBe("AI + Review");
+    expect(getOwnerLabel("human-led")).toBe("Human-Led");
   });
 
   it("getOwnerColor returns non-empty strings", () => {
@@ -157,9 +157,9 @@ describe("Helper Functions", () => {
   });
 
   it("getAgentTypeLabel returns correct labels", () => {
-    expect(getAgentTypeLabel("persistent")).toBe("Persistent");
-    expect(getAgentTypeLabel("triggered")).toBe("Triggered");
-    expect(getAgentTypeLabel("orchestrator")).toBe("Orchestrator");
+    expect(getAgentTypeLabel("persistent")).toBe("Always-On");
+    expect(getAgentTypeLabel("triggered")).toBe("On-Demand");
+    expect(getAgentTypeLabel("orchestrator")).toBe("Coordinator");
   });
 
   it("getAgentTypeBg returns non-empty strings", () => {

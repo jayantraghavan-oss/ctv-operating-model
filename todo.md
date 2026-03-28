@@ -114,3 +114,62 @@
 - [x] Add resetAgentRuns function to AgentContext (clears runs from state + localStorage)
 - [x] Test agents on War Room, Command Center, Module pages on production — all passing
 - [x] All 5 cross-page tests passed (Swarm #4/#5, War Room #1, Deep Dive, Module M1 #8)
+
+## Phase 23: Make UX & Terminology More User-Friendly
+- [x] Audit all pages for overly technical/jargon-heavy labels
+- [x] Sidebar nav: simplify labels (e.g. "Agent Swarm" → "AI Agents", "Data Pulse" → "Insights", etc.)
+- [x] Command Center: soften language (e.g. "Go Live" → "Run All", "Deploy" → "Run", "Autopilot" → something clearer)
+- [x] Agent Swarm: make agent cards more approachable (clearer status labels, friendlier descriptions)
+- [x] War Room: rename to something less aggressive (e.g. "Scenarios" or "Competitive Sims")
+- [x] Module pages: simplify section headers and sub-module labels
+- [x] Replace "Persistent"/"Triggered"/"Orchestrator" agent type badges with friendlier terms
+- [x] Replace "Agent"/"Agent+Human"/"Human-led" ownership badges with clearer labels
+- [x] Soften button labels across the app (Execute → Run, Deploy → Start, etc.)
+- [x] Add helpful tooltips or descriptions where technical terms remain necessary
+- [x] Improve empty states and status messages to be more conversational
+- [x] Review NeuralShell sidebar section headers for clarity
+
+## Phase 23: Sales-Friendly Terminology + Onboarding Tips
+- [x] Sidebar nav: "Command" → "Dashboard", "Agent Swarm" → "AI Assistants", "Data Pulse" → "Insights", "War Room" → "Competitive Sims", "Buyer Sim" → "Buyer Roleplay"
+- [x] Section headers: "COMMAND" → "HOME", "INTELLIGENCE" → "TOOLS", "REFERENCE" → "REFERENCE"
+- [x] Buttons: "Execute" → "Run", "Deploy" → "Start", "Go Live" → "Run All", "Deploy All" → "Start All"
+- [x] Agent types: "Persistent" → "Always-On", "Triggered" → "On-Demand", "Orchestrator" → "Coordinator"
+- [x] Ownership: "Agent" → "AI-Driven", "Agent+Human" → "AI + Review", "Human-led" → "Human-Led"
+- [x] Status: "Autopilot" → "Auto Mode", "Processing" → "Working..."
+- [x] Home page: soften "Command Center" → "Dashboard", update subtitle
+- [x] Agent Swarm: soften page title and descriptions
+- [x] War Room: soften to "Competitive Scenarios"
+- [x] Build TipBanner component for contextual page-level tips (dismissible, with icon)
+- [x] Build Tooltip wrapper component for hover hints on key UI elements (GlossaryTip + GlossaryBadge)
+- [x] Add first-visit welcome modal on Dashboard with 5-step quick-start guide
+- [x] Add contextual tips on AI Assistants page
+- [x] Add contextual tips on Competitive Sims page
+- [x] Add contextual tips on Buyer Roleplay page
+- [x] Add contextual tips on Insights page
+- [x] Add contextual tips on Module pages (via TipBanner on Dashboard)
+- [x] Add guided pulse animation on first-time key actions (sparkle animation on welcome tip)
+
+## Phase 23b: Hover Tooltip Terminology + Onboarding (Updated)
+- [x] Create shared GlossaryTip component (hover shows "aka [technical term]")
+- [x] Create shared TipBanner component (dismissible contextual tip per page)
+- [x] Create HelpButton floating component with tips, shortcuts, and reset onboarding
+- [x] Update NeuralCommand.tsx: Dashboard title, Run All, Auto Mode, softer labels + tooltips
+- [x] Update AgentSwarm.tsx: AI Assistants title, Run/Re-run buttons, agent type tooltips
+- [x] Update WarRoom.tsx: Competitive Scenarios title, softer scenario labels + tooltips
+- [x] Update DataPulse.tsx: Insights title, softer tab labels
+- [x] Update BuyerSim.tsx: Buyer Roleplay title consistency
+- [x] Update CommandPalette.tsx: all nav labels + action labels to match new terminology
+- [x] Update NeuralShell.tsx: sidebar counter "Agents" → "Assistants", nav labels updated
+- [x] Update Layout.tsx (legacy): nav labels to match new terminology
+- [x] Update AgentContext.tsx: toast messages and seeded notifications to use friendly language
+- [x] Build welcome modal for first-time visitors with 5-step quick-start guide + glossary hint
+- [x] Add TipBanner to Dashboard, AI Assistants, Competitive Scenarios, Insights, Buyer Roleplay pages
+- [x] Add floating HelpButton with keyboard shortcuts, quick tips, and reset onboarding
+- [x] Agent type badges: "Always-On" with hover tooltip "aka Persistent Agent"
+- [x] Ownership badges: "AI-Driven" with hover tooltip "aka Agent-Owned"
+- [x] Update ModelOverview.tsx: soften all terminology (agents → assistants, orchestrators → coordinators)
+- [x] Update ClusterPage.tsx: soften breadcrumb, section headers
+- [x] Update ModulePage.tsx: soften breadcrumb, Execute → Run, Agent Output → AI Output
+- [x] Update AgentRegistry.tsx: soften labels
+- [x] Update ApprovalQueue.tsx: soften empty state and output label
+- [x] All 48 vitest tests passing

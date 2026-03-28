@@ -1,0 +1,8 @@
+Screenshot review findings:
+1. Welcome modal renders correctly with 5-step onboarding, step indicators, glossary hint
+2. Sidebar nav labels updated: Dashboard, AI Agents, Approvals, Insights, Competitive Sims, Buyer Roleplay, Modules
+3. Top bar shows "Dashboard" breadcrumb correctly
+4. TipBanner visible behind modal with "Welcome" sparkle tip
+5. Help button visible in bottom-right corner (circle with ? icon)
+6. "200 AGENTS" counter in sidebar still shows "AGENTS" - should check NeuralShell for this
+7. All looks clean, no visual errors

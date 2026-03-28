@@ -4,6 +4,7 @@
  * Apple-style: glassy panels, soft interactions, polished typography.
  */
 import NeuralShell from "@/components/NeuralShell";
+import TipBanner from "@/components/TipBanner";
 import { useAgent } from "@/contexts/AgentContext";
 import { useState } from "react";
 import { Shield, CheckCircle2, XCircle, Eye, Clock, Copy, Sparkles, EyeOff } from "lucide-react";
@@ -43,6 +44,10 @@ export default function ApprovalQueue() {
   return (
     <NeuralShell>
       <div className="space-y-8">
+        <TipBanner tipId="approvals-intro" variant="default">
+          This is where completed AI outputs land for your review. <strong>Approve</strong> outputs to mark them as ready, or <strong>Reject</strong> to flag for revision. Expand any item to see the full output.
+        </TipBanner>
+
         <div>
           <h1 className="text-[28px] font-bold tracking-tight">Approval Queue</h1>
           <p className="text-[15px] text-foreground/45 mt-1">{pendingRuns.length} pending · {approvedRuns.length} approved · {rejectedRuns.length} rejected</p>
@@ -78,8 +83,8 @@ export default function ApprovalQueue() {
             <div className="w-14 h-14 rounded-2xl bg-black/[0.03] flex items-center justify-center mx-auto mb-4">
               <Shield className="w-6 h-6 text-foreground/20" />
             </div>
-            <p className="text-[15px] font-medium text-foreground/40">No agent outputs to review yet</p>
-            <p className="text-[13px] text-foreground/25 mt-1.5">Execute agents from the Swarm, Registry, or any Module page to generate outputs.</p>
+            <p className="text-[15px] font-medium text-foreground/40">No outputs to review yet</p>
+            <p className="text-[13px] text-foreground/25 mt-1.5">Run assistants from the AI Assistants page, Registry, or any Module to generate outputs.</p>
           </div>
         ) : (
           <div className="glass rounded-2xl overflow-hidden">
@@ -118,7 +123,7 @@ export default function ApprovalQueue() {
                               <div className="flex items-center justify-between mb-3">
                                 <div className="text-[11px] font-bold text-[#0091FF]/70 uppercase tracking-wider flex items-center gap-1.5">
                                   <Sparkles className="w-3 h-3" />
-                                  Agent Output
+                                   AI Output
                                 </div>
                                 <button
                                   onClick={() => copyOutput(run.output || "")}

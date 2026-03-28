@@ -38,7 +38,7 @@ export default function ClusterPage() {
         <Link href="/">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer mb-4">
             <ArrowLeft className="w-3 h-3" />
-            Command Center
+            Dashboard
           </div>
         </Link>
 
@@ -82,7 +82,7 @@ export default function ClusterPage() {
         >
           <div className="px-5 py-4 border-b border-border flex items-center gap-2">
             <Brain className="w-4 h-4 text-violet-500" />
-            <h2 className="text-sm font-semibold text-foreground">Human Orchestrator Role</h2>
+            <h2 className="text-sm font-semibold text-foreground">Human Coordinator Role</h2>
           </div>
           <div className="px-5 py-4">
             <p className="text-sm text-muted-foreground leading-relaxed">{cluster.humanRole}</p>
@@ -145,7 +145,7 @@ export default function ClusterPage() {
                           Module {mod.id}: {mod.name}
                         </div>
                         <div className="text-xs text-muted-foreground mt-0.5">
-                          {s.sections} sections · {s.subModules} sub-modules · {s.prompts} prompts
+                          {s.sections} sections · {s.subModules} sub-modules · {s.prompts} assistants
                         </div>
                       </div>
                       <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />

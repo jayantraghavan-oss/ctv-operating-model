@@ -75,7 +75,7 @@ export default function CommandPalette({ open: controlledOpen, onOpenChange }: C
     }
     runAgent(prompt.id, prompt.text, prompt.moduleId, subModule, prompt.agentType, owner);
     setOpen(false);
-    toast(`Executing Agent #${prompt.id}`, {
+    toast(`Running Assistant #${prompt.id}`, {
       description: prompt.text.slice(0, 80) + "...",
       duration: 2000,
     });
@@ -83,7 +83,7 @@ export default function CommandPalette({ open: controlledOpen, onOpenChange }: C
 
   return (
     <CommandDialog open={open} onOpenChange={setOpen} showCloseButton={false}>
-      <CommandInput placeholder="Search agents, pages, actions... (⌘K)" />
+      <CommandInput placeholder="Search assistants, pages, actions... (⌘K)" />
       <CommandList className="max-h-[400px]">
         <CommandEmpty>
           <div className="flex flex-col items-center gap-2 py-4">
@@ -96,13 +96,13 @@ export default function CommandPalette({ open: controlledOpen, onOpenChange }: C
         <CommandGroup heading="Navigate">
           <CommandItem onSelect={() => navigateTo("/")}>
             <Brain className="w-4 h-4 text-primary" />
-            <span>Command Center</span>
+            <span>Dashboard</span>
             <span className="ml-auto text-xs text-foreground/25">Home</span>
           </CommandItem>
           <CommandItem onSelect={() => navigateTo("/swarm")}>
             <Zap className="w-4 h-4 text-amber-500" />
-            <span>Agent Swarm</span>
-            <span className="ml-auto text-xs text-foreground/25">200 agents</span>
+            <span>AI Assistants</span>
+            <span className="ml-auto text-xs text-foreground/25">200 assistants</span>
           </CommandItem>
           <CommandItem onSelect={() => navigateTo("/approvals")}>
             <Shield className="w-4 h-4 text-violet-500" />
@@ -110,15 +110,15 @@ export default function CommandPalette({ open: controlledOpen, onOpenChange }: C
           </CommandItem>
           <CommandItem onSelect={() => navigateTo("/data-pulse")}>
             <Radio className="w-4 h-4 text-emerald-500" />
-            <span>Data Pulse</span>
+            <span>Insights</span>
           </CommandItem>
           <CommandItem onSelect={() => navigateTo("/war-room")}>
             <Crosshair className="w-4 h-4 text-rose-500" />
-            <span>War Room</span>
+            <span>Competitive Sims</span>
           </CommandItem>
           <CommandItem onSelect={() => navigateTo("/simulation")}>
             <MessageSquare className="w-4 h-4 text-violet-500" />
-            <span>Buyer Simulation</span>
+            <span>Buyer Roleplay</span>
           </CommandItem>
         </CommandGroup>
 
@@ -149,7 +149,7 @@ export default function CommandPalette({ open: controlledOpen, onOpenChange }: C
             });
           }}>
             <Sparkles className="w-4 h-4 text-primary" />
-            <span>Deploy Top 5 Agents</span>
+            <span>Run Top 5 Assistants</span>
           </CommandItem>
           <CommandItem onSelect={() => navigateTo("/model")}>
             <BookOpen className="w-4 h-4 text-foreground/40" />
@@ -164,7 +164,7 @@ export default function CommandPalette({ open: controlledOpen, onOpenChange }: C
         <CommandSeparator />
 
         {/* Agent Search — show first 20 matching */}
-        <CommandGroup heading="Execute Agent">
+        <CommandGroup heading="Run Assistant">
           {prompts.slice(0, 20).map((prompt) => (
             <CommandItem
               key={prompt.id}

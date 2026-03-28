@@ -306,7 +306,7 @@ export function AgentProvider({ children }: { children: ReactNode }) {
     setExecutionQueue((q) => q + 1);
 
     // Toast: agent started
-    toast(`Agent #${promptId} started`, {
+    toast(`Assistant #${promptId} started`, {
       description: subModuleName,
       duration: 2000,
     });
@@ -351,7 +351,7 @@ export function AgentProvider({ children }: { children: ReactNode }) {
           const notif: Notification = {
             id: genId(),
             type: "agent-complete",
-            title: `Agent #${promptId} Complete`,
+            title: `Assistant #${promptId} Complete`,
             description: `${subModuleName} — ${(durationMs / 1000).toFixed(1)}s — ${output.slice(0, 100)}...`,
             timestamp: new Date().toISOString(),
             read: false,
@@ -365,7 +365,7 @@ export function AgentProvider({ children }: { children: ReactNode }) {
         setExecutionQueue((q) => Math.max(0, q - 1));
 
         // Toast: agent complete
-        toast.success(`Agent #${promptId} complete`, {
+        toast.success(`Assistant #${promptId} complete`, {
           description: `${subModuleName} — ${(durationMs / 1000).toFixed(1)}s`,
           duration: 3000,
         });
@@ -389,7 +389,7 @@ export function AgentProvider({ children }: { children: ReactNode }) {
               return { ...prev, agentRuns: updatedRuns };
             });
             setExecutionQueue((q) => Math.max(0, q - 1));
-            toast.success(`Agent #${promptId} complete (fallback)`, {
+            toast.success(`Assistant #${promptId} complete (fallback)`, {
               description: subModuleName,
               duration: 3000,
             });
@@ -406,7 +406,7 @@ export function AgentProvider({ children }: { children: ReactNode }) {
             setExecutionQueue((q) => Math.max(0, q - 1));
 
             // Toast: agent failed
-            toast.error(`Agent #${promptId} failed`, {
+            toast.error(`Assistant #${promptId} failed`, {
               description: err.message || "Unknown error",
               duration: 4000,
             });
@@ -505,7 +505,7 @@ export function AgentProvider({ children }: { children: ReactNode }) {
     streamingOutputs.current = {};
     setStreamingTick((t) => t + 1);
     setExecutionQueue(0);
-    toast.success("Agent history cleared", {
+    toast.success("Run history cleared", {
       description: "All run history has been reset.",
       duration: 2000,
     });

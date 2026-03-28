@@ -4,6 +4,7 @@
  * Apple-style: glassy panels, soft interactions, polished typography.
  */
 import NeuralShell from "@/components/NeuralShell";
+import TipBanner from "@/components/TipBanner";
 import { useAgent } from "@/contexts/AgentContext";
 import { useState, useCallback } from "react";
 import { Swords, Play, Target, Shield, Zap, Cpu, Copy, Sparkles, RotateCcw } from "lucide-react";
@@ -41,7 +42,7 @@ export default function WarRoom() {
       s.id + 900,
       s.desc,
       1, // Module 1: Market Intelligence
-      `War Room: ${s.name}`,
+      `Competitive Sim: ${s.name}`,
       "triggered",
       "agent-human"
     );
@@ -63,9 +64,13 @@ export default function WarRoom() {
   return (
     <NeuralShell>
       <div className="space-y-8">
+        <TipBanner tipId="warroom-intro" variant="action">
+          Pick a scenario and click <strong>"Simulate"</strong> to generate AI-powered competitive analysis. Each simulation produces talking points, battle cards, and strategic recommendations you can copy and use in real deals.
+        </TipBanner>
+
         <div>
-          <h1 className="text-[28px] font-bold tracking-tight">War Room</h1>
-          <p className="text-[15px] text-foreground/45 mt-1">Adversarial simulation with real AI reasoning — every scenario fires a live agent</p>
+          <h1 className="text-[28px] font-bold tracking-tight">Competitive Sims</h1>
+          <p className="text-[15px] text-foreground/45 mt-1">Head-to-head competitive analysis with real AI reasoning</p>
         </div>
 
         {/* Competitive Landscape */}
@@ -110,8 +115,8 @@ export default function WarRoom() {
         {/* Battle Scenarios */}
         <div className="glass rounded-2xl overflow-hidden">
           <div className="px-5 py-4 border-b border-black/[0.04]">
-            <span className="text-[15px] font-semibold">Battle Scenarios</span>
-            <span className="text-[12px] text-foreground/30 ml-2">Click Simulate to fire real AI analysis</span>
+            <span className="text-[15px] font-semibold">Competitive Scenarios</span>
+            <span className="text-[12px] text-foreground/30 ml-2">Click Simulate to generate AI analysis</span>
           </div>
           <div className="divide-y divide-black/[0.04]">
             {scenarios.map((s) => {
@@ -210,7 +215,7 @@ export default function WarRoom() {
                   <div>
                     <div className="flex items-center gap-3 text-[14px] text-foreground/40 mb-4">
                       <div className="w-5 h-5 border-2 border-rose-signal/20 border-t-rose-signal rounded-full animate-spin" />
-                      Running adversarial simulation with real AI reasoning...
+                      Generating competitive analysis with AI reasoning...
                     </div>
                     <div className="space-y-2.5">
                       <div className="h-3 rounded-full bg-rose-200/30 animate-pulse w-full" />

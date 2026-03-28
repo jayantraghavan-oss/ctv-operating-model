@@ -27,9 +27,9 @@ import { useAgent } from "@/contexts/AgentContext";
 import { useState, useEffect } from "react";
 
 const navItems = [
-  { href: "/", label: "Command Center", icon: LayoutDashboard },
+  { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/model", label: "Operating Model", icon: BookOpen },
-  { href: "/agents", label: "Agent Registry", icon: Bot },
+  { href: "/agents", label: "Assistant Registry", icon: Bot },
 ];
 
 const agenticItems = [
@@ -42,7 +42,7 @@ const moduleIcons = [Radar, Megaphone, Users, BarChart3];
 
 const mobileNavItems = [
   { href: "/", label: "Home", icon: LayoutDashboard },
-  { href: "/agents", label: "Agents", icon: Bot },
+  { href: "/agents", label: "Assistants", icon: Bot },
   { href: "/weekly-prep", label: "Prep", icon: Calendar },
   { href: "/conviction", label: "Score", icon: Target },
 ];
@@ -98,7 +98,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Agentic tools section */}
       <div className="mt-5">
         <div className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-[#0091FF]/60">
-          Agentic Tools
+          AI Tools
         </div>
         <div className="mt-1 space-y-0.5">
           {agenticItems.map((item) => {

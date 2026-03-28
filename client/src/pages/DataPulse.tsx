@@ -4,6 +4,7 @@
  * NOW WITH: AI-powered analysis buttons that fire real LLM calls on every insight.
  */
 import NeuralShell from "@/components/NeuralShell";
+import TipBanner from "@/components/TipBanner";
 import { useAgent } from "@/contexts/AgentContext";
 import { modules, getTotalStats, prompts } from "@/lib/data";
 import { useState, useCallback } from "react";
@@ -125,10 +126,14 @@ Provide:
   return (
     <NeuralShell>
       <div className="space-y-8">
+        <TipBanner tipId="datapulse-intro" variant="info">
+          Each insight card has an <strong>"Analyze"</strong> button that runs AI analysis on the signal. Click <strong>"Analyze All"</strong> to batch-process the top 3 signals. Switch tabs to explore pipeline and system health.
+        </TipBanner>
+
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
-            <h1 className="text-[28px] font-bold tracking-tight">Data Pulse</h1>
-            <p className="text-[15px] text-foreground/45 mt-1">Live intelligence from Gong, brand pipeline, and system telemetry</p>
+            <h1 className="text-[28px] font-bold tracking-tight">Insights</h1>
+            <p className="text-[15px] text-foreground/45 mt-1">Live intelligence from Gong calls, brand pipeline, and system health</p>
           </div>
           <div className="flex items-center gap-2">
             <motion.button

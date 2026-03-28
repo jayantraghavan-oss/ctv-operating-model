@@ -4,7 +4,10 @@
  * Apple-level polish: glassy panels, spring animations, mobile-first.
  */
 import NeuralShell from "@/components/NeuralShell";
+import TipBanner from "@/components/TipBanner";
+import GlossaryTip from "@/components/GlossaryTip";
 import { useAgent } from "@/contexts/AgentContext";
+import { getAgentTypeLabel, getOwnerLabel } from "@/lib/data";
 import { modules, prompts, type Prompt } from "@/lib/data";
 import { useState, useMemo, useCallback } from "react";
 import { Streamdown } from "streamdown";
@@ -96,7 +99,7 @@ export default function AgentSwarm() {
     batch.forEach((p, i) => {
       setTimeout(() => executeAgent(p), i * 1200);
     });
-    toast(`Deploying ${batch.length} agents`, {
+    toast(`Running ${batch.length} assistants`, {
       description: "Watch them think in real-time below",
       duration: 3000,
     });
@@ -107,8 +110,8 @@ export default function AgentSwarm() {
     batch.forEach((p, i) => {
       setTimeout(() => executeAgent(p), i * 1000);
     });
-    toast(`Deploying M${moduleId} agents`, {
-      description: `${batch.length} agents from Module ${moduleId}`,
+    toast(`Running Module ${moduleId} assistants`, {
+      description: `${batch.length} assistants from Module ${moduleId}`,
       duration: 2000,
     });
   }, [filtered, executeAgent]);
@@ -123,12 +126,17 @@ export default function AgentSwarm() {
   return (
     <NeuralShell>
       <div className="space-y-6 max-w-full">
+        {/* Contextual Tip */}
+        <TipBanner tipId="swarm-intro" variant="info">
+          Each card is an AI assistant you can run individually. Click <strong>"Run"</strong> to see real-time AI output, or use <strong>"Run Top 10"</strong> to batch-execute. Use filters to narrow by module, type, or ownership.
+        </TipBanner>
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-[28px] font-bold tracking-tight">Agent Swarm</h1>
+            <h1 className="text-2xl sm:text-[28px] font-bold tracking-tight">AI Assistants</h1>
             <p className="text-[14px] text-foreground/40 mt-1">
-              {stats.completed > 0 ? `${stats.completed} executed · ${stats.running} running` : "Click any agent to execute with real AI reasoning"} · <span className="text-foreground/25">⌘K to search</span>
+              {stats.completed > 0 ? `${stats.completed} completed · ${stats.running} running` : "Click any assistant to run it with AI reasoning"} · <span className="text-foreground/25">⌘K to search</span>
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -151,7 +159,7 @@ export default function AgentSwarm() {
               className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-blue-600 to-violet-600 text-white text-[13px] font-semibold shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-all disabled:opacity-50"
             >
               <Zap className="w-4 h-4" />
-              {isExecuting ? `Running ${executionQueue}...` : "Execute Top 10"}
+              {isExecuting ? `Running ${executionQueue}...` : "Run Top 10"}
             </motion.button>
           </div>
         </div>
@@ -225,14 +233,14 @@ export default function AgentSwarm() {
                   </select>
                   <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as FilterType)} className="px-4 py-2.5 rounded-xl bg-white/60 backdrop-blur-sm border border-black/[0.06] text-[13px] font-medium text-foreground/60 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
                     <option value="all">All Types</option>
-                    <option value="persistent">Persistent</option>
-                    <option value="triggered">Triggered</option>
-                    <option value="orchestrator">Orchestrator</option>
+                    <option value="persistent">Always-On</option>
+                    <option value="triggered">On-Demand</option>
+                    <option value="orchestrator">Coordinator</option>
                   </select>
                   <select value={ownerFilter} onChange={(e) => setOwnerFilter(e.target.value as OwnerFilter)} className="px-4 py-2.5 rounded-xl bg-white/60 backdrop-blur-sm border border-black/[0.06] text-[13px] font-medium text-foreground/60 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
                     <option value="all">All Owners</option>
-                    <option value="agent">Agent</option>
-                    <option value="agent-human">Agent+Human</option>
+                    <option value="agent">AI-Driven</option>
+                    <option value="agent-human">AI + Review</option>
                     <option value="human-led">Human-Led</option>
                   </select>
                   {/* Module quick-execute buttons */}
@@ -301,12 +309,10 @@ export default function AgentSwarm() {
                             prompt.agentType === "persistent" ? "bg-emerald-500/8 text-emerald-600" :
                             prompt.agentType === "triggered" ? "bg-violet-500/8 text-violet-600" :
                             "bg-rose-500/8 text-rose-600"
-                          }`}>{prompt.agentType}</span>
-                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg hidden sm:inline ${
+                          }>`}>{getAgentTypeLabel(prompt.agentType)}</span>                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg hidden sm:inline ${
                             meta.owner === "agent" ? "bg-blue-500/8 text-blue-600" :
                             meta.owner === "agent-human" ? "bg-amber-500/8 text-amber-600" :
-                            "bg-foreground/5 text-foreground/35"
-                          }`}>{meta.owner}</span>
+                            "bg-foreground/5 text-foreground/35"                          }>`}>{getOwnerLabel(meta.owner)}</span>
                           {run?.durationMs && (
                             <>
                               <span className="text-foreground/10">·</span>
@@ -335,7 +341,7 @@ export default function AgentSwarm() {
                         ) : run?.status === "completed" ? (
                           <><RotateCcw className="w-3 h-3" />Re-run</>
                         ) : (
-                          <><Play className="w-3 h-3" />Execute</>
+                          <><Play className="w-3 h-3" />Run</>
                         )}
                       </motion.button>
 
@@ -378,7 +384,7 @@ export default function AgentSwarm() {
                                 <div className="flex items-center justify-between mb-3">
                                   <div className="text-[11px] font-bold text-blue-600/70 uppercase tracking-wider flex items-center gap-1.5">
                                     <Sparkles className="w-3 h-3" />
-                                    {isRunning ? "Streaming Output" : "Agent Output"}
+                                    {isRunning ? "Streaming Output" : "AI Output"}
                                     {isRunning && <span className="inline-block w-1.5 h-4 bg-blue-500 animate-blink ml-1 rounded-sm" />}
                                   </div>
                                   <div className="flex items-center gap-2">
@@ -410,7 +416,7 @@ export default function AgentSwarm() {
                                     <div className="absolute inset-0 w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
                                   </div>
                                   <div>
-                                    <div className="text-[13px] font-semibold text-amber-700">Agent is thinking...</div>
+                                    <div className="text-[13px] font-semibold text-amber-700">AI is thinking...</div>
                                     <div className="text-[12px] text-amber-600/60 mt-0.5">Pulling context, reasoning over data, generating output</div>
                                   </div>
                                 </div>
@@ -431,7 +437,7 @@ export default function AgentSwarm() {
                                   className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-primary/8 text-primary text-[13px] font-semibold hover:bg-primary/12 transition-all"
                                 >
                                   <Play className="w-4 h-4" />
-                                  Execute this agent with real AI reasoning
+                                  Run this assistant with AI reasoning
                                 </motion.button>
                               </div>
                             )}
@@ -451,7 +457,7 @@ export default function AgentSwarm() {
             {filtered.length === 0 && (
               <div className="px-5 py-16 text-center">
                 <Search className="w-8 h-8 text-foreground/15 mx-auto mb-3" />
-                <div className="text-[15px] font-medium text-foreground/30">No agents match your filters</div>
+                <div className="text-[15px] font-medium text-foreground/30">No assistants match your filters</div>
                 <div className="text-[13px] text-foreground/20 mt-1">Try adjusting your search or filter criteria</div>
               </div>
             )}

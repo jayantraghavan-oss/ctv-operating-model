@@ -7,6 +7,8 @@
  * Apple-level UX with magical micro-interactions.
  */
 import NeuralShell from "@/components/NeuralShell";
+import TipBanner from "@/components/TipBanner";
+import GlossaryTip from "@/components/GlossaryTip";
 import { useAgent } from "@/contexts/AgentContext";
 import { modules, clusters, getTotalStats, getModuleStats, prompts } from "@/lib/data";
 import { useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
@@ -128,29 +130,29 @@ Be specific, data-driven, and actionable. Reference CTV market dynamics, Moloco'
     const recs: Array<{ priority: "critical" | "high" | "medium"; text: string; action: string; onClick?: () => void; link?: string }> = [];
 
     if (recentRuns.length === 0) {
-      recs.push({ priority: "critical", text: "System is cold — no agents have been executed yet. Deploy the swarm to start generating intelligence.", action: "Go Live", onClick: deployAll });
+      recs.push({ priority: "critical", text: "No AI assistants have run yet. Hit \"Run All\" to start generating intelligence across all modules.", action: "Run All", onClick: deployAll });
     }
     if (failedRuns > 0) {
-      recs.push({ priority: "critical", text: `${failedRuns} agent${failedRuns > 1 ? "s" : ""} failed. Check the output stream for error details and re-deploy.`, action: "View Errors", link: "/swarm" });
+      recs.push({ priority: "critical", text: `${failedRuns} assistant${failedRuns > 1 ? "s" : ""} encountered errors. Check the output for details and re-run.`, action: "View Errors", link: "/swarm" });
     }
     if (convictionScore.overall < 50) {
-      recs.push({ priority: "high", text: `Conviction score is ${convictionScore.overall}% — below investment threshold. Run more agents to gather evidence.`, action: "Deploy All", onClick: deployAll });
+      recs.push({ priority: "high", text: `Conviction score is ${convictionScore.overall}% — below investment threshold. Run more assistants to gather evidence.`, action: "Run All", onClick: deployAll });
     }
     const weakGoals = convictionScore.goals.filter(g => g.status === "weak" || g.status === "insufficient");
     if (weakGoals.length > 0) {
       recs.push({ priority: "high", text: `${weakGoals.length} learning goal${weakGoals.length > 1 ? "s" : ""} need${weakGoals.length === 1 ? "s" : ""} more evidence: "${weakGoals[0].question.slice(0, 60)}..."`, action: "View Goals", link: "/conviction" });
     }
     if (completedRuns > 0 && completedRuns < 10) {
-      recs.push({ priority: "medium", text: "Run the Buyer Simulation to stress-test your positioning with real CTV buyer personas.", action: "Open Sim", link: "/simulation" });
+      recs.push({ priority: "medium", text: "Try the Buyer Roleplay to practice your pitch against AI-powered CTV buyer personas.", action: "Open Roleplay", link: "/simulation" });
     }
     clusters.forEach(c => {
       const health = getClusterHealth(c.id);
       if (health.percent < 20) {
-        recs.push({ priority: "medium", text: `C${c.id}: ${c.shortName} is underactivated (${health.percent}%). Deploy to start generating outputs.`, action: `Deploy C${c.id}`, onClick: () => deployCluster(c.id) });
+        recs.push({ priority: "medium", text: `Cluster ${c.id}: ${c.shortName} hasn't been activated yet (${health.percent}%). Run it to start generating outputs.`, action: `Run C${c.id}`, onClick: () => deployCluster(c.id) });
       }
     });
     if (recs.length === 0) {
-      recs.push({ priority: "medium", text: "System is healthy. Continue monitoring agent outputs and refining conviction scores.", action: "View Data", link: "/data-pulse" });
+      recs.push({ priority: "medium", text: "Everything looks good. Keep reviewing outputs and refining conviction scores.", action: "View Insights", link: "/data-pulse" });
     }
     return recs.slice(0, 4);
   }, [recentRuns, failedRuns, completedRuns, convictionScore, deployAll, deployCluster, getClusterHealth]);
@@ -163,6 +165,11 @@ Be specific, data-driven, and actionable. Reference CTV market dynamics, Moloco'
         animate="visible"
         variants={{ visible: stagger, hidden: {} }}
       >
+        {/* ── Welcome Tip ── */}
+        <TipBanner tipId="dashboard-welcome" variant="welcome" sparkle>
+          Welcome to the CTV AI Engine! This is your central dashboard. Use <strong>"Run All"</strong> to activate AI assistants across all modules, or explore individual pages from the sidebar. Press <strong>⌘K</strong> to search anything.
+        </TipBanner>
+
         {/* ── Header with System Status ── */}
         <motion.div
           variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
@@ -172,7 +179,7 @@ Be specific, data-driven, and actionable. Reference CTV market dynamics, Moloco'
             <div>
               <div className="flex items-center gap-3 mb-1">
                 <h1 className="text-2xl md:text-[28px] font-bold tracking-tight text-foreground">
-                  Command Center
+                  Dashboard
                 </h1>
                 {/* Live pulse indicator */}
                 <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-signal/8">
@@ -183,7 +190,7 @@ Be specific, data-driven, and actionable. Reference CTV market dynamics, Moloco'
                 </div>
               </div>
               <p className="text-[14px] text-foreground/40 leading-relaxed">
-                {stats.modules} modules · {stats.totalPrompts} agents · {completedRuns > 0 ? `${completedRuns} completed · ${totalOutputWords.toLocaleString()} words generated` : "Ready for deployment"}
+                {stats.modules} modules · {stats.totalPrompts} agents · {completedRuns > 0 ? `${completedRuns} completed · ${totalOutputWords.toLocaleString()} words generated` : "Ready to go"}
               </p>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
@@ -197,7 +204,7 @@ Be specific, data-driven, and actionable. Reference CTV market dynamics, Moloco'
                 whileTap={{ scale: 0.96 }}
               >
                 {autopilot ? <Pause className="w-3.5 h-3.5" /> : <ToggleLeft className="w-3.5 h-3.5" />}
-                {autopilot ? "Autopilot ON" : "Autopilot"}
+                {autopilot ? "Auto Mode ON" : "Auto Mode"}
               </motion.button>
               <motion.button
                 onClick={deployAll}
@@ -207,7 +214,7 @@ Be specific, data-driven, and actionable. Reference CTV market dynamics, Moloco'
                 whileTap={{ scale: 0.96 }}
               >
                 <Zap className="w-3.5 h-3.5" />
-                {isExecuting ? `Executing (${executionQueue})...` : "Go Live"}
+                {isExecuting ? `Running (${executionQueue})...` : "Run All"}
               </motion.button>
               <Link href="/simulation">
                 <motion.div
@@ -215,7 +222,7 @@ Be specific, data-driven, and actionable. Reference CTV market dynamics, Moloco'
                   whileTap={{ scale: 0.96 }}
                 >
                   <MessageSquare className="w-3.5 h-3.5" />
-                  Buyer Sim
+                  Buyer Roleplay
                 </motion.div>
               </Link>
             </div>
@@ -417,9 +424,9 @@ Be specific, data-driven, and actionable. Reference CTV market dynamics, Moloco'
           transition={spring}
           className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3"
         >
-          <GlassKpi label="Agents" value={String(stats.totalPrompts)} icon={<Brain className="w-4 h-4" />} accent="primary" />
-          <GlassKpi label="Clusters" value="5" icon={<Layers className="w-4 h-4" />} accent="violet-signal" />
-          <GlassKpi label="Executed" value={String(recentRuns.length)} icon={<Zap className="w-4 h-4" />} accent="amber-signal" />
+          <GlassKpi label="Assistants" value={String(stats.totalPrompts)} icon={<Brain className="w-4 h-4" />} accent="primary" />
+          <GlassKpi label="Groups" value="5" icon={<Layers className="w-4 h-4" />} accent="violet-signal" />
+          <GlassKpi label="Runs" value={String(recentRuns.length)} icon={<Zap className="w-4 h-4" />} accent="amber-signal" />
           <GlassKpi label="Completed" value={completedRuns > 0 ? String(completedRuns) : "—"} icon={<CheckCircle2 className="w-4 h-4" />} accent="emerald-signal" />
           <GlassKpi label="Active" value={String(activeRuns)} icon={<Activity className="w-4 h-4" />} accent="primary" />
           <GlassKpi label="Errors" value={failedRuns > 0 ? String(failedRuns) : "—"} icon={<AlertTriangle className="w-4 h-4" />} accent="rose-signal" />
@@ -489,6 +496,7 @@ Be specific, data-driven, and actionable. Reference CTV market dynamics, Moloco'
                     <Shield className="w-4 h-4 text-primary" />
                   </div>
                   <span className="text-[15px] font-semibold">Cluster Control</span>
+                <GlossaryTip label="" technical="Human Orchestrator Clusters" className="text-[11px] text-foreground/25 ml-1" />
                 </div>
                 <span className="text-[12px] text-foreground/30 font-medium">{stats.totalPrompts} agents · 5 clusters</span>
               </div>
@@ -556,7 +564,7 @@ Be specific, data-driven, and actionable. Reference CTV market dynamics, Moloco'
                             whileTap={{ scale: 0.95 }}
                           >
                             {isDeploying ? <RotateCcw className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
-                            {isDeploying ? "Deploying..." : clusterCompleted > 0 ? "Re-deploy" : "Deploy"}
+                            {isDeploying ? "Running..." : clusterCompleted > 0 ? "Re-run" : "Run"}
                           </motion.button>
                           <Link href={`/cluster/${cluster.id}`}>
                             <motion.div
@@ -594,14 +602,14 @@ Be specific, data-driven, and actionable. Reference CTV market dynamics, Moloco'
                     <div className="w-14 h-14 rounded-2xl bg-black/[0.03] flex items-center justify-center mx-auto mb-3">
                       <Radio className="w-6 h-6 text-foreground/15" />
                     </div>
-                    <p className="text-[14px] font-medium text-foreground/35">No agent outputs yet</p>
-                    <p className="text-[12px] text-foreground/20 mt-1 mb-3">Hit "Go Live" to deploy the swarm</p>
+                    <p className="text-[14px] font-medium text-foreground/35">No outputs yet</p>
+                    <p className="text-[12px] text-foreground/20 mt-1 mb-3">Hit "Run All" to start generating insights</p>
                     <motion.button
                       onClick={deployAll}
                       className="text-[12px] font-semibold text-primary hover:text-primary/70 transition-colors"
                       whileTap={{ scale: 0.95 }}
                     >
-                      Deploy All Clusters →
+                      Run All Clusters →
                     </motion.button>
                   </div>
                 ) : (

@@ -687,9 +687,9 @@ export const modules: Module[] = [
 
 export function getOwnerLabel(owner: OwnerType): string {
   switch (owner) {
-    case "agent": return "Agent";
-    case "agent-human": return "Agent + Human";
-    case "human-led": return "Human-led";
+    case "agent": return "AI-Driven";
+    case "agent-human": return "AI + Review";
+    case "human-led": return "Human-Led";
   }
 }
 
@@ -711,9 +711,9 @@ export function getOwnerBg(owner: OwnerType): string {
 
 export function getAgentTypeLabel(type: AgentType): string {
   switch (type) {
-    case "persistent": return "Persistent";
-    case "triggered": return "Triggered";
-    case "orchestrator": return "Orchestrator";
+    case "persistent": return "Always-On";
+    case "triggered": return "On-Demand";
+    case "orchestrator": return "Coordinator";
   }
 }
 
@@ -722,6 +722,24 @@ export function getAgentTypeBg(type: AgentType): string {
     case "persistent": return "bg-emerald-50 text-emerald-700 border-emerald-200";
     case "triggered": return "bg-violet-50 text-violet-700 border-violet-200";
     case "orchestrator": return "bg-rose-50 text-rose-700 border-rose-200";
+  }
+}
+
+/** Technical term for agent type (shown in tooltips) */
+export function getAgentTypeTechnical(type: AgentType): string {
+  switch (type) {
+    case "persistent": return "Persistent Agent";
+    case "triggered": return "Triggered Agent";
+    case "orchestrator": return "Orchestrator Agent";
+  }
+}
+
+/** Technical term for ownership model (shown in tooltips) */
+export function getOwnerTechnical(owner: OwnerType): string {
+  switch (owner) {
+    case "agent": return "Agent-Owned";
+    case "agent-human": return "Agent+Human";
+    case "human-led": return "Human-Led";
   }
 }
 
