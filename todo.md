@@ -102,4 +102,4 @@
 - [x] Fix lockfile mismatch (typescript version reverted to 5.6.3)
 - [x] Verify dev mode agents still work (19 executed, 0 failed, 35 tests passing)
 - [x] Production build succeeds (vite build + esbuild), /api/llm returns 200
-- [ ] Validate agents work on published production site (pending publish)
+- [x] Validate agents work on published production site — agents #4 and #5 executed successfully (13.3s and 10.2s)
