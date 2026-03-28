@@ -400,6 +400,22 @@ html {
     width: 0;
     height: 0;
   }
+
+  /* Prevent horizontal overflow on mobile */
+  body {
+    overflow-x: hidden;
+  }
+
+  /* Ensure minimum touch targets */
+  button, a, [role="button"] {
+    min-height: 36px;
+  }
+
+  /* Improve readability on small screens */
+  .prose {
+    font-size: 14px;
+    line-height: 1.6;
+  }
 }
 
 /* ── Reduced motion ── */

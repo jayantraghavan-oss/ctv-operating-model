@@ -610,7 +610,7 @@ export default function BuyerSim() {
           </div>
         ) : (
           /* ── Active Simulation ─────────────────────────────────── */
-          <div className="flex flex-col lg:flex-row gap-4" style={{ height: "calc(100vh - 200px)", minHeight: "400px" }}>
+          <div className="flex flex-col lg:flex-row gap-4" style={{ height: "calc(100vh - 240px)", minHeight: "350px" }}>
             {/* Main conversation */}
             <div className="flex-1 flex flex-col min-w-0">
               {/* Persona + progress bar */}
@@ -623,7 +623,7 @@ export default function BuyerSim() {
                       </div>
                       <div>
                         <span className="text-sm font-medium text-foreground">{p.name}</span>
-                        <span className="text-xs text-muted-foreground ml-2">{p.title}, {p.company}</span>
+                        <span className="text-xs text-muted-foreground ml-2 hidden sm:inline">{p.title}, {p.company}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 text-xs">

@@ -156,7 +156,7 @@ export default function AgentSwarm() {
               disabled={isExecuting}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-blue-600 to-violet-600 text-white text-[13px] font-semibold shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-all disabled:opacity-50"
+              className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-2xl bg-gradient-to-r from-blue-600 to-violet-600 text-white text-[13px] font-semibold shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-all disabled:opacity-50 active:scale-95"
             >
               <Zap className="w-4 h-4" />
               {isExecuting ? `Running ${executionQueue}...` : "Run Top 10"}

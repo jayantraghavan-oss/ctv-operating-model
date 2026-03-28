@@ -228,3 +228,25 @@
 - [x] Notification items: unread indicator dot, title/description/timestamp, click to mark read
 - [x] Both mobile and desktop bell buttons wired to the same dropdown
 - [x] All 48 tests passing
+
+## Phase 28: Mobile Web UX Overhaul
+- [x] Audit all pages on mobile viewport (375px width) — identify layout, nav, readability, interaction issues
+- [x] Fix sidebar/navigation for mobile — hamburger menu, slide-out drawer, proper close behavior
+- [x] Fix header bar for mobile — compact layout, no overflow, touch-friendly buttons
+- [x] Fix Dashboard (Home) page mobile layout — cards stack properly, no horizontal overflow
+- [x] Fix AI Assistants page mobile layout — agent cards readable and tappable
+- [x] Fix Org Chart page mobile layout — scrollable, nodes readable, tour modal fits screen
+- [x] Fix Org Chart guided tour for mobile — modal sizing, button placement, pointer hints
+- [x] Fix Competitive Sims page mobile layout
+- [x] Fix Buyer Roleplay page mobile layout
+- [x] Fix Insights page mobile layout
+- [x] Fix Module detail pages mobile layout
+- [x] Fix Cluster detail pages mobile layout
+- [x] Fix Approvals page mobile layout
+- [x] Fix floating HelpButton positioning on mobile
+- [x] Fix notification dropdown positioning on mobile
+- [x] Ensure all text is readable (min 14px body, proper line-height)
+- [x] Ensure all touch targets are min 36px (CSS global rule)
+- [x] Ensure no horizontal scroll on any page (overflow-x: hidden on body)
+- [x] Test complete mobile user journey: first visit → org chart tour → dashboard → run agent
+- [x] All 48 vitest tests passing after mobile fixes

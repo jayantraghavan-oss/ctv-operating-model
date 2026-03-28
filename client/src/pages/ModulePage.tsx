@@ -123,7 +123,7 @@ export default function ModulePage() {
         </div>
 
         {/* Stats bar */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-6">
+        <div className="grid grid-cols-3 md:grid-cols-6 gap-2 sm:gap-3 mb-6">
           <StatPill label="Sections" value={stats.sections} />
           <StatPill label="Sub-modules" value={stats.subModules} />
           <StatPill label="Prompts" value={stats.prompts} />
@@ -194,7 +194,7 @@ export default function ModulePage() {
                                 {/* Sub-module row — clickable */}
                                 <button
                                   onClick={() => toggleSubModule(section.key, sm.name)}
-                                  className={`w-full text-left px-5 py-3.5 flex items-center gap-4 transition-colors group ${
+                                  className={`w-full text-left px-3 sm:px-5 py-3 sm:py-3.5 flex items-start sm:items-center gap-3 sm:gap-4 transition-colors group ${
                                     isOpen
                                       ? "bg-[#0091FF]/[0.03]"
                                       : "hover:bg-muted/30"

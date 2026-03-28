@@ -96,30 +96,38 @@ export default function ApprovalQueue() {
                 {pendingRuns.map((run) => {
                   const isExpanded = expandedId === run.id;
                   return (
-                    <motion.div key={run.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, height: 0 }} transition={spring} className="px-5 py-4">
-                      <div className="flex items-center gap-4 mb-2">
-                        <div className="w-2.5 h-2.5 rounded-full bg-amber-signal shrink-0" />
-                        <span className="text-[12px] font-mono text-foreground/25">#{run.promptId}</span>
-                        <span className="text-[14px] text-foreground/70 truncate flex-1">{run.promptText.slice(0, 80)}...</span>
-                        {run.durationMs && (
-                          <span className="text-[11px] text-foreground/25 flex items-center gap-1 shrink-0">
-                            <Clock className="w-3 h-3" />{(run.durationMs / 1000).toFixed(1)}s
-                          </span>
-                        )}
+                    <motion.div key={run.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, height: 0 }} transition={spring} className="px-4 sm:px-5 py-4">
+                      {/* Row 1: Status + text */}
+                      <div className="flex items-start sm:items-center gap-3 sm:gap-4 mb-2">
+                        <div className="w-2.5 h-2.5 rounded-full bg-amber-signal shrink-0 mt-1.5 sm:mt-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[12px] font-mono text-foreground/25">#{run.promptId}</span>
+                            {run.durationMs && (
+                              <span className="text-[11px] text-foreground/25 flex items-center gap-1">
+                                <Clock className="w-3 h-3" />{(run.durationMs / 1000).toFixed(1)}s
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[13px] sm:text-[14px] text-foreground/70 line-clamp-2 mt-0.5 block">{run.promptText.slice(0, 80)}...</span>
+                        </div>
+                      </div>
+                      {/* Row 2: Actions */}
+                      <div className="flex items-center gap-2 ml-5 sm:ml-7">
                         <button
                           onClick={() => setExpandedId(isExpanded ? null : run.id)}
-                          className="text-foreground/25 hover:text-foreground/50 transition-colors p-1"
+                          className="text-foreground/25 hover:text-foreground/50 transition-colors p-2 rounded-lg active:bg-black/[0.04]"
                           title={isExpanded ? "Collapse" : "Expand"}
                         >
                           {isExpanded ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
-                        <button onClick={() => handleApprove(run.id)} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold bg-emerald-signal/10 text-emerald-signal hover:bg-emerald-signal/15 transition-all"><CheckCircle2 className="w-3.5 h-3.5" /> Approve</button>
-                        <button onClick={() => handleReject(run.id)} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold bg-rose-signal/10 text-rose-signal hover:bg-rose-signal/15 transition-all"><XCircle className="w-3.5 h-3.5" /> Reject</button>
+                        <button onClick={() => handleApprove(run.id)} className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-[12px] font-semibold bg-emerald-signal/10 text-emerald-signal hover:bg-emerald-signal/15 transition-all active:scale-95"><CheckCircle2 className="w-3.5 h-3.5" /> Approve</button>
+                        <button onClick={() => handleReject(run.id)} className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-[12px] font-semibold bg-rose-signal/10 text-rose-signal hover:bg-rose-signal/15 transition-all active:scale-95"><XCircle className="w-3.5 h-3.5" /> Reject</button>
                       </div>
                       <AnimatePresence>
                         {isExpanded && (
                           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={spring} className="overflow-hidden">
-                            <div className="bg-gradient-to-br from-white to-blue-50/30 rounded-xl p-5 border border-black/[0.05] ml-7">
+                            <div className="bg-gradient-to-br from-white to-blue-50/30 rounded-xl p-4 sm:p-5 border border-black/[0.05] ml-0 sm:ml-7">
                               <div className="flex items-center justify-between mb-3">
                                 <div className="text-[11px] font-bold text-[#0091FF]/70 uppercase tracking-wider flex items-center gap-1.5">
                                   <Sparkles className="w-3 h-3" />

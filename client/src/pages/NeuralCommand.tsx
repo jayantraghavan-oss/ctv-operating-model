@@ -209,7 +209,7 @@ Be specific, data-driven, and actionable. Reference CTV market dynamics, Moloco'
               <motion.button
                 onClick={deployAll}
                 disabled={isExecuting}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-primary text-white text-[13px] font-semibold shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-2xl bg-primary text-white text-[13px] font-semibold shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 active:scale-95"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.96 }}
               >
@@ -218,11 +218,12 @@ Be specific, data-driven, and actionable. Reference CTV market dynamics, Moloco'
               </motion.button>
               <Link href="/simulation">
                 <motion.div
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-2xl glass text-violet-signal text-[13px] font-semibold hover:bg-violet-signal/8 transition-all cursor-pointer"
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-2xl glass text-violet-signal text-[13px] font-semibold hover:bg-violet-signal/8 transition-all cursor-pointer"
                   whileTap={{ scale: 0.96 }}
                 >
                   <MessageSquare className="w-3.5 h-3.5" />
-                  Buyer Roleplay
+                  <span className="hidden sm:inline">Buyer Roleplay</span>
+                  <span className="sm:hidden">Roleplay</span>
                 </motion.div>
               </Link>
             </div>
@@ -514,8 +515,8 @@ Be specific, data-driven, and actionable. Reference CTV market dynamics, Moloco'
                       whileHover={{ x: 2 }}
                       transition={{ type: "spring", stiffness: 400, damping: 30 }}
                     >
-                      <div className="flex items-center gap-4">
-                        <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-[14px] font-bold shrink-0 transition-all duration-500 ${
+                      <div className="flex items-start sm:items-center gap-3 sm:gap-4">
+                        <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl flex items-center justify-center text-[13px] sm:text-[14px] font-bold shrink-0 transition-all duration-500 ${
                           clusterRunning > 0 ? "bg-primary/12 text-primary shadow-sm shadow-primary/10" :
                           clusterCompleted > 0 ? "bg-emerald-signal/10 text-emerald-signal" :
                           isDeploying ? "bg-amber-signal/10 text-amber-signal animate-pulse" :
@@ -524,8 +525,8 @@ Be specific, data-driven, and actionable. Reference CTV market dynamics, Moloco'
                           C{cluster.id}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[14px] font-semibold text-foreground truncate">{cluster.name}</span>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[13px] sm:text-[14px] font-semibold text-foreground truncate">{cluster.name}</span>
                             {clusterRunning > 0 && (
                               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-primary/10 text-primary animate-pulse">
                                 {clusterRunning} LIVE
@@ -533,7 +534,7 @@ Be specific, data-driven, and actionable. Reference CTV market dynamics, Moloco'
                             )}
                           </div>
                           <div className="flex items-center gap-3 mt-1">
-                            <span className="text-[12px] text-foreground/35">{cluster.primaryModuleCoverage}</span>
+                            <span className="text-[11px] sm:text-[12px] text-foreground/35">{cluster.primaryModuleCoverage}</span>
                             {clusterCompleted > 0 && (
                               <span className="text-[11px] text-emerald-signal font-medium">{clusterCompleted} done</span>
                             )}
@@ -550,11 +551,11 @@ Be specific, data-driven, and actionable. Reference CTV market dynamics, Moloco'
                             </div>
                           )}
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                           <motion.button
                             onClick={() => deployCluster(cluster.id)}
                             disabled={isDeploying}
-                            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[12px] font-semibold transition-all duration-200 ${
+                            className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl text-[12px] font-semibold transition-all duration-200 active:scale-95 ${
                               isDeploying
                                 ? "bg-amber-signal/10 text-amber-signal"
                                 : clusterCompleted > 0
@@ -564,7 +565,8 @@ Be specific, data-driven, and actionable. Reference CTV market dynamics, Moloco'
                             whileTap={{ scale: 0.95 }}
                           >
                             {isDeploying ? <RotateCcw className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
-                            {isDeploying ? "Running..." : clusterCompleted > 0 ? "Re-run" : "Run"}
+                            <span className="hidden sm:inline">{isDeploying ? "Running..." : clusterCompleted > 0 ? "Re-run" : "Run"}</span>
+                            <span className="sm:hidden">{isDeploying ? "..." : "Run"}</span>
                           </motion.button>
                           <Link href={`/cluster/${cluster.id}`}>
                             <motion.div

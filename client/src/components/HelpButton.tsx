@@ -1,7 +1,7 @@
 /**
  * HelpButton — Floating help button with contextual tips and keyboard shortcuts.
- * Appears in the bottom-right corner. Click to toggle a help panel.
- * Can also reset the welcome modal and tip banners.
+ * Desktop: bottom-right corner. Mobile: above bottom nav bar.
+ * Click to toggle a help panel. Can also reset the welcome modal and tip banners.
  */
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,6 +10,7 @@ import {
   Keyboard, Zap, Brain, MessageSquare, BarChart3,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/useMobile";
 
 const shortcuts = [
   { keys: ["⌘", "K"], label: "Open command palette" },
@@ -47,6 +48,7 @@ const quickTips = [
 export default function HelpButton() {
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   // Close on outside click
   useEffect(() => {
@@ -62,13 +64,10 @@ export default function HelpButton() {
 
   const resetOnboarding = () => {
     try {
-      // Reset org chart guided tour (the first-time experience)
       localStorage.removeItem("ctv-orgchart-tour-completed");
       localStorage.removeItem("ctv-orgchart-walkthrough-seen");
-      // Reset welcome modal (legacy)
       localStorage.removeItem("ctv-welcome-seen-v3");
       localStorage.removeItem("ctv-welcome-seen-v2");
-      // Reset all tip banners
       localStorage.removeItem("ctv-dismissed-tips");
       const keys = Object.keys(localStorage);
       keys.forEach((key) => {
@@ -83,12 +82,21 @@ export default function HelpButton() {
     } catch { /* ignore */ }
   };
 
+  // Mobile: position above bottom nav (bottom ~70px). Desktop: bottom-right corner.
+  const buttonPosition = isMobile
+    ? "fixed bottom-[72px] right-4 z-50"
+    : "fixed bottom-6 right-6 z-50";
+
+  const panelPosition = isMobile
+    ? "fixed bottom-[120px] right-4 left-4 z-50"
+    : "fixed bottom-20 right-6 z-50 w-[320px]";
+
   return (
     <>
       {/* Floating button */}
       <motion.button
         onClick={() => setOpen(!open)}
-        className="fixed bottom-6 right-6 z-50 w-11 h-11 rounded-full bg-white border border-black/[0.08] shadow-lg shadow-black/[0.08] flex items-center justify-center hover:shadow-xl hover:scale-105 transition-all"
+        className={`${buttonPosition} w-10 h-10 rounded-full bg-white border border-black/[0.08] shadow-lg shadow-black/[0.08] flex items-center justify-center hover:shadow-xl hover:scale-105 transition-all`}
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.95 }}
         title="Help & Tips"
@@ -96,11 +104,11 @@ export default function HelpButton() {
         <AnimatePresence mode="wait">
           {open ? (
             <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}>
-              <X className="w-4.5 h-4.5 text-foreground/50" />
+              <X className="w-4 h-4 text-foreground/50" />
             </motion.div>
           ) : (
             <motion.div key="help" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }}>
-              <HelpCircle className="w-4.5 h-4.5 text-foreground/50" />
+              <HelpCircle className="w-4 h-4 text-foreground/50" />
             </motion.div>
           )}
         </AnimatePresence>
@@ -115,41 +123,43 @@ export default function HelpButton() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            className="fixed bottom-20 right-6 z-50 w-[320px] bg-white rounded-2xl border border-black/[0.08] shadow-2xl shadow-black/[0.12] overflow-hidden"
+            className={`${panelPosition} bg-white rounded-2xl border border-black/[0.08] shadow-2xl shadow-black/[0.12] overflow-hidden`}
           >
             {/* Header */}
-            <div className="px-5 py-4 border-b border-black/[0.05]">
+            <div className="px-5 py-3.5 border-b border-black/[0.05]">
               <div className="text-[14px] font-semibold text-foreground">Help & Tips</div>
               <div className="text-[11px] text-foreground/40 mt-0.5">Quick reference for the CTV AI Engine</div>
             </div>
 
-            {/* Keyboard shortcuts */}
-            <div className="px-5 py-3 border-b border-black/[0.04]">
-              <div className="flex items-center gap-1.5 text-[10px] font-bold text-foreground/30 uppercase tracking-wider mb-2">
-                <Keyboard className="w-3 h-3" />
-                Keyboard Shortcuts
-              </div>
-              <div className="space-y-1.5">
-                {shortcuts.map((s, i) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <span className="text-[12px] text-foreground/55">{s.label}</span>
-                    <div className="flex items-center gap-1">
-                      {s.keys.map((k, j) => (
-                        <kbd
-                          key={j}
-                          className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/[0.04] border border-black/[0.08] text-foreground/50"
-                        >
-                          {k}
-                        </kbd>
-                      ))}
+            {/* Keyboard shortcuts — hide on mobile (no keyboard) */}
+            {!isMobile && (
+              <div className="px-5 py-3 border-b border-black/[0.04]">
+                <div className="flex items-center gap-1.5 text-[10px] font-bold text-foreground/30 uppercase tracking-wider mb-2">
+                  <Keyboard className="w-3 h-3" />
+                  Keyboard Shortcuts
+                </div>
+                <div className="space-y-1.5">
+                  {shortcuts.map((s, i) => (
+                    <div key={i} className="flex items-center justify-between">
+                      <span className="text-[12px] text-foreground/55">{s.label}</span>
+                      <div className="flex items-center gap-1">
+                        {s.keys.map((k, j) => (
+                          <kbd
+                            key={j}
+                            className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/[0.04] border border-black/[0.08] text-foreground/50"
+                          >
+                            {k}
+                          </kbd>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Quick tips */}
-            <div className="px-5 py-3 border-b border-black/[0.04] max-h-[240px] overflow-y-auto">
+            <div className={`px-5 py-3 border-b border-black/[0.04] ${isMobile ? "max-h-[200px]" : "max-h-[240px]"} overflow-y-auto`}>
               <div className="flex items-center gap-1.5 text-[10px] font-bold text-foreground/30 uppercase tracking-wider mb-2">
                 <Lightbulb className="w-3 h-3" />
                 Quick Tips
@@ -160,7 +170,7 @@ export default function HelpButton() {
                   return (
                     <div key={i} className="flex items-start gap-2">
                       <Icon className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${tip.color}`} />
-                      <span className="text-[11px] text-foreground/50 leading-relaxed">{tip.text}</span>
+                      <span className="text-[12px] text-foreground/50 leading-relaxed">{tip.text}</span>
                     </div>
                   );
                 })}
@@ -171,7 +181,7 @@ export default function HelpButton() {
             <div className="px-5 py-3">
               <button
                 onClick={resetOnboarding}
-                className="flex items-center gap-2 text-[11px] text-foreground/35 hover:text-foreground/55 transition-colors"
+                className="flex items-center gap-2 text-[12px] text-foreground/35 hover:text-foreground/55 transition-colors"
               >
                 <RotateCcw className="w-3 h-3" />
                 Reset onboarding (show welcome & tips again)

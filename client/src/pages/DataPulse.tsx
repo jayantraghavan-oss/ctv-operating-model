@@ -336,9 +336,9 @@ Provide:
               </div>
               <div className="divide-y divide-black/[0.04]">
                 {pipelineStages.map((stage) => (
-                  <div key={stage.stage} className="px-5 py-4 flex items-center gap-5">
-                    <span className="text-[14px] font-semibold w-28 text-foreground/60">{stage.stage}</span>
-                    <div className="flex-1 h-2.5 bg-black/[0.04] rounded-full overflow-hidden">
+                  <div key={stage.stage} className="px-3 sm:px-5 py-3 sm:py-4 flex items-center gap-2.5 sm:gap-5">
+                    <span className="text-[12px] sm:text-[14px] font-semibold w-20 sm:w-28 text-foreground/60 shrink-0">{stage.stage}</span>
+                    <div className="flex-1 h-2 sm:h-2.5 bg-black/[0.04] rounded-full overflow-hidden">
                       <motion.div
                         className={`h-full rounded-full ${stage.color}`}
                         initial={{ width: 0 }}
@@ -346,8 +346,8 @@ Provide:
                         transition={{ duration: 0.8, ease: "easeOut" }}
                       />
                     </div>
-                    <span className="text-[13px] font-mono text-foreground/35 w-8 text-right">{stage.count}</span>
-                    <span className="text-[13px] font-semibold text-foreground w-16 text-right">{stage.value}</span>
+                    <span className="text-[12px] sm:text-[13px] font-mono text-foreground/35 w-6 sm:w-8 text-right">{stage.count}</span>
+                    <span className="text-[12px] sm:text-[13px] font-semibold text-foreground w-14 sm:w-16 text-right">{stage.value}</span>
                   </div>
                 ))}
               </div>

@@ -168,27 +168,31 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-2.5">
             <img src={MOLOCO_LOGO} alt="Moloco" className="w-8 h-8 object-contain" />
             <div>
-              <div className="text-[14px] font-bold tracking-tight text-foreground">CTV AI Engine</div>
-              <div className="text-[10px] font-medium text-foreground/35">
-                {activeRuns > 0 ? `${activeRuns} working` : "Ready"}
+              <div className="flex items-center gap-2">
+                <span className="text-[15px] font-bold tracking-tight text-foreground">CTV AI Engine</span>
+                <div className={`w-2 h-2 rounded-full shrink-0 ${activeRuns > 0 ? "bg-primary animate-pulse" : "bg-emerald-signal"}`} />
+              </div>
+              <div className="text-[11px] font-medium text-foreground/35">
+                {activeRuns > 0 ? `${activeRuns} running` : "Ready"}
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {/* Status indicator */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-black/[0.03]">
-              <div className={`w-2 h-2 rounded-full ${activeRuns > 0 ? "bg-primary animate-pulse-neon" : "bg-emerald-signal"}`} />
-              <span className="text-[11px] font-semibold text-foreground/40">
-                {activeRuns > 0 ? "Live" : "Idle"}
-              </span>
-            </div>
+          <div className="flex items-center gap-1.5">
+            {/* Refresh */}
+            <button
+              onClick={() => window.location.reload()}
+              className="p-2.5 rounded-xl hover:bg-black/[0.03] transition-colors active:bg-black/[0.06]"
+              title="Refresh"
+            >
+              <RotateCcw className="w-4 h-4 text-foreground/40" />
+            </button>
             {/* Notifications */}
             <div className="relative" ref={isMobile ? notifRef : undefined}>
               <button
                 onClick={() => setShowNotifs(!showNotifs)}
-                className="relative p-2 rounded-xl hover:bg-black/[0.03] transition-colors"
+                className="relative p-2.5 rounded-xl hover:bg-black/[0.03] transition-colors active:bg-black/[0.06]"
               >
-                <Bell className="w-4 h-4 text-foreground/40" />
+                <Bell className="w-4.5 h-4.5 text-foreground/40" />
                 {unreadCount > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-rose-signal text-[9px] font-bold text-white flex items-center justify-center">
                     {unreadCount > 9 ? "9+" : unreadCount}
@@ -202,35 +206,35 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -8, scale: 0.95 }}
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                    className="absolute right-0 top-12 w-80 max-h-96 bg-white border border-black/[0.08] rounded-2xl shadow-xl z-50 overflow-hidden"
+                    className="fixed left-3 right-3 top-16 max-h-[70vh] bg-white border border-black/[0.08] rounded-2xl shadow-xl z-50 overflow-hidden"
                     style={{ backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}
                   >
                     <div className="flex items-center justify-between px-4 py-3 border-b border-black/[0.06]">
-                      <span className="text-[13px] font-bold text-foreground">Notifications</span>
-                      <button onClick={clearNotifications} className="text-[11px] text-primary hover:underline font-medium">Mark all read</button>
+                      <span className="text-[14px] font-bold text-foreground">Notifications</span>
+                      <button onClick={clearNotifications} className="text-[12px] text-primary hover:underline font-medium py-1 px-2">Mark all read</button>
                     </div>
-                    <div className="overflow-y-auto max-h-72">
+                    <div className="overflow-y-auto max-h-[60vh]">
                       {notifications.length === 0 ? (
-                        <div className="p-6 text-center">
-                          <Bell className="w-8 h-8 text-foreground/15 mx-auto mb-2" />
-                          <div className="text-[13px] text-foreground/40">No notifications yet</div>
-                          <div className="text-[11px] text-foreground/25 mt-1">Run an AI assistant to see updates here</div>
+                        <div className="p-8 text-center">
+                          <Bell className="w-10 h-10 text-foreground/15 mx-auto mb-3" />
+                          <div className="text-[14px] text-foreground/40">No notifications yet</div>
+                          <div className="text-[12px] text-foreground/25 mt-1">Run an AI assistant to see updates here</div>
                         </div>
                       ) : (
                         notifications.slice(0, 10).map((n) => (
                           <div
                             key={n.id}
                             onClick={() => markNotificationRead(n.id)}
-                            className={`px-4 py-3 border-b border-black/[0.04] cursor-pointer hover:bg-black/[0.02] transition-colors ${
+                            className={`px-4 py-3.5 border-b border-black/[0.04] cursor-pointer active:bg-black/[0.04] transition-colors ${
                               !n.read ? "bg-primary/5" : ""
                             }`}
                           >
                             <div className="flex items-start gap-2.5">
-                              {!n.read && <div className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />}
+                              {!n.read && <div className="w-2.5 h-2.5 rounded-full bg-primary mt-1.5 shrink-0" />}
                               <div className={!n.read ? "" : "ml-[18px]"}>
-                                <div className="text-[12px] font-semibold text-foreground">{n.title}</div>
-                                <div className="text-[11px] text-foreground/50 mt-0.5 line-clamp-2">{n.description}</div>
-                                <div className="text-[10px] text-foreground/25 mt-1 font-mono">
+                                <div className="text-[13px] font-semibold text-foreground">{n.title}</div>
+                                <div className="text-[12px] text-foreground/50 mt-0.5 line-clamp-2">{n.description}</div>
+                                <div className="text-[11px] text-foreground/25 mt-1 font-mono">
                                   {new Date(n.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                                 </div>
                               </div>

@@ -127,7 +127,7 @@ export default function WarRoom() {
               return (
                 <motion.div
                   key={s.id}
-                  className="px-5 py-4 flex items-center gap-4 hover:bg-black/[0.015] transition-colors"
+                  className="px-4 sm:px-5 py-4 flex items-start sm:items-center gap-3 sm:gap-4 hover:bg-black/[0.015] transition-colors"
                   whileHover={{ x: 2 }}
                   transition={spring}
                 >
