@@ -1,8 +1,9 @@
-/**
+/*
  * NeuralCommand — CTV AI Commercial Engine Command Center
  * The living second brain. Not a dashboard — an operating system.
  * Features: Conviction tracker, system pulse, smart recommendations,
- * cluster deployment, live output stream, module architecture, autopilot.
+ * cluster deployment, live output stream with STREAMING markdown,
+ * module architecture, autopilot.
  * Apple-level UX with magical micro-interactions.
  */
 import NeuralShell from "@/components/NeuralShell";
@@ -13,10 +14,11 @@ import {
   Brain, Play, Zap, CheckCircle2, Clock, AlertTriangle, ChevronRight,
   Sparkles, Activity, MessageSquare, ToggleLeft, ToggleRight,
   TrendingUp, Target, Shield, ArrowUpRight, Pause, RotateCcw,
-  ChevronDown, ChevronUp, Eye, Layers, Radio,
+  ChevronDown, ChevronUp, Eye, Layers, Radio, Maximize2, Minimize2,
 } from "lucide-react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
+import { Streamdown } from "streamdown";
 
 const stats = getTotalStats();
 const spring = { type: "spring" as const, stiffness: 300, damping: 30 };
@@ -28,10 +30,12 @@ export default function NeuralCommand() {
   const {
     recentRuns, runAgent, convictionScore, isExecuting, executionQueue,
     notifications, unreadCount, getModuleHealth, getClusterHealth,
+    getStreamingOutput,
   } = useAgent();
   const [autopilot, setAutopilot] = useState(false);
   const [deployingCluster, setDeployingCluster] = useState<number | null>(null);
   const [expandedSection, setExpandedSection] = useState<string | null>("conviction");
+  const [expandedRun, setExpandedRun] = useState<string | null>(null);
   const [systemPulse, setSystemPulse] = useState(0);
 
   const activeRuns = recentRuns.filter((r) => r.status === "running").length;
@@ -459,20 +463,20 @@ export default function NeuralCommand() {
             </div>
           </motion.div>
 
-          {/* Right Column: Live Output + Quick Actions */}
+          {/* Right Column: Live Output with Streaming + Quick Actions */}
           <motion.div
             variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
             transition={spring}
             className="lg:col-span-2 space-y-5"
           >
-            {/* Live Output Stream */}
+            {/* Live Output Stream — NOW WITH STREAMING MARKDOWN */}
             <div className="glass rounded-3xl overflow-hidden">
               <div className="px-5 py-4 border-b border-black/[0.04] flex items-center gap-2.5">
                 <div className={`w-2.5 h-2.5 rounded-full ${activeRuns > 0 ? "bg-emerald-signal animate-pulse" : "bg-foreground/15"}`} />
                 <span className="text-[13px] font-semibold text-foreground/50 uppercase tracking-wide">Live Output</span>
                 <span className="ml-auto text-[12px] font-medium text-foreground/25">{recentRuns.length} runs</span>
               </div>
-              <div className="max-h-80 overflow-y-auto">
+              <div className="max-h-[420px] overflow-y-auto">
                 {recentRuns.length === 0 ? (
                   <div className="p-8 text-center">
                     <div className="w-14 h-14 rounded-2xl bg-black/[0.03] flex items-center justify-center mx-auto mb-3">
@@ -491,36 +495,96 @@ export default function NeuralCommand() {
                 ) : (
                   <div className="divide-y divide-black/[0.04]">
                     <AnimatePresence>
-                      {recentRuns.slice(0, 12).map((run) => (
-                        <motion.div
-                          key={run.id}
-                          initial={{ opacity: 0, y: -10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={spring}
-                          className="px-5 py-3.5 hover:bg-black/[0.01] transition-colors"
-                        >
-                          <div className="flex items-center gap-2 mb-1.5">
-                            <div className={`w-2 h-2 rounded-full shrink-0 ${
-                              run.status === "completed" ? "bg-emerald-signal" :
-                              run.status === "running" ? "bg-primary animate-pulse" :
-                              "bg-rose-signal"
-                            }`} />
-                            <span className="text-[11px] font-semibold text-foreground/35 truncate flex-1">{run.subModuleName}</span>
-                            {run.durationMs && (
-                              <span className="text-[10px] text-foreground/20 font-mono shrink-0">{(run.durationMs / 1000).toFixed(1)}s</span>
-                            )}
-                          </div>
-                          {run.output && (
-                            <p className="text-[12px] text-foreground/50 line-clamp-3 leading-relaxed pl-4">{run.output.slice(0, 200)}</p>
-                          )}
-                          {run.status === "running" && (
-                            <div className="flex items-center gap-2 pl-4 mt-1">
-                              <div className="w-3 h-3 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-                              <span className="text-[11px] text-primary/60 font-medium">Thinking...</span>
-                            </div>
-                          )}
-                        </motion.div>
-                      ))}
+                      {recentRuns.slice(0, 12).map((run) => {
+                        const streamingContent = run.status === "running" ? getStreamingOutput(run.id) : null;
+                        const isExpanded = expandedRun === run.id;
+                        const displayContent = run.output || streamingContent || "";
+                        
+                        return (
+                          <motion.div
+                            key={run.id}
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={spring}
+                            className="hover:bg-black/[0.01] transition-colors"
+                          >
+                            {/* Run header — clickable to expand */}
+                            <button
+                              onClick={() => setExpandedRun(isExpanded ? null : run.id)}
+                              className="w-full px-5 py-3.5 text-left"
+                            >
+                              <div className="flex items-center gap-2 mb-1">
+                                <div className={`w-2 h-2 rounded-full shrink-0 ${
+                                  run.status === "completed" ? "bg-emerald-signal" :
+                                  run.status === "running" ? "bg-primary animate-pulse" :
+                                  "bg-rose-signal"
+                                }`} />
+                                <span className="text-[11px] font-semibold text-foreground/35 truncate flex-1">{run.subModuleName}</span>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  {run.durationMs && (
+                                    <span className="text-[10px] text-foreground/20 font-mono">{(run.durationMs / 1000).toFixed(1)}s</span>
+                                  )}
+                                  {displayContent && (
+                                    isExpanded
+                                      ? <Minimize2 className="w-3 h-3 text-foreground/20" />
+                                      : <Maximize2 className="w-3 h-3 text-foreground/20" />
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Streaming indicator with live content */}
+                              {run.status === "running" && streamingContent && !isExpanded && (
+                                <div className="pl-4 mt-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <div className="w-3 h-3 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                                    <span className="text-[11px] text-primary/60 font-medium">Streaming...</span>
+                                    <span className="text-[10px] text-foreground/20 font-mono">{streamingContent.length} chars</span>
+                                  </div>
+                                  <p className="text-[12px] text-foreground/40 line-clamp-2 leading-relaxed">{streamingContent.slice(-150)}</p>
+                                </div>
+                              )}
+
+                              {/* Running but no content yet */}
+                              {run.status === "running" && !streamingContent && (
+                                <div className="flex items-center gap-2 pl-4 mt-1">
+                                  <div className="w-3 h-3 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                                  <span className="text-[11px] text-primary/60 font-medium">Thinking...</span>
+                                </div>
+                              )}
+
+                              {/* Collapsed preview for completed runs */}
+                              {run.output && !isExpanded && (
+                                <p className="text-[12px] text-foreground/50 line-clamp-2 leading-relaxed pl-4">{run.output.slice(0, 200)}</p>
+                              )}
+                            </button>
+
+                            {/* Expanded: full markdown output */}
+                            <AnimatePresence>
+                              {isExpanded && displayContent && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: "auto", opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ duration: 0.2 }}
+                                  className="overflow-hidden"
+                                >
+                                  <div className="px-5 pb-4 pt-0">
+                                    <div className="rounded-xl bg-black/[0.02] p-4 max-h-64 overflow-y-auto text-[13px] text-foreground/70 leading-relaxed prose prose-sm prose-headings:text-foreground prose-headings:font-semibold prose-strong:text-foreground/80 prose-a:text-primary max-w-none">
+                                      <Streamdown>{displayContent}</Streamdown>
+                                    </div>
+                                    {run.status === "running" && (
+                                      <div className="flex items-center gap-2 mt-2">
+                                        <div className="w-2 h-2 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                                        <span className="text-[10px] text-primary/50 font-medium">Still generating...</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </motion.div>
+                        );
+                      })}
                     </AnimatePresence>
                   </div>
                 )}

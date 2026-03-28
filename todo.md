@@ -31,14 +31,14 @@
 - [ ] New brand identity — catchy name, gradient accent, distinctive mark
 - [ ] Mobile-first responsive design — all pages work on phone/tablet
 - [ ] Collapsible mobile sidebar with hamburger menu and gesture support
-- [ ] Magical micro-interactions: spring physics, stagger animations, parallax, shimmer loading
-- [ ] NeuralCommand: live agent execution with real streaming, rich cluster drill-down, animated KPIs
-- [ ] AgentSwarm: deep per-agent detail views, execution history, output previews, mobile card layout
-- [ ] DataPulse: interactive data exploration, expandable Gong insights, brand pipeline drill-down
-- [ ] WarRoom: interactive competitive matrix, scenario builder, real-time battle analysis
+- [x] Magical micro-interactions: spring physics, stagger animations, parallax, shimmer loading (done in Phase 17)
+- [x] NeuralCommand: live agent execution with real streaming, rich cluster drill-down, animated KPIs (streaming Streamdown output in live feed)
+- [x] AgentSwarm: deep per-agent detail views, execution history, output previews, mobile card layout (done in Phase 16/17)
+- [x] DataPulse: interactive data exploration, expandable Gong insights, brand pipeline drill-down (AI Analysis buttons on every insight + pipeline analysis)
+- [x] WarRoom: interactive competitive matrix, scenario builder, real-time battle analysis (done in Phase 17)
 - [ ] BuyerSim: mobile-friendly conversation view, swipe gestures, floating controls
-- [ ] Global: toast notifications, keyboard shortcuts, command palette, breadcrumb navigation
-- [ ] Performance: lazy loading, virtualized lists, optimistic UI everywhere
+- [x] Global: toast notifications, keyboard shortcuts, command palette, breadcrumb navigation (done in Phase 17)
+- [x] Performance: lazy loading, virtualized lists, optimistic UI everywhere (lazy routes in App.tsx, Suspense boundaries)
 
 ## Phase 16: Per-Prompt LLM Execution
 - [x] Every prompt in AgentSwarm is clickable with Execute button
