@@ -1,11 +1,14 @@
 /**
  * ApprovalQueue — Review and approve/reject agent outputs.
+ * Apple-style: glassy panels, soft interactions, polished typography.
  */
 import NeuralShell from "@/components/NeuralShell";
 import { useAgent } from "@/contexts/AgentContext";
 import { useState } from "react";
 import { Shield, CheckCircle2, XCircle, Eye, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
+const spring = { type: "spring" as const, stiffness: 300, damping: 30 };
 
 export default function ApprovalQueue() {
   const { recentRuns } = useAgent();
@@ -29,56 +32,67 @@ export default function ApprovalQueue() {
 
   return (
     <NeuralShell>
-      <div className="space-y-6">
+      <div className="space-y-8">
         <div>
-          <div className="flex items-center gap-3 mb-1">
-            <Shield className="w-6 h-6 text-neon" />
-            <h1 className="text-2xl font-semibold tracking-tight">Approval Queue</h1>
-          </div>
-          <p className="text-sm text-muted-foreground">{pendingRuns.length} pending · {approvedRuns.length} approved · {rejectedRuns.length} rejected</p>
+          <h1 className="text-[28px] font-bold tracking-tight">Approval Queue</h1>
+          <p className="text-[15px] text-foreground/45 mt-1">{pendingRuns.length} pending · {approvedRuns.length} approved · {rejectedRuns.length} rejected</p>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
-          <div className="border border-border rounded-lg p-3 bg-card">
-            <div className="flex items-center gap-1.5 mb-1.5 text-amber-signal"><Clock className="w-3.5 h-3.5" /><span className="text-[10px] font-mono uppercase">PENDING</span></div>
-            <div className="text-xl font-semibold font-mono text-foreground">{pendingRuns.length}</div>
-          </div>
-          <div className="border border-border rounded-lg p-3 bg-card">
-            <div className="flex items-center gap-1.5 mb-1.5 text-emerald-signal"><CheckCircle2 className="w-3.5 h-3.5" /><span className="text-[10px] font-mono uppercase">APPROVED</span></div>
-            <div className="text-xl font-semibold font-mono text-foreground">{approvedRuns.length}</div>
-          </div>
-          <div className="border border-border rounded-lg p-3 bg-card">
-            <div className="flex items-center gap-1.5 mb-1.5 text-rose-signal"><XCircle className="w-3.5 h-3.5" /><span className="text-[10px] font-mono uppercase">REJECTED</span></div>
-            <div className="text-xl font-semibold font-mono text-foreground">{rejectedRuns.length}</div>
-          </div>
+        {/* KPI strip */}
+        <div className="grid grid-cols-3 gap-4">
+          <motion.div whileHover={{ y: -2, scale: 1.01 }} transition={spring} className="glass rounded-2xl p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-7 h-7 rounded-xl bg-amber-signal/10 flex items-center justify-center"><Clock className="w-3.5 h-3.5 text-amber-signal" /></div>
+              <span className="text-[12px] font-semibold text-foreground/35 uppercase tracking-wide">Pending</span>
+            </div>
+            <div className="text-[24px] font-bold tracking-tight text-foreground">{pendingRuns.length}</div>
+          </motion.div>
+          <motion.div whileHover={{ y: -2, scale: 1.01 }} transition={spring} className="glass rounded-2xl p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-7 h-7 rounded-xl bg-emerald-signal/10 flex items-center justify-center"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-signal" /></div>
+              <span className="text-[12px] font-semibold text-foreground/35 uppercase tracking-wide">Approved</span>
+            </div>
+            <div className="text-[24px] font-bold tracking-tight text-foreground">{approvedRuns.length}</div>
+          </motion.div>
+          <motion.div whileHover={{ y: -2, scale: 1.01 }} transition={spring} className="glass rounded-2xl p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-7 h-7 rounded-xl bg-rose-signal/10 flex items-center justify-center"><XCircle className="w-3.5 h-3.5 text-rose-signal" /></div>
+              <span className="text-[12px] font-semibold text-foreground/35 uppercase tracking-wide">Rejected</span>
+            </div>
+            <div className="text-[24px] font-bold tracking-tight text-foreground">{rejectedRuns.length}</div>
+          </motion.div>
         </div>
 
         {completedRuns.length === 0 ? (
-          <div className="border border-border rounded-lg bg-card p-12 text-center">
-            <Shield className="w-12 h-12 text-muted-foreground/20 mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground">No agent outputs to review yet.</p>
-            <p className="text-xs text-muted-foreground/60 mt-1">Execute agents from the Swarm or Command Center to generate outputs.</p>
+          <div className="glass rounded-2xl p-14 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-black/[0.03] flex items-center justify-center mx-auto mb-4">
+              <Shield className="w-6 h-6 text-foreground/20" />
+            </div>
+            <p className="text-[15px] font-medium text-foreground/40">No agent outputs to review yet</p>
+            <p className="text-[13px] text-foreground/25 mt-1.5">Execute agents from the Swarm or Command Center to generate outputs.</p>
           </div>
         ) : (
-          <div className="border border-border rounded-lg bg-card overflow-hidden">
-            <div className="px-4 py-3 border-b border-border"><span className="text-sm font-medium">Pending Review</span></div>
-            <div className="divide-y divide-border">
+          <div className="glass rounded-2xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-black/[0.04]">
+              <span className="text-[15px] font-semibold">Pending Review</span>
+            </div>
+            <div className="divide-y divide-black/[0.04]">
               <AnimatePresence>
                 {pendingRuns.map((run) => (
-                  <motion.div key={run.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, height: 0 }} className="px-4 py-3">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-2 h-2 rounded-full bg-amber-signal shrink-0" />
-                      <span className="text-xs font-mono text-muted-foreground">#{run.promptId}</span>
-                      <span className="text-sm text-foreground truncate flex-1">{run.promptText.slice(0, 60)}...</span>
-                      <button onClick={() => setExpandedId(expandedId === run.id ? null : run.id)} className="text-xs font-mono text-neon hover:underline"><Eye className="w-3.5 h-3.5" /></button>
-                      <button onClick={() => handleApprove(run.id)} className="flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium bg-emerald-signal/15 text-emerald-signal hover:bg-emerald-signal/25 transition-all"><CheckCircle2 className="w-3 h-3" /> Approve</button>
-                      <button onClick={() => handleReject(run.id)} className="flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium bg-rose-signal/15 text-rose-signal hover:bg-rose-signal/25 transition-all"><XCircle className="w-3 h-3" /> Reject</button>
+                  <motion.div key={run.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, height: 0 }} transition={spring} className="px-5 py-4">
+                    <div className="flex items-center gap-4 mb-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-amber-signal shrink-0" />
+                      <span className="text-[12px] font-mono text-foreground/25">#{run.promptId}</span>
+                      <span className="text-[14px] text-foreground/70 truncate flex-1">{run.promptText.slice(0, 60)}...</span>
+                      <button onClick={() => setExpandedId(expandedId === run.id ? null : run.id)} className="text-foreground/25 hover:text-foreground/50 transition-colors"><Eye className="w-4 h-4" /></button>
+                      <button onClick={() => handleApprove(run.id)} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold bg-emerald-signal/10 text-emerald-signal hover:bg-emerald-signal/15 transition-all"><CheckCircle2 className="w-3.5 h-3.5" /> Approve</button>
+                      <button onClick={() => handleReject(run.id)} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold bg-rose-signal/10 text-rose-signal hover:bg-rose-signal/15 transition-all"><XCircle className="w-3.5 h-3.5" /> Reject</button>
                     </div>
                     <AnimatePresence>
                       {expandedId === run.id && (
-                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                          <div className="bg-muted/50 rounded-lg p-3 text-xs text-foreground/70 border border-border ml-5">
-                            <div className="text-[10px] font-mono text-neon mb-1">AGENT OUTPUT</div>
+                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={spring} className="overflow-hidden">
+                          <div className="bg-black/[0.02] rounded-xl p-4 text-[13px] text-foreground/60 border border-black/[0.04] ml-7">
+                            <div className="text-[11px] font-semibold text-primary/60 mb-1.5 uppercase tracking-wide">Agent Output</div>
                             {run.output}
                           </div>
                         </motion.div>
@@ -87,20 +101,23 @@ export default function ApprovalQueue() {
                   </motion.div>
                 ))}
               </AnimatePresence>
-              {pendingRuns.length === 0 && <div className="p-6 text-center text-xs text-muted-foreground">All items reviewed.</div>}
+              {pendingRuns.length === 0 && <div className="p-8 text-center text-[13px] text-foreground/30">All items reviewed.</div>}
             </div>
           </div>
         )}
 
         {approvedRuns.length > 0 && (
-          <div className="border border-border rounded-lg bg-card overflow-hidden">
-            <div className="px-4 py-3 border-b border-border flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-signal" /><span className="text-sm font-medium">Approved</span></div>
-            <div className="divide-y divide-border">
+          <div className="glass rounded-2xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-black/[0.04] flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-xl bg-emerald-signal/10 flex items-center justify-center"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-signal" /></div>
+              <span className="text-[15px] font-semibold">Approved</span>
+            </div>
+            <div className="divide-y divide-black/[0.04]">
               {approvedRuns.map((run) => (
-                <div key={run.id} className="px-4 py-2.5 flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-emerald-signal shrink-0" />
-                  <span className="text-xs font-mono text-muted-foreground">#{run.promptId}</span>
-                  <span className="text-sm text-foreground/70 truncate flex-1">{run.promptText.slice(0, 60)}...</span>
+                <div key={run.id} className="px-5 py-3.5 flex items-center gap-4">
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-signal shrink-0" />
+                  <span className="text-[12px] font-mono text-foreground/25">#{run.promptId}</span>
+                  <span className="text-[14px] text-foreground/60 truncate flex-1">{run.promptText.slice(0, 60)}...</span>
                 </div>
               ))}
             </div>

@@ -1,8 +1,14 @@
+/**
+ * WarRoom — Adversarial simulation and competitive war gaming.
+ * Apple-style: glassy panels, soft interactions, polished typography.
+ */
 import NeuralShell from "@/components/NeuralShell";
 import { useAgent } from "@/contexts/AgentContext";
 import { useState } from "react";
 import { Swords, Play, Target, Shield, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
+const spring = { type: "spring" as const, stiffness: 300, damping: 30 };
 
 const competitors = [
   { id: "ttd", name: "The Trade Desk", strength: "Brand recognition, self-serve, CTV scale", weakness: "Rules-based optimization, premium pricing", threatLevel: "high" },
@@ -45,60 +51,112 @@ export default function WarRoom() {
 
   return (
     <NeuralShell>
-      <div className="space-y-6">
+      <div className="space-y-8">
         <div>
-          <div className="flex items-center gap-3 mb-1"><Swords className="w-6 h-6 text-rose-signal" /><h1 className="text-2xl font-semibold tracking-tight">War Room</h1></div>
-          <p className="text-sm text-muted-foreground">Adversarial simulation and competitive war gaming</p>
+          <h1 className="text-[28px] font-bold tracking-tight">War Room</h1>
+          <p className="text-[15px] text-foreground/45 mt-1">Adversarial simulation and competitive war gaming</p>
         </div>
 
-        <div className="border border-border rounded-lg bg-card overflow-hidden">
-          <div className="px-4 py-3 border-b border-border"><span className="text-sm font-medium">Competitive Landscape</span></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
+        {/* Competitive Landscape */}
+        <div className="glass rounded-2xl overflow-hidden">
+          <div className="px-5 py-4 border-b border-black/[0.04] flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-xl bg-rose-signal/10 flex items-center justify-center">
+              <Swords className="w-3.5 h-3.5 text-rose-signal" />
+            </div>
+            <span className="text-[15px] font-semibold">Competitive Landscape</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-black/[0.04]">
             {competitors.map((c) => (
-              <div key={c.id} className="bg-card p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-foreground">{c.name}</span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${c.threatLevel === "high" ? "bg-rose-signal/15 text-rose-signal" : "bg-amber-signal/15 text-amber-signal"}`}>{c.threatLevel}</span>
+              <motion.div
+                key={c.id}
+                whileHover={{ scale: 1.01 }}
+                transition={spring}
+                className="bg-white p-5"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[15px] font-semibold text-foreground">{c.name}</span>
+                  <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg ${c.threatLevel === "high" ? "bg-rose-signal/10 text-rose-signal" : "bg-amber-signal/10 text-amber-signal"}`}>{c.threatLevel}</span>
                 </div>
-                <div className="space-y-1.5 text-xs">
-                  <div className="flex gap-2"><Target className="w-3 h-3 text-emerald-signal shrink-0 mt-0.5" /><span className="text-foreground/60">{c.strength}</span></div>
-                  <div className="flex gap-2"><Shield className="w-3 h-3 text-rose-signal shrink-0 mt-0.5" /><span className="text-foreground/60">{c.weakness}</span></div>
+                <div className="space-y-2.5">
+                  <div className="flex gap-2.5">
+                    <div className="w-5 h-5 rounded-lg bg-emerald-signal/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <Target className="w-3 h-3 text-emerald-signal" />
+                    </div>
+                    <span className="text-[13px] text-foreground/55 leading-relaxed">{c.strength}</span>
+                  </div>
+                  <div className="flex gap-2.5">
+                    <div className="w-5 h-5 rounded-lg bg-rose-signal/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <Shield className="w-3 h-3 text-rose-signal" />
+                    </div>
+                    <span className="text-[13px] text-foreground/55 leading-relaxed">{c.weakness}</span>
+                  </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
 
-        <div className="border border-border rounded-lg bg-card overflow-hidden">
-          <div className="px-4 py-3 border-b border-border"><span className="text-sm font-medium">Battle Scenarios</span></div>
-          <div className="divide-y divide-border">
+        {/* Battle Scenarios */}
+        <div className="glass rounded-2xl overflow-hidden">
+          <div className="px-5 py-4 border-b border-black/[0.04]">
+            <span className="text-[15px] font-semibold">Battle Scenarios</span>
+          </div>
+          <div className="divide-y divide-black/[0.04]">
             {scenarios.map((s) => (
-              <div key={s.id} className="px-4 py-3 flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${activeScenario === s.id ? "bg-rose-signal/15 text-rose-signal" : "bg-muted text-muted-foreground"}`}>{s.id}</div>
+              <motion.div
+                key={s.id}
+                className="px-5 py-4 flex items-center gap-4 hover:bg-black/[0.015] transition-colors"
+                whileHover={{ x: 2 }}
+                transition={spring}
+              >
+                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-[14px] font-bold shrink-0 transition-colors ${
+                  activeScenario === s.id ? "bg-rose-signal/10 text-rose-signal" : "bg-black/[0.04] text-foreground/30"
+                }`}>{s.id}</div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-foreground">{s.name}</div>
-                  <div className="text-xs text-muted-foreground mt-0.5">{s.desc}</div>
+                  <div className="text-[14px] font-semibold text-foreground">{s.name}</div>
+                  <div className="text-[12px] text-foreground/40 mt-0.5">{s.desc}</div>
                 </div>
-                <button onClick={() => runScenario(s)} disabled={simRunning} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all shrink-0 ${simRunning && activeScenario === s.id ? "bg-amber-signal/15 text-amber-signal" : "border border-border text-muted-foreground hover:text-rose-signal hover:border-rose-signal/30"}`}>
+                <button
+                  onClick={() => runScenario(s)}
+                  disabled={simRunning}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold transition-all shrink-0 ${
+                    simRunning && activeScenario === s.id
+                      ? "bg-amber-signal/10 text-amber-signal"
+                      : "bg-black/[0.04] text-foreground/40 hover:text-rose-signal hover:bg-rose-signal/8"
+                  }`}
+                >
                   <Play className="w-3 h-3" />{simRunning && activeScenario === s.id ? "Running..." : "Simulate"}
                 </button>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
 
+        {/* Simulation Output */}
         <AnimatePresence>
           {(simRunning || simOutput) && (
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="border border-rose-signal/30 rounded-lg bg-card overflow-hidden">
-              <div className="px-4 py-3 border-b border-border flex items-center gap-2">
-                <Zap className="w-4 h-4 text-rose-signal" /><span className="text-sm font-medium">Simulation Output</span>
-                {simRunning && <div className="w-2 h-2 rounded-full bg-amber-signal animate-pulse-neon ml-auto" />}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={spring}
+              className="glass rounded-2xl overflow-hidden ring-1 ring-rose-signal/20"
+            >
+              <div className="px-5 py-4 border-b border-black/[0.04] flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-xl bg-rose-signal/10 flex items-center justify-center">
+                  <Zap className="w-3.5 h-3.5 text-rose-signal" />
+                </div>
+                <span className="text-[15px] font-semibold">Simulation Output</span>
+                {simRunning && <div className="w-2.5 h-2.5 rounded-full bg-amber-signal animate-pulse ml-auto" />}
               </div>
-              <div className="p-4">
+              <div className="p-5">
                 {simRunning ? (
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground"><div className="w-4 h-4 border-2 border-rose-signal/30 border-t-rose-signal rounded-full animate-spin" />Running adversarial simulation...</div>
+                  <div className="flex items-center gap-3 text-[14px] text-foreground/40">
+                    <div className="w-5 h-5 border-2 border-rose-signal/20 border-t-rose-signal rounded-full animate-spin" />
+                    Running adversarial simulation...
+                  </div>
                 ) : (
-                  <pre className="text-xs text-foreground/80 whitespace-pre-wrap font-mono leading-relaxed">{simOutput}</pre>
+                  <pre className="text-[13px] text-foreground/70 whitespace-pre-wrap font-mono leading-relaxed">{simOutput}</pre>
                 )}
               </div>
             </motion.div>

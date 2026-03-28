@@ -1,12 +1,15 @@
 /**
- * DataPulse — Live data feeds from Gong calls, brand pipeline, and system intelligence.
+ * DataPulse — Live intelligence from Gong calls, brand pipeline, and system telemetry.
+ * Apple-style: glassy panels, soft interactions, polished typography.
  */
 import NeuralShell from "@/components/NeuralShell";
 import { modules, getTotalStats, prompts } from "@/lib/data";
 import { useState } from "react";
-import { Database, Radio, Users, Search } from "lucide-react";
+import { Database, Radio, Users, Search, TrendingUp, BarChart3 } from "lucide-react";
+import { motion } from "framer-motion";
 
 const stats = getTotalStats();
+const spring = { type: "spring" as const, stiffness: 300, damping: 30 };
 
 const gongInsights = [
   { id: 1, title: "CTV Performance Proof Points", calls: 12, signal: "strong", summary: "12 calls reference ROAS improvement. Average cited: 22% lift vs incumbent DSP. Gaming vertical strongest." },
@@ -20,11 +23,11 @@ const gongInsights = [
 ];
 
 const pipelineStages = [
-  { stage: "Prospecting", count: 28, value: "$2.1M", color: "text-muted-foreground" },
-  { stage: "Qualification", count: 15, value: "$3.4M", color: "text-amber-signal" },
-  { stage: "Testing", count: 8, value: "$1.8M", color: "text-neon" },
-  { stage: "Scaling", count: 5, value: "$4.2M", color: "text-emerald-signal" },
-  { stage: "Churned/Lost", count: 12, value: "$1.9M", color: "text-rose-signal" },
+  { stage: "Prospecting", count: 28, value: "$2.1M", color: "bg-foreground/20" },
+  { stage: "Qualification", count: 15, value: "$3.4M", color: "bg-amber-signal" },
+  { stage: "Testing", count: 8, value: "$1.8M", color: "bg-primary" },
+  { stage: "Scaling", count: 5, value: "$4.2M", color: "bg-emerald-signal" },
+  { stage: "Churned/Lost", count: 12, value: "$1.9M", color: "bg-rose-signal" },
 ];
 
 const topVerticals = [
@@ -46,36 +49,66 @@ export default function DataPulse() {
 
   return (
     <NeuralShell>
-      <div className="space-y-6">
+      <div className="space-y-8">
         <div>
-          <div className="flex items-center gap-3 mb-1"><Database className="w-6 h-6 text-neon" /><h1 className="text-2xl font-semibold tracking-tight">Data Pulse</h1></div>
-          <p className="text-sm text-muted-foreground">Live intelligence from Gong, brand pipeline, and system telemetry</p>
+          <h1 className="text-[28px] font-bold tracking-tight">Data Pulse</h1>
+          <p className="text-[15px] text-foreground/45 mt-1">Live intelligence from Gong, brand pipeline, and system telemetry</p>
         </div>
 
-        <div className="flex items-center gap-1 bg-muted rounded-lg p-1 w-fit">
+        {/* Tab switcher */}
+        <div className="flex items-center gap-1 bg-black/[0.03] rounded-2xl p-1.5 w-fit">
           {(["gong", "pipeline", "system"] as const).map((tab) => (
-            <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === tab ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-5 py-2 rounded-xl text-[13px] font-semibold transition-all duration-200 ${
+                activeTab === tab
+                  ? "bg-white text-foreground shadow-sm"
+                  : "text-foreground/40 hover:text-foreground/60"
+              }`}
+            >
               {tab === "gong" ? "Gong Intelligence" : tab === "pipeline" ? "Brand Pipeline" : "System"}
             </button>
           ))}
         </div>
 
         {activeTab === "gong" && (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="relative max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input type="text" placeholder="Search insights..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-9 pr-3 py-2 rounded-lg bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-neon" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/30" />
+              <input
+                type="text"
+                placeholder="Search insights..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-black/[0.03] text-[14px] text-foreground placeholder:text-foreground/30 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
+              />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {filteredInsights.map((insight) => (
-                <div key={insight.id} className="border border-border rounded-lg bg-card p-4 hover:border-neon/20 transition-all">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-foreground">{insight.title}</span>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${insight.signal === "strong" ? "bg-emerald-signal/15 text-emerald-signal" : insight.signal === "warning" ? "bg-rose-signal/15 text-rose-signal" : insight.signal === "emerging" ? "bg-violet-signal/15 text-violet-signal" : "bg-muted text-muted-foreground"}`}>{insight.signal}</span>
+                <motion.div
+                  key={insight.id}
+                  whileHover={{ y: -3, scale: 1.005 }}
+                  transition={spring}
+                  className="glass rounded-2xl p-5 hover:shadow-apple transition-shadow duration-300"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[15px] font-semibold text-foreground">{insight.title}</span>
+                    <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg ${
+                      insight.signal === "strong" ? "bg-emerald-signal/10 text-emerald-signal" :
+                      insight.signal === "warning" ? "bg-rose-signal/10 text-rose-signal" :
+                      insight.signal === "emerging" ? "bg-violet-signal/10 text-violet-signal" :
+                      "bg-black/[0.04] text-foreground/35"
+                    }`}>{insight.signal}</span>
                   </div>
-                  <div className="flex items-center gap-2 mb-2"><Radio className="w-3 h-3 text-neon" /><span className="text-xs font-mono text-muted-foreground">{insight.calls} calls</span></div>
-                  <p className="text-xs text-foreground/60 leading-relaxed">{insight.summary}</p>
-                </div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-6 h-6 rounded-lg bg-primary/8 flex items-center justify-center">
+                      <Radio className="w-3 h-3 text-primary" />
+                    </div>
+                    <span className="text-[13px] font-medium text-foreground/40">{insight.calls} calls</span>
+                  </div>
+                  <p className="text-[13px] text-foreground/55 leading-relaxed">{insight.summary}</p>
+                </motion.div>
               ))}
             </div>
           </div>
@@ -83,30 +116,50 @@ export default function DataPulse() {
 
         {activeTab === "pipeline" && (
           <div className="space-y-6">
-            <div className="border border-border rounded-lg bg-card overflow-hidden">
-              <div className="px-4 py-3 border-b border-border"><span className="text-sm font-medium">Pipeline by Stage</span></div>
-              <div className="divide-y divide-border">
+            <div className="glass rounded-2xl overflow-hidden">
+              <div className="px-5 py-4 border-b border-black/[0.04] flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-xl bg-primary/8 flex items-center justify-center">
+                  <TrendingUp className="w-3.5 h-3.5 text-primary" />
+                </div>
+                <span className="text-[15px] font-semibold">Pipeline by Stage</span>
+              </div>
+              <div className="divide-y divide-black/[0.04]">
                 {pipelineStages.map((stage) => (
-                  <div key={stage.stage} className="px-4 py-3 flex items-center gap-4">
-                    <span className={`text-sm font-medium w-28 ${stage.color}`}>{stage.stage}</span>
-                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full ${stage.stage === "Scaling" ? "bg-emerald-signal" : stage.stage === "Testing" ? "bg-neon" : stage.stage === "Qualification" ? "bg-amber-signal" : stage.stage === "Churned/Lost" ? "bg-rose-signal" : "bg-muted-foreground/30"}`} style={{ width: `${(stage.count / 30) * 100}%` }} />
+                  <div key={stage.stage} className="px-5 py-4 flex items-center gap-5">
+                    <span className="text-[14px] font-semibold w-28 text-foreground/60">{stage.stage}</span>
+                    <div className="flex-1 h-2.5 bg-black/[0.04] rounded-full overflow-hidden">
+                      <motion.div
+                        className={`h-full rounded-full ${stage.color}`}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(stage.count / 30) * 100}%` }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                      />
                     </div>
-                    <span className="text-xs font-mono text-muted-foreground w-8 text-right">{stage.count}</span>
-                    <span className="text-xs font-mono text-foreground w-16 text-right">{stage.value}</span>
+                    <span className="text-[13px] font-mono text-foreground/35 w-8 text-right">{stage.count}</span>
+                    <span className="text-[13px] font-semibold text-foreground w-16 text-right">{stage.value}</span>
                   </div>
                 ))}
               </div>
             </div>
-            <div className="border border-border rounded-lg bg-card overflow-hidden">
-              <div className="px-4 py-3 border-b border-border"><span className="text-sm font-medium">Top Verticals</span></div>
-              <div className="divide-y divide-border">
+
+            <div className="glass rounded-2xl overflow-hidden">
+              <div className="px-5 py-4 border-b border-black/[0.04] flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-xl bg-violet-signal/10 flex items-center justify-center">
+                  <Users className="w-3.5 h-3.5 text-violet-signal" />
+                </div>
+                <span className="text-[15px] font-semibold">Top Verticals</span>
+              </div>
+              <div className="divide-y divide-black/[0.04]">
                 {topVerticals.map((v) => (
-                  <div key={v.name} className="px-4 py-3 flex items-center gap-3">
-                    <Users className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm text-foreground flex-1">{v.name}</span>
-                    <span className="text-xs font-mono text-muted-foreground">{v.brands} brands</span>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${v.signal === "hot" ? "bg-rose-signal/15 text-rose-signal" : v.signal === "warm" ? "bg-amber-signal/15 text-amber-signal" : v.signal === "emerging" ? "bg-violet-signal/15 text-violet-signal" : "bg-muted text-muted-foreground"}`}>{v.signal}</span>
+                  <div key={v.name} className="px-5 py-4 flex items-center gap-4">
+                    <span className="text-[14px] font-medium text-foreground flex-1">{v.name}</span>
+                    <span className="text-[13px] font-medium text-foreground/35">{v.brands} brands</span>
+                    <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg ${
+                      v.signal === "hot" ? "bg-rose-signal/10 text-rose-signal" :
+                      v.signal === "warm" ? "bg-amber-signal/10 text-amber-signal" :
+                      v.signal === "emerging" ? "bg-violet-signal/10 text-violet-signal" :
+                      "bg-black/[0.04] text-foreground/35"
+                    }`}>{v.signal}</span>
                   </div>
                 ))}
               </div>
@@ -115,34 +168,49 @@ export default function DataPulse() {
         )}
 
         {activeTab === "system" && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {[{ label: "MODULES", value: stats.modules }, { label: "SUB-MODULES", value: stats.totalSubModules }, { label: "AGENTS", value: stats.totalPrompts }, { label: "CLUSTERS", value: stats.clusters }].map((item) => (
-                <div key={item.label} className="border border-border rounded-lg p-3 bg-card">
-                  <div className="text-[10px] font-mono text-muted-foreground uppercase mb-1">{item.label}</div>
-                  <div className="text-xl font-semibold font-mono text-foreground">{item.value}</div>
-                </div>
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label: "Modules", value: stats.modules, icon: <Database className="w-4 h-4" />, bg: "bg-primary/8", color: "text-primary" },
+                { label: "Sub-modules", value: stats.totalSubModules, icon: <BarChart3 className="w-4 h-4" />, bg: "bg-violet-signal/10", color: "text-violet-signal" },
+                { label: "Agents", value: stats.totalPrompts, icon: <Users className="w-4 h-4" />, bg: "bg-emerald-signal/10", color: "text-emerald-signal" },
+                { label: "Clusters", value: stats.clusters, icon: <Radio className="w-4 h-4" />, bg: "bg-amber-signal/10", color: "text-amber-signal" },
+              ].map((item) => (
+                <motion.div key={item.label} whileHover={{ y: -2, scale: 1.01 }} transition={spring} className="glass rounded-2xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className={`w-7 h-7 rounded-xl ${item.bg} flex items-center justify-center`}>
+                      <span className={item.color}>{item.icon}</span>
+                    </div>
+                    <span className="text-[12px] font-semibold text-foreground/35 uppercase tracking-wide">{item.label}</span>
+                  </div>
+                  <div className="text-[24px] font-bold tracking-tight text-foreground">{item.value}</div>
+                </motion.div>
               ))}
             </div>
-            <div className="border border-border rounded-lg bg-card overflow-hidden">
-              <div className="px-4 py-3 border-b border-border"><span className="text-sm font-medium">Agent Distribution</span></div>
+
+            <div className="glass rounded-2xl overflow-hidden">
+              <div className="px-5 py-4 border-b border-black/[0.04]">
+                <span className="text-[15px] font-semibold">Agent Distribution</span>
+              </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead><tr className="border-b border-border bg-muted/30">
-                    <th className="text-left px-4 py-2.5 text-xs font-mono text-muted-foreground">Module</th>
-                    <th className="text-center px-3 py-2.5 text-xs font-mono text-muted-foreground">Persistent</th>
-                    <th className="text-center px-3 py-2.5 text-xs font-mono text-muted-foreground">Triggered</th>
-                    <th className="text-center px-3 py-2.5 text-xs font-mono text-muted-foreground">Total</th>
-                  </tr></thead>
-                  <tbody className="divide-y divide-border">
+                <table className="w-full text-[14px]">
+                  <thead>
+                    <tr className="border-b border-black/[0.04]">
+                      <th className="text-left px-5 py-3 text-[12px] font-semibold text-foreground/35 uppercase tracking-wide">Module</th>
+                      <th className="text-center px-3 py-3 text-[12px] font-semibold text-foreground/35 uppercase tracking-wide">Persistent</th>
+                      <th className="text-center px-3 py-3 text-[12px] font-semibold text-foreground/35 uppercase tracking-wide">Triggered</th>
+                      <th className="text-center px-3 py-3 text-[12px] font-semibold text-foreground/35 uppercase tracking-wide">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-black/[0.04]">
                     {modules.map((mod) => {
                       const mp = prompts.filter((p) => p.moduleId === mod.id);
                       return (
-                        <tr key={mod.id} className="hover:bg-accent/20 transition-colors">
-                          <td className="px-4 py-2.5 text-foreground">{mod.shortName}</td>
-                          <td className="text-center px-3 py-2.5 font-mono text-xs text-emerald-signal">{mp.filter((p) => p.agentType === "persistent").length}</td>
-                          <td className="text-center px-3 py-2.5 font-mono text-xs text-violet-signal">{mp.filter((p) => p.agentType === "triggered").length}</td>
-                          <td className="text-center px-3 py-2.5 font-mono text-xs font-semibold text-neon">{mp.length}</td>
+                        <tr key={mod.id} className="hover:bg-black/[0.015] transition-colors">
+                          <td className="px-5 py-3.5 font-semibold text-foreground">{mod.shortName}</td>
+                          <td className="text-center px-3 py-3.5 font-mono text-[13px] text-emerald-signal">{mp.filter((p) => p.agentType === "persistent").length}</td>
+                          <td className="text-center px-3 py-3.5 font-mono text-[13px] text-violet-signal">{mp.filter((p) => p.agentType === "triggered").length}</td>
+                          <td className="text-center px-3 py-3.5 font-mono text-[13px] font-bold text-primary">{mp.length}</td>
                         </tr>
                       );
                     })}

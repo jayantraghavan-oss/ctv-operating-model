@@ -1,6 +1,6 @@
 /**
- * NeuralShell — The operating system chrome for Meridian.
- * Dark sidebar, status bar, live indicators.
+ * NeuralShell — Apple-style operating system chrome for Meridian.
+ * Frosted glass sidebar, soft shadows, polished typography.
  */
 import { Link, useLocation } from "wouter";
 import { useAgent } from "@/contexts/AgentContext";
@@ -33,20 +33,20 @@ interface NavItem {
 }
 
 const commandNav: NavItem[] = [
-  { path: "/", label: "Neural Command", icon: <Brain className="w-4 h-4" />, badge: "LIVE" },
-  { path: "/swarm", label: "Agent Swarm", icon: <Zap className="w-4 h-4" /> },
-  { path: "/approvals", label: "Approval Queue", icon: <Shield className="w-4 h-4" /> },
+  { path: "/", label: "Neural Command", icon: <Brain className="w-[18px] h-[18px]" />, badge: "LIVE" },
+  { path: "/swarm", label: "Agent Swarm", icon: <Zap className="w-[18px] h-[18px]" /> },
+  { path: "/approvals", label: "Approval Queue", icon: <Shield className="w-[18px] h-[18px]" /> },
 ];
 
 const intelligenceNav: NavItem[] = [
-  { path: "/data-pulse", label: "Data Pulse", icon: <Radio className="w-4 h-4" /> },
-  { path: "/war-room", label: "War Room", icon: <Crosshair className="w-4 h-4" /> },
-  { path: "/simulation", label: "Buyer Sim", icon: <MessageSquare className="w-4 h-4" /> },
+  { path: "/data-pulse", label: "Data Pulse", icon: <Radio className="w-[18px] h-[18px]" /> },
+  { path: "/war-room", label: "War Room", icon: <Crosshair className="w-[18px] h-[18px]" /> },
+  { path: "/simulation", label: "Buyer Sim", icon: <MessageSquare className="w-[18px] h-[18px]" /> },
 ];
 
 const legacyNav: NavItem[] = [
-  { path: "/model", label: "Operating Model", icon: <BookOpen className="w-4 h-4" /> },
-  { path: "/agents", label: "Agent Registry", icon: <Target className="w-4 h-4" /> },
+  { path: "/model", label: "Operating Model", icon: <BookOpen className="w-[18px] h-[18px]" /> },
+  { path: "/agents", label: "Agent Registry", icon: <Target className="w-[18px] h-[18px]" /> },
 ];
 
 export default function NeuralShell({ children }: { children: ReactNode }) {
@@ -61,16 +61,18 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
     return (
       <Link href={item.path}>
         <div
-          className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all ${
+          className={`flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] transition-all duration-200 ${
             active
-              ? "bg-accent text-neon font-medium"
-              : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
-          } ${collapsed ? "justify-center" : ""}`}
+              ? "bg-primary/10 text-primary font-semibold shadow-sm"
+              : "text-foreground/60 hover:text-foreground hover:bg-black/[0.03]"
+          } ${collapsed ? "justify-center px-2" : ""}`}
         >
-          <span className={active ? "text-neon" : ""}>{item.icon}</span>
+          <span className={`transition-colors ${active ? "text-primary" : "text-foreground/40"}`}>
+            {item.icon}
+          </span>
           {!collapsed && <span className="truncate">{item.label}</span>}
           {!collapsed && item.badge && (
-            <span className="ml-auto text-[10px] font-mono px-1.5 py-0.5 rounded bg-neon/15 text-neon animate-pulse-neon">
+            <span className="ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
               {item.badge}
             </span>
           )}
@@ -81,9 +83,9 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
 
   function NavGroup({ label, items }: { label: string; items: NavItem[] }) {
     return (
-      <div className="mb-4">
+      <div className="mb-5">
         {!collapsed && (
-          <div className="px-3 mb-1.5 text-[10px] font-mono uppercase tracking-widest text-muted-foreground/60">
+          <div className="px-3 mb-2 text-[11px] font-semibold uppercase tracking-wider text-foreground/30">
             {label}
           </div>
         )}
@@ -98,22 +100,27 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Sidebar */}
+      {/* Sidebar — frosted glass */}
       <aside
-        className={`flex flex-col border-r border-border bg-sidebar shrink-0 transition-all duration-200 ${
-          collapsed ? "w-16" : "w-56"
+        className={`flex flex-col shrink-0 transition-all duration-300 ease-out border-r border-black/[0.06] ${
+          collapsed ? "w-[68px]" : "w-[240px]"
         }`}
+        style={{
+          background: "oklch(1 0 0 / 0.55)",
+          backdropFilter: "blur(40px) saturate(1.8)",
+          WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+        }}
       >
         {/* Logo */}
-        <div className="flex items-center gap-3 px-4 py-4 border-b border-border">
-          <div className="w-8 h-8 rounded-lg bg-neon/15 flex items-center justify-center shrink-0">
-            <Brain className="w-4 h-4 text-neon" />
+        <div className="flex items-center gap-3 px-4 py-5">
+          <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shrink-0 shadow-sm">
+            <Brain className="w-[18px] h-[18px] text-primary" />
           </div>
           {!collapsed && (
             <div>
-              <div className="text-sm font-semibold tracking-tight text-foreground">MERIDIAN</div>
-              <div className="text-[10px] font-mono text-neon">
-                {activeRuns > 0 ? "ACTIVE" : "NOMINAL"}
+              <div className="text-[15px] font-bold tracking-tight text-foreground">Meridian</div>
+              <div className="text-[11px] font-medium text-primary/70">
+                {activeRuns > 0 ? "Processing" : "Ready"}
               </div>
             </div>
           )}
@@ -121,31 +128,33 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
 
         {/* System stats */}
         {!collapsed && (
-          <div className="flex items-center justify-between px-4 py-2.5 border-b border-border text-[10px] font-mono">
+          <div className="flex items-center justify-between mx-4 mb-4 px-3 py-2.5 rounded-xl bg-black/[0.03]">
             <div className="text-center">
-              <div className="text-foreground font-semibold">67</div>
-              <div className="text-muted-foreground">AGENTS</div>
+              <div className="text-[15px] font-bold text-foreground">67</div>
+              <div className="text-[10px] font-medium text-foreground/35 uppercase tracking-wide">Agents</div>
             </div>
+            <div className="w-px h-6 bg-black/[0.06]" />
             <div className="text-center">
-              <div className="text-foreground font-semibold">{recentRuns.length}</div>
-              <div className="text-muted-foreground">RUNS</div>
+              <div className="text-[15px] font-bold text-foreground">{recentRuns.length}</div>
+              <div className="text-[10px] font-medium text-foreground/35 uppercase tracking-wide">Runs</div>
             </div>
+            <div className="w-px h-6 bg-black/[0.06]" />
             <div className="text-center">
-              <div className="text-foreground font-semibold">{activeRuns}</div>
-              <div className="text-muted-foreground">QUEUE</div>
+              <div className="text-[15px] font-bold text-foreground">{activeRuns}</div>
+              <div className="text-[10px] font-medium text-foreground/35 uppercase tracking-wide">Active</div>
             </div>
           </div>
         )}
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-3 px-2">
+        <nav className="flex-1 overflow-y-auto py-1 px-3">
           <NavGroup label="Command" items={commandNav} />
           <NavGroup label="Intelligence" items={intelligenceNav} />
 
           {/* Module links */}
           {!collapsed && (
-            <div className="mb-4">
-              <div className="px-3 mb-1.5 text-[10px] font-mono uppercase tracking-widest text-muted-foreground/60">
+            <div className="mb-5">
+              <div className="px-3 mb-2 text-[11px] font-semibold uppercase tracking-wider text-foreground/30">
                 Modules
               </div>
               <div className="space-y-0.5">
@@ -155,15 +164,15 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
                   return (
                     <Link key={mod.id} href={`/module/${mod.id}`}>
                       <div
-                        className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all ${
+                        className={`flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] transition-all duration-200 ${
                           active
-                            ? "bg-accent text-neon font-medium"
-                            : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                            ? "bg-primary/10 text-primary font-semibold shadow-sm"
+                            : "text-foreground/60 hover:text-foreground hover:bg-black/[0.03]"
                         }`}
                       >
-                        <Icon className="w-4 h-4" />
+                        <Icon className={`w-[18px] h-[18px] ${active ? "text-primary" : "text-foreground/40"}`} />
                         <span className="truncate">{mod.shortName}</span>
-                        <span className="ml-auto text-[10px] font-mono text-muted-foreground/50">
+                        <span className="ml-auto text-[10px] font-medium text-foreground/25">
                           M{mod.id}
                         </span>
                       </div>
@@ -178,21 +187,21 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
         </nav>
 
         {/* Footer */}
-        <div className="border-t border-border px-3 py-3">
+        <div className="px-3 py-4 border-t border-black/[0.06]">
           {!collapsed && (
-            <div className="flex items-center gap-2.5 mb-2">
-              <div className="w-7 h-7 rounded-full bg-neon/15 flex items-center justify-center text-[10px] font-bold text-neon shrink-0">
+            <div className="flex items-center gap-2.5 mb-3 px-2">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-violet-signal/20 flex items-center justify-center text-[11px] font-bold text-primary shrink-0">
                 BB
               </div>
               <div>
-                <div className="text-xs font-medium text-foreground">Beth Berger</div>
-                <div className="text-[10px] text-muted-foreground">DRI · 2 FTEs · AI-First</div>
+                <div className="text-[13px] font-semibold text-foreground">Beth Berger</div>
+                <div className="text-[11px] text-foreground/40">DRI · 2 FTEs · AI-First</div>
               </div>
             </div>
           )}
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="w-full flex items-center justify-center py-1 text-muted-foreground hover:text-foreground transition-colors"
+            className="w-full flex items-center justify-center py-1.5 rounded-lg text-foreground/30 hover:text-foreground/60 hover:bg-black/[0.03] transition-all"
           >
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
@@ -200,13 +209,20 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto">
-        {/* Top bar */}
-        <header className="sticky top-0 z-10 flex items-center justify-between px-6 py-3 border-b border-border bg-background/80 backdrop-blur-sm">
-          <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
-            <span className="text-foreground">MERIDIAN</span>
-            <span>›</span>
-            <span className="text-foreground/70">
+      <main className="flex-1 overflow-y-auto bg-background">
+        {/* Top bar — frosted glass */}
+        <header
+          className="sticky top-0 z-10 flex items-center justify-between px-8 py-3.5 border-b border-black/[0.06]"
+          style={{
+            background: "oklch(0.985 0.002 250 / 0.8)",
+            backdropFilter: "blur(20px) saturate(1.5)",
+            WebkitBackdropFilter: "blur(20px) saturate(1.5)",
+          }}
+        >
+          <div className="flex items-center gap-2 text-[13px] text-foreground/40">
+            <span className="font-semibold text-foreground">Meridian</span>
+            <span className="text-foreground/20">/</span>
+            <span>
               {location === "/"
                 ? "Neural Command"
                 : location
@@ -216,18 +232,18 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
                     .join(" ")}
             </span>
           </div>
-          <div className="flex items-center gap-4 text-xs font-mono">
-            <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-5 text-[13px]">
+            <div className="flex items-center gap-2">
               <div
-                className={`w-2 h-2 rounded-full ${
-                  activeRuns > 0 ? "bg-neon animate-pulse-neon" : "bg-emerald-signal"
+                className={`w-2 h-2 rounded-full transition-colors ${
+                  activeRuns > 0 ? "bg-primary animate-pulse-neon" : "bg-emerald-signal"
                 }`}
               />
-              <span className={activeRuns > 0 ? "text-neon" : "text-emerald-signal"}>
-                {activeRuns > 0 ? "ACTIVE" : "NOMINAL"}
+              <span className={`font-medium ${activeRuns > 0 ? "text-primary" : "text-emerald-signal"}`}>
+                {activeRuns > 0 ? "Processing" : "Ready"}
               </span>
             </div>
-            <span className="text-muted-foreground">
+            <span className="text-foreground/30 font-medium">
               {new Date().toLocaleTimeString("en-US", {
                 hour: "numeric",
                 minute: "2-digit",
@@ -238,7 +254,7 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
         </header>
 
         {/* Page content */}
-        <div className="p-6 lg:p-8 max-w-[1400px]">{children}</div>
+        <div className="p-8 lg:p-10 max-w-[1440px]">{children}</div>
       </main>
     </div>
   );
