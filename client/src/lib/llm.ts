@@ -1,8 +1,9 @@
 /**
- * LLM Client — Calls the server-side proxy at /api/llm which uses
- * BUILT_IN_FORGE_API_KEY (the working server key).
- * Supports both streaming (SSE) and non-streaming modes.
- * Every prompt becomes a live cognitive unit that pulls real context and reasons.
+ * LLM Client — Dual-mode: 
+ * - Dev: Calls /api/llm (Vite proxy → Forge API with BUILT_IN_FORGE_API_KEY)
+ * - Production: Calls /api/trpc/llm.chat (tRPC mutation → invokeLLM server-side)
+ * Supports both streaming (SSE via /api/llm) and non-streaming modes.
+ * Falls back gracefully between modes.
  */
 
 export interface LLMMessage {
@@ -16,10 +17,50 @@ export interface LLMResponse {
 }
 
 /**
- * Call the LLM via server proxy (non-streaming).
- * Returns the assistant's response content.
+ * Call the LLM via tRPC mutation endpoint (production mode).
+ * tRPC batch protocol: POST /api/trpc/llm.chat with JSON body.
  */
-export async function callLLM(messages: LLMMessage[]): Promise<LLMResponse> {
+async function callLLMViaTRPC(messages: LLMMessage[]): Promise<LLMResponse> {
+  // tRPC batch format: POST /api/trpc/llm.chat
+  // Body: { "0": { "json": { messages, temperature, max_tokens } } }
+  const res = await fetch("/api/trpc/llm.chat?batch=1", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({
+      "0": {
+        json: {
+          messages,
+          temperature: 0.7,
+          max_tokens: 2000,
+        },
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text().catch(() => "Unknown error");
+    throw new Error(`tRPC LLM error ${res.status}: ${errText}`);
+  }
+
+  const data = await res.json();
+  // tRPC batch response: [{ "result": { "data": { "json": { choices: [...] } } } }]
+  const result = data?.[0]?.result?.data?.json;
+  if (!result) {
+    throw new Error("Invalid tRPC response format");
+  }
+
+  const choice = result.choices?.[0];
+  return {
+    content: choice?.message?.content || "No response generated.",
+    finishReason: choice?.finish_reason || "stop",
+  };
+}
+
+/**
+ * Call the LLM via direct proxy endpoint (dev mode).
+ */
+async function callLLMViaProxy(messages: LLMMessage[]): Promise<LLMResponse> {
   const res = await fetch("/api/llm", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -44,75 +85,141 @@ export async function callLLM(messages: LLMMessage[]): Promise<LLMResponse> {
 }
 
 /**
+ * Call the LLM via server proxy (non-streaming).
+ * Tries /api/llm first (dev mode), falls back to /api/trpc (production).
+ */
+export async function callLLM(messages: LLMMessage[]): Promise<LLMResponse> {
+  try {
+    // Try direct proxy first (works in dev via Vite middleware)
+    const res = await fetch("/api/llm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages,
+        temperature: 0.7,
+        max_tokens: 2000,
+      }),
+    });
+
+    if (res.status === 404) {
+      // /api/llm not available (production) — fall back to tRPC
+      return await callLLMViaTRPC(messages);
+    }
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "Unknown error");
+      throw new Error(`LLM API error ${res.status}: ${errText}`);
+    }
+
+    const data = await res.json();
+    const choice = data.choices?.[0];
+    return {
+      content: choice?.message?.content || "No response generated.",
+      finishReason: choice?.finish_reason || "stop",
+    };
+  } catch (e: any) {
+    // If the error is from our own throw, re-throw it
+    if (e.message?.includes("LLM API error") || e.message?.includes("tRPC LLM error")) {
+      throw e;
+    }
+    // Network error or /api/llm not available — try tRPC
+    try {
+      return await callLLMViaTRPC(messages);
+    } catch (trpcErr: any) {
+      throw new Error(`LLM call failed: ${e.message}. tRPC fallback also failed: ${trpcErr.message}`);
+    }
+  }
+}
+
+/**
  * Call the LLM via server proxy with streaming (SSE).
- * Calls onChunk with each delta as it arrives.
- * Returns the full accumulated content when done.
+ * Tries /api/llm streaming first, falls back to non-streaming tRPC.
  */
 export async function callLLMStream(
   messages: LLMMessage[],
   onChunk: (chunk: string, accumulated: string) => void,
 ): Promise<LLMResponse> {
-  const res = await fetch("/api/llm", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      messages,
-      temperature: 0.7,
-      max_tokens: 2000,
-      stream: true,
-    }),
-  });
+  try {
+    const res = await fetch("/api/llm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages,
+        temperature: 0.7,
+        max_tokens: 2000,
+        stream: true,
+      }),
+    });
 
-  if (!res.ok) {
-    const errText = await res.text().catch(() => "Unknown error");
-    throw new Error(`LLM API error ${res.status}: ${errText}`);
-  }
+    if (res.status === 404) {
+      // /api/llm not available (production) — fall back to non-streaming tRPC
+      const result = await callLLMViaTRPC(messages);
+      // Simulate streaming by delivering the full content at once
+      onChunk(result.content, result.content);
+      return result;
+    }
 
-  const reader = res.body?.getReader();
-  if (!reader) throw new Error("No response body");
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "Unknown error");
+      throw new Error(`LLM API error ${res.status}: ${errText}`);
+    }
 
-  const decoder = new TextDecoder();
-  let accumulated = "";
-  let finishReason = "stop";
-  let buffer = "";
+    const reader = res.body?.getReader();
+    if (!reader) throw new Error("No response body");
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
+    const decoder = new TextDecoder();
+    let accumulated = "";
+    let finishReason = "stop";
+    let buffer = "";
 
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split("\n");
-    // Keep the last potentially incomplete line in buffer
-    buffer = lines.pop() || "";
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
 
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || !trimmed.startsWith("data: ")) continue;
-      const data = trimmed.slice(6);
-      if (data === "[DONE]") continue;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
 
-      try {
-        const parsed = JSON.parse(data);
-        const delta = parsed.choices?.[0]?.delta?.content;
-        const fr = parsed.choices?.[0]?.finish_reason;
-        if (fr) finishReason = fr;
-        if (delta) {
-          accumulated += delta;
-          onChunk(delta, accumulated);
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || !trimmed.startsWith("data: ")) continue;
+        const data = trimmed.slice(6);
+        if (data === "[DONE]") continue;
+
+        try {
+          const parsed = JSON.parse(data);
+          const delta = parsed.choices?.[0]?.delta?.content;
+          const fr = parsed.choices?.[0]?.finish_reason;
+          if (fr) finishReason = fr;
+          if (delta) {
+            accumulated += delta;
+            onChunk(delta, accumulated);
+          }
+        } catch {
+          // Skip malformed JSON chunks
         }
-      } catch {
-        // Skip malformed JSON chunks
       }
     }
-  }
 
-  // If streaming didn't produce output, fall back to non-streaming
-  if (!accumulated) {
-    const fallback = await callLLM(messages);
-    return fallback;
-  }
+    // If streaming didn't produce output, fall back to non-streaming
+    if (!accumulated) {
+      const fallback = await callLLM(messages);
+      onChunk(fallback.content, fallback.content);
+      return fallback;
+    }
 
-  return { content: accumulated, finishReason };
+    return { content: accumulated, finishReason };
+  } catch (e: any) {
+    // If it's a known error, try tRPC fallback
+    if (e.message?.includes("LLM API error")) throw e;
+    try {
+      const result = await callLLMViaTRPC(messages);
+      onChunk(result.content, result.content);
+      return result;
+    } catch (trpcErr: any) {
+      throw new Error(`LLM streaming failed: ${e.message}. tRPC fallback also failed: ${trpcErr.message}`);
+    }
+  }
 }
 
 /**
