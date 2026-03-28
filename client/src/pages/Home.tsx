@@ -51,7 +51,7 @@ export default function Home() {
             Command Center
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            AI-First CTV Commercial Operating Model — 2 FTEs, {stats.totalPrompts} agents, {stats.modules} modules
+            CTV AI Commercial Engine — 2 FTEs, {stats.totalPrompts} agents, {stats.modules} modules
           </p>
         </div>
 
@@ -376,7 +376,7 @@ export default function Home() {
 
         {/* Footer */}
         <div className="text-center text-xs text-muted-foreground pb-8">
-          <span className="font-mono">AI-First CTV Commercial Operating Model</span> · Beth Berger · Draft for POC & Feedback · Mar 2026
+          <span className="font-mono">CTV AI Commercial Engine</span> · Moloco · Draft for POC & Feedback · Mar 2026
         </div>
       </div>
     </Layout>

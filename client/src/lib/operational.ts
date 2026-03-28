@@ -1,6 +1,6 @@
 // ============================================================================
 // OPERATIONAL METADATA — Enriches each sub-module with workflow details
-// Derived from Beth Berger's operating model doc + domain inference
+// Derived from CTV operating model doc + domain inference
 // ============================================================================
 
 export interface WorkflowStep {

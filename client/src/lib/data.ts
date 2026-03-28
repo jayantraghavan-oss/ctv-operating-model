@@ -1,6 +1,6 @@
 // ============================================================================
 // AI-First CTV Commercial Operating Model — Complete Data Model
-// Source: Beth Berger's operating model doc (Mar 9, 2026) + 200 agent prompts
+// Source: CTV operating model doc (Mar 9, 2026) + 200 agent prompts
 // Every sub-module, ownership type, cluster rationale, and prompt captured.
 // ============================================================================
 

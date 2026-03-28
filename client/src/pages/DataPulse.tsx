@@ -72,7 +72,7 @@ export default function DataPulse() {
 
 Provide:
 1. **Strategic implications** — What does this signal mean for our CTV GTM strategy?
-2. **Action items** — What should Beth and the team do about this in the next 2 weeks?
+2. **Action items** — What should the team do about this in the next 2 weeks?
 3. **Risk assessment** — What happens if we ignore this signal?
 4. **Connection to other signals** — How does this relate to other intelligence we're seeing?
 5. **Conviction impact** — How should this affect our investment conviction score?`;

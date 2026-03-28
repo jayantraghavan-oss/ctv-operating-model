@@ -240,8 +240,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {/* Footer */}
         <div className="border-t border-border px-4 py-3">
           <div className="text-[11px] text-muted-foreground">
-            <div className="font-medium text-foreground text-xs">Beth Berger</div>
-            <div>Head of CTV Programs</div>
+            <div className="font-medium text-foreground text-xs">CTV AI Engine</div>
+            <div>Moloco Commercial</div>
             <div className="mt-1 font-mono text-[10px] opacity-50">2 FTEs · AI-First</div>
           </div>
         </div>
@@ -281,8 +281,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </nav>
               <div className="border-t border-border px-4 py-3">
                 <div className="text-[11px] text-muted-foreground">
-                  <div className="font-medium text-foreground text-xs">Beth Berger</div>
-                  <div>Head of CTV Programs · 2 FTEs · AI-First</div>
+                  <div className="font-medium text-foreground text-xs">CTV AI Engine</div>
+                  <div>Moloco Commercial · 2 FTEs · AI-First</div>
                 </div>
               </div>
             </motion.aside>

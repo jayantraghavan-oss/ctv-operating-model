@@ -66,7 +66,7 @@ describe("buildAgentSystemPrompt", () => {
   it("includes output formatting requirements", () => {
     const prompt = buildAgentSystemPrompt("Test", 1, "Sub", "persistent", "agent");
     expect(prompt).toContain("markdown");
-    expect(prompt).toContain("500 words");
+    expect(prompt).toContain("600 words");
   });
 
   it("handles all 4 module IDs correctly", () => {

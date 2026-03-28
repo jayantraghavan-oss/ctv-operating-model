@@ -3,7 +3,7 @@
  * REAL LLM execution with STREAMING — every agent fires a live cognitive call.
  * Manages: agent run history, sub-module statuses, cluster notes,
  * notifications, conviction scores, and learning loop events.
- * All state persisted to localStorage so Beth never loses context.
+ * All state persisted to localStorage so the user never loses context.
  */
 import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from "react";
 import { executeAgentPromptStream, executeAgentPrompt } from "@/lib/llm";
@@ -419,7 +419,7 @@ export function AgentProvider({ children }: { children: ReactNode }) {
       clusterId,
       text,
       createdAt: new Date().toISOString(),
-      author: "Beth Berger",
+      author: "Operator",
     };
     setState((prev) => ({
       ...prev,

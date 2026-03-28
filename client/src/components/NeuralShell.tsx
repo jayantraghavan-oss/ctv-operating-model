@@ -1,11 +1,12 @@
 /**
  * NeuralShell — CTV AI Commercial Engine chrome.
  * Mobile-first: bottom nav on mobile, frosted sidebar on desktop.
- * Magical micro-interactions throughout.
+ * Moloco branding with cloud+M logo throughout.
  */
 import { Link, useLocation } from "wouter";
 import { useAgent } from "@/contexts/AgentContext";
 import { useIsMobile } from "@/hooks/useMobile";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Brain,
   Zap,
@@ -25,10 +26,14 @@ import {
   X,
   Bell,
   Activity,
+  LogIn,
 } from "lucide-react";
 import { useState, useEffect, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { modules } from "@/lib/data";
+import { modules, getTotalStats } from "@/lib/data";
+import { getLoginUrl } from "@/const";
+
+const MOLOCO_LOGO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663459898851/Wr22fCMnjpJGgmtKZSL2hG/moloco-logo-blue_486481be.png";
 
 const moduleIcons = [Radar, Megaphone, Users, BarChart3];
 
@@ -71,8 +76,15 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { recentRuns, unreadCount } = useAgent();
   const isMobile = useIsMobile();
+  const { user, isAuthenticated } = useAuth();
 
   const activeRuns = recentRuns.filter((r) => r.status === "running").length;
+
+  // Get user initials for avatar
+  const userInitials = user?.name
+    ? user.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
+    : "?";
+  const userName = user?.name || "Guest";
 
   // Close mobile menu on navigation
   useEffect(() => {
@@ -139,11 +151,9 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
           }}
         >
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-              <Brain className="w-4 h-4 text-primary" />
-            </div>
+            <img src={MOLOCO_LOGO} alt="Moloco" className="w-8 h-8 object-contain" />
             <div>
-              <div className="text-[14px] font-bold tracking-tight text-foreground">CTV Engine</div>
+              <div className="text-[14px] font-bold tracking-tight text-foreground">CTV AI Engine</div>
               <div className="text-[10px] font-medium text-foreground/35">
                 {activeRuns > 0 ? `${activeRuns} running` : "Ready"}
               </div>
@@ -233,15 +243,22 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
                   <NavGroup label="Reference" items={legacyNav} />
                   {/* User */}
                   <div className="mt-6 pt-4 border-t border-black/[0.06]">
-                    <div className="flex items-center gap-2.5 px-2">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-violet-signal/20 flex items-center justify-center text-[11px] font-bold text-primary">
-                        BB
+                    {isAuthenticated ? (
+                      <div className="flex items-center gap-2.5 px-2">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-violet-signal/20 flex items-center justify-center text-[11px] font-bold text-primary">
+                          {userInitials}
+                        </div>
+                        <div>
+                          <div className="text-[13px] font-semibold text-foreground">{userName}</div>
+                          <div className="text-[11px] text-foreground/35">Operator</div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="text-[13px] font-semibold text-foreground">Beth Berger</div>
-                        <div className="text-[11px] text-foreground/35">DRI · 2 FTEs</div>
-                      </div>
-                    </div>
+                    ) : (
+                      <a href={getLoginUrl()} className="flex items-center gap-2.5 px-2 text-primary hover:underline">
+                        <LogIn className="w-4 h-4" />
+                        <span className="text-[13px] font-medium">Sign In</span>
+                      </a>
+                    )}
                   </div>
                 </div>
               </motion.div>
@@ -313,12 +330,12 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
         {/* Logo */}
         <div className="flex items-center gap-3 px-4 py-5">
           <motion.div
-            className="w-9 h-9 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shrink-0"
+            className="w-9 h-9 rounded-2xl flex items-center justify-center shrink-0"
             whileHover={{ scale: 1.05, rotate: 5 }}
             whileTap={{ scale: 0.95 }}
             transition={{ type: "spring", stiffness: 400, damping: 20 }}
           >
-            <Brain className="w-[18px] h-[18px] text-primary" />
+            <img src={MOLOCO_LOGO} alt="Moloco" className="w-9 h-9 object-contain" />
           </motion.div>
           {!collapsed && (
             <motion.div
@@ -326,8 +343,8 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1 }}
             >
-              <div className="text-[14px] font-bold tracking-tight text-foreground">CTV Engine</div>
-              <div className="text-[10px] font-semibold text-primary/60 uppercase tracking-wider">AI Commercial</div>
+              <div className="text-[14px] font-bold tracking-tight text-foreground">CTV AI Engine</div>
+              <div className="text-[10px] font-semibold text-primary/60 uppercase tracking-wider">Moloco</div>
             </motion.div>
           )}
         </div>
@@ -340,7 +357,7 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
             className="flex items-center justify-between mx-4 mb-4 px-3 py-2.5 rounded-2xl bg-black/[0.03]"
           >
             <div className="text-center">
-              <div className="text-[15px] font-bold text-foreground">67</div>
+              <div className="text-[15px] font-bold text-foreground">{getTotalStats().totalPrompts}</div>
               <div className="text-[9px] font-bold text-foreground/25 uppercase tracking-wider">Agents</div>
             </div>
             <div className="w-px h-6 bg-black/[0.06]" />
@@ -397,17 +414,26 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
           <NavGroup label="Reference" items={legacyNav} compact={collapsed} />
         </nav>
 
-        {/* Footer */}
+        {/* Footer — dynamic user */}
         <div className="px-3 py-4 border-t border-black/[0.06]">
           {!collapsed && (
             <div className="flex items-center gap-2.5 mb-3 px-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-violet-signal/20 flex items-center justify-center text-[11px] font-bold text-primary shrink-0">
-                BB
-              </div>
-              <div>
-                <div className="text-[13px] font-semibold text-foreground">Beth Berger</div>
-                <div className="text-[11px] text-foreground/35">DRI · AI-First</div>
-              </div>
+              {isAuthenticated ? (
+                <>
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-violet-signal/20 flex items-center justify-center text-[11px] font-bold text-primary shrink-0">
+                    {userInitials}
+                  </div>
+                  <div>
+                    <div className="text-[13px] font-semibold text-foreground">{userName}</div>
+                    <div className="text-[11px] text-foreground/35">Operator</div>
+                  </div>
+                </>
+              ) : (
+                <a href={getLoginUrl()} className="flex items-center gap-2 text-primary hover:underline">
+                  <LogIn className="w-4 h-4" />
+                  <span className="text-[13px] font-medium">Sign In</span>
+                </a>
+              )}
             </div>
           )}
           <button
@@ -431,7 +457,8 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
           }}
         >
           <div className="flex items-center gap-2 text-[13px] text-foreground/35">
-            <span className="font-bold text-foreground">CTV Engine</span>
+            <img src={MOLOCO_LOGO} alt="Moloco" className="w-5 h-5 object-contain" />
+            <span className="font-bold text-foreground">CTV AI Engine</span>
             <span className="text-foreground/15">/</span>
             <span className="font-medium">
               {location === "/"

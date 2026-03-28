@@ -27,10 +27,10 @@
 - [x] Vitest tests for data model integrity (22 tests, all passing)
 
 ## Phase 15: Rebrand + Mobile + 100x UX Upgrade
-- [ ] Rename to "CTV AI Commercial Engine" throughout
-- [ ] New brand identity — catchy name, gradient accent, distinctive mark
+- [x] Rename to "CTV AI Commercial Engine" throughout (updated NeuralShell, Home, NeuralCommand)
+- [x] New brand identity — CTV AI Engine with gradient brain icon, primary accent, distinctive mark (already in NeuralShell)
 - [ ] Mobile-first responsive design — all pages work on phone/tablet
-- [ ] Collapsible mobile sidebar with hamburger menu and gesture support
+- [x] Collapsible mobile sidebar with hamburger menu and gesture support (already implemented: bottom nav + slide-over menu)
 - [x] Magical micro-interactions: spring physics, stagger animations, parallax, shimmer loading (done in Phase 17)
 - [x] NeuralCommand: live agent execution with real streaming, rich cluster drill-down, animated KPIs (streaming Streamdown output in live feed)
 - [x] AgentSwarm: deep per-agent detail views, execution history, output previews, mobile card layout (done in Phase 16/17)
@@ -62,9 +62,26 @@
 - [x] Polish micro-interactions: better hover states, focus rings, ripple effects
 
 ## Phase 17b: Gap Items (noted during review)
-- [ ] Move agent execution to server-side tRPC procedure (currently client-side Forge API)
-- [ ] Inject real Gong call data and brand pipeline context into server-side agent execution
+- [x] Move agent execution to server-side /api/llm proxy (Vite middleware using BUILT_IN_FORGE_API_KEY)
+- [ ] Inject real Gong call data and brand pipeline context into server-side agent execution (future: requires Gong API integration)
 - [x] Add Escape key handling for command palette and modal close (confirmed: line 47-49 in CommandPalette.tsx)
 - [x] Verify BuyerSim auto-play typing animation is working (confirmed: autoPlay state, bounce animation, progressive turn reveal)
 - [x] Add AnimatePresence route transitions in App.tsx (confirmed: line 51-73)
 - [x] Add visible focus-ring states on interactive controls (added to index.css base layer)
+
+## Phase 18: Remove hardcoded DRI, make user dynamic
+- [x] Remove hardcoded "Beth Berger" from NeuralShell sidebar (desktop + mobile)
+- [x] Remove hardcoded "Beth Berger" from Home.tsx footer
+- [x] Remove hardcoded "Beth Berger" from NeuralCommand.tsx footer
+- [x] Show logged-in user name/initials when authenticated, show generic "Guest" or nothing when not
+
+## Phase 18: Fix LLM API errors + Remove hardcoded DRI
+- [x] Diagnose and fix LLM API errors when clicking Execute buttons (fixed: routed through /api/llm server proxy using BUILT_IN_FORGE_API_KEY)
+- [x] Test every Execute button on every page (AgentSwarm, ModulePage, AgentRegistry, WarRoom, NeuralCommand, DataPulse) — all working
+- [x] Remove hardcoded "Beth Berger" from NeuralShell sidebar (desktop + mobile)
+- [x] Remove hardcoded "Beth Berger" from Home.tsx and NeuralCommand.tsx footers
+- [x] Show logged-in user name/initials when authenticated, generic when not
+- [x] Add Moloco logo to sidebar/header replacing Brain icon
+- [x] Move LLM calls from client-side Forge API to server-side /api/llm proxy using BUILT_IN_FORGE_API_KEY
+- [x] Update all frontend agent execution to call server proxy instead of direct API
+- [x] Test every Execute button on every page and verify 100% success

@@ -69,6 +69,75 @@ function writeToLogFile(source: LogSource, entries: unknown[]) {
 }
 
 /**
+ * Vite plugin to proxy LLM calls through the server using BUILT_IN_FORGE_API_KEY.
+ * The frontend key (VITE_FRONTEND_FORGE_API_KEY) returns 401, so we route through
+ * the server which has the working key.
+ */
+function vitePluginLLMProxy(): Plugin {
+  return {
+    name: "llm-proxy",
+    configureServer(server: ViteDevServer) {
+      // POST /api/llm — proxy to Forge API with server-side key
+      server.middlewares.use("/api/llm", (req: any, res: any, next: any) => {
+        if (req.method !== "POST") return next();
+
+        let body = "";
+        req.on("data", (chunk: Buffer) => { body += chunk.toString(); });
+        req.on("end", async () => {
+          try {
+            const payload = JSON.parse(body);
+            const FORGE_URL = process.env.BUILT_IN_FORGE_API_URL || "https://forge.manus.ai";
+            const FORGE_KEY = process.env.BUILT_IN_FORGE_API_KEY || "";
+
+            const isStream = payload.stream === true;
+
+            const forgeRes = await fetch(`${FORGE_URL}/v1/chat/completions`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${FORGE_KEY}`,
+              },
+              body: JSON.stringify(payload),
+            });
+
+            if (!forgeRes.ok) {
+              const errText = await forgeRes.text().catch(() => "Unknown error");
+              res.writeHead(forgeRes.status, { "Content-Type": "application/json" });
+              res.end(JSON.stringify({ error: errText }));
+              return;
+            }
+
+            if (isStream && forgeRes.body) {
+              res.writeHead(200, {
+                "Content-Type": "text/event-stream",
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+              });
+              const reader = (forgeRes.body as any).getReader();
+              const pump = async () => {
+                while (true) {
+                  const { done, value } = await reader.read();
+                  if (done) { res.end(); break; }
+                  res.write(value);
+                }
+              };
+              pump().catch(() => res.end());
+            } else {
+              const data = await forgeRes.json();
+              res.writeHead(200, { "Content-Type": "application/json" });
+              res.end(JSON.stringify(data));
+            }
+          } catch (e: any) {
+            res.writeHead(500, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ error: e.message || "Internal error" }));
+          }
+        });
+      });
+    },
+  };
+}
+
+/**
  * Vite plugin to collect browser debug logs
  * - POST /__manus__/logs: Browser sends logs, written directly to files
  * - Files: browserConsole.log, networkRequests.log, sessionReplay.log
@@ -150,7 +219,7 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
+const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginLLMProxy(), vitePluginManusDebugCollector()];
 
 export default defineConfig({
   plugins,

@@ -37,6 +37,8 @@ export default function NeuralCommand() {
   const [expandedSection, setExpandedSection] = useState<string | null>("conviction");
   const [expandedRun, setExpandedRun] = useState<string | null>(null);
   const [systemPulse, setSystemPulse] = useState(0);
+  const [expandedGoal, setExpandedGoal] = useState<string | null>(null);
+  const [analyzingGoal, setAnalyzingGoal] = useState<string | null>(null);
 
   const activeRuns = recentRuns.filter((r) => r.status === "running").length;
   const completedRuns = recentRuns.filter((r) => r.status === "completed").length;
@@ -86,6 +88,40 @@ export default function NeuralCommand() {
       setTimeout(() => deployCluster(c.id), i * 2000);
     });
   }, [deployCluster]);
+
+  // Deep-dive analysis for individual conviction goals
+  const analyzeGoal = useCallback((goalId: string, question: string, conviction: number, status: string, evidence: string[]) => {
+    setAnalyzingGoal(goalId);
+    setExpandedGoal(goalId);
+    const deepDivePrompt = `You are a senior CTV strategy analyst at Moloco. Perform a deep-dive analysis on this specific investment conviction question:
+
+**Question:** ${question}
+**Current Conviction:** ${conviction}%
+**Status:** ${status}
+**Existing Evidence:** ${evidence.join("; ")}
+
+Provide a comprehensive deep-dive including:
+
+1. **Current State Assessment** — What do we actually know vs. what are we assuming? Be specific about data gaps.
+2. **Key Facts & Data Points** — What concrete evidence supports or undermines this conviction? Reference specific market data, competitive intel, and customer signals.
+3. **Risk Factors** — What could cause this conviction to drop? What are the bear-case scenarios?
+4. **Upside Catalysts** — What events or evidence would significantly increase conviction?
+5. **Recommended Actions** — 3-5 specific, time-bound actions the team should take in the next 2-4 weeks to gather more evidence.
+6. **Evidence Collection Plan** — What specific data do we need to collect, from whom, and by when?
+7. **EOQ2 Decision Impact** — How does this goal's trajectory affect the overall investment decision?
+
+Be specific, data-driven, and actionable. Reference CTV market dynamics, Moloco's competitive position, and real industry trends.`;
+
+    runAgent(
+      900 + parseInt(goalId.replace("lg-", "")),
+      deepDivePrompt,
+      4,
+      `Conviction::${question.slice(0, 50)}`,
+      "triggered",
+      "agent",
+    );
+    setTimeout(() => setAnalyzingGoal(null), 2000);
+  }, [runAgent]);
 
   // Smart recommendations based on current state
   const smartRecs = useMemo(() => {
@@ -242,45 +278,121 @@ export default function NeuralCommand() {
                 >
                   <div className="px-5 md:px-6 pb-5 border-t border-black/[0.04]">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
-                      {convictionScore.goals.slice(0, 8).map((goal) => (
+                      {convictionScore.goals.slice(0, 8).map((goal) => {
+                        const isExpanded = expandedGoal === goal.id;
+                        const isAnalyzing = analyzingGoal === goal.id;
+                        const goalRun = recentRuns.find(r => r.subModuleName?.startsWith(`Conviction::${goal.question.slice(0, 50)}`));
+                        const streamingOut = goalRun?.status === "running" ? getStreamingOutput(goalRun.id) : undefined;
+                        const finalOutput = goalRun?.output;
+                        const displayOutput = streamingOut || finalOutput;
+                        return (
                         <motion.div
                           key={goal.id}
-                          className="p-3.5 rounded-2xl bg-black/[0.015] hover:bg-black/[0.025] transition-colors"
+                          className={`rounded-2xl transition-all cursor-pointer ${
+                            isExpanded ? "bg-black/[0.03] ring-1 ring-primary/20" : "bg-black/[0.015] hover:bg-black/[0.025]"
+                          }`}
                           whileHover={{ scale: 1.005 }}
+                          layout
                         >
-                          <div className="flex items-start justify-between gap-2 mb-2">
-                            <p className="text-[13px] text-foreground/70 leading-snug flex-1">{goal.question}</p>
-                            <span className={`text-[13px] font-bold shrink-0 ${
-                              goal.conviction >= 70 ? "text-emerald-signal" :
-                              goal.conviction >= 50 ? "text-amber-signal" :
-                              goal.conviction >= 30 ? "text-rose-signal" :
-                              "text-foreground/25"
-                            }`}>{goal.conviction}%</span>
+                          <div
+                            className="p-3.5"
+                            onClick={() => setExpandedGoal(isExpanded ? null : goal.id)}
+                          >
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <p className="text-[13px] text-foreground/70 leading-snug flex-1">{goal.question}</p>
+                              <span className={`text-[13px] font-bold shrink-0 ${
+                                goal.conviction >= 70 ? "text-emerald-signal" :
+                                goal.conviction >= 50 ? "text-amber-signal" :
+                                goal.conviction >= 30 ? "text-rose-signal" :
+                                "text-foreground/25"
+                              }`}>{goal.conviction}%</span>
+                            </div>
+                            <div className="w-full h-1.5 rounded-full bg-black/[0.04] overflow-hidden">
+                              <motion.div
+                                className={`h-full rounded-full ${
+                                  goal.conviction >= 70 ? "bg-emerald-signal" :
+                                  goal.conviction >= 50 ? "bg-amber-signal" :
+                                  goal.conviction >= 30 ? "bg-rose-signal" :
+                                  "bg-foreground/15"
+                                }`}
+                                initial={{ width: 0 }}
+                                animate={{ width: `${goal.conviction}%` }}
+                                transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
+                              />
+                            </div>
+                            <div className="flex items-center justify-between mt-2">
+                              <div className="flex items-center gap-1.5">
+                                <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md ${
+                                  goal.status === "strong" ? "bg-emerald-signal/10 text-emerald-signal" :
+                                  goal.status === "moderate" ? "bg-amber-signal/10 text-amber-signal" :
+                                  goal.status === "weak" ? "bg-rose-signal/10 text-rose-signal" :
+                                  "bg-foreground/5 text-foreground/30"
+                                }`}>{goal.status}</span>
+                                <span className="text-[10px] text-foreground/25">{goal.evidence.length} evidence point{goal.evidence.length !== 1 ? "s" : ""}</span>
+                              </div>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  analyzeGoal(goal.id, goal.question, goal.conviction, goal.status, goal.evidence);
+                                }}
+                                disabled={isAnalyzing || goalRun?.status === "running"}
+                                className="text-[10px] font-semibold text-primary hover:text-primary/70 disabled:opacity-50 flex items-center gap-1 transition-colors"
+                              >
+                                {goalRun?.status === "running" ? (
+                                  <><Activity className="w-3 h-3 animate-pulse" /> Analyzing...</>
+                                ) : displayOutput ? (
+                                  <><RotateCcw className="w-3 h-3" /> Re-analyze</>
+                                ) : (
+                                  <><Zap className="w-3 h-3" /> Deep Dive</>
+                                )}
+                              </button>
+                            </div>
                           </div>
-                          <div className="w-full h-1.5 rounded-full bg-black/[0.04] overflow-hidden">
-                            <motion.div
-                              className={`h-full rounded-full ${
-                                goal.conviction >= 70 ? "bg-emerald-signal" :
-                                goal.conviction >= 50 ? "bg-amber-signal" :
-                                goal.conviction >= 30 ? "bg-rose-signal" :
-                                "bg-foreground/15"
-                              }`}
-                              initial={{ width: 0 }}
-                              animate={{ width: `${goal.conviction}%` }}
-                              transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
-                            />
-                          </div>
-                          <div className="flex items-center gap-1.5 mt-2">
-                            <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md ${
-                              goal.status === "strong" ? "bg-emerald-signal/10 text-emerald-signal" :
-                              goal.status === "moderate" ? "bg-amber-signal/10 text-amber-signal" :
-                              goal.status === "weak" ? "bg-rose-signal/10 text-rose-signal" :
-                              "bg-foreground/5 text-foreground/30"
-                            }`}>{goal.status}</span>
-                            <span className="text-[10px] text-foreground/25">{goal.evidence.length} evidence point{goal.evidence.length !== 1 ? "s" : ""}</span>
-                          </div>
+                          <AnimatePresence>
+                            {isExpanded && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.3 }}
+                                className="overflow-hidden"
+                              >
+                                <div className="px-3.5 pb-3.5 border-t border-black/[0.04] pt-3">
+                                  {displayOutput ? (
+                                    <div className="text-[12px] text-foreground/70 leading-relaxed max-h-[300px] overflow-y-auto prose prose-sm prose-headings:text-foreground prose-headings:text-[13px] prose-p:text-[12px] prose-li:text-[12px]">
+                                      <Streamdown>{displayOutput}</Streamdown>
+                                    </div>
+                                  ) : goalRun?.status === "running" ? (
+                                    <div className="flex items-center gap-2 text-[12px] text-foreground/40 py-4">
+                                      <Activity className="w-3.5 h-3.5 animate-pulse text-primary" />
+                                      <span>Analyzing conviction data...</span>
+                                    </div>
+                                  ) : (
+                                    <div className="text-center py-4">
+                                      <p className="text-[12px] text-foreground/30 mb-2">Click "Deep Dive" to analyze this conviction goal with AI</p>
+                                      <button
+                                        onClick={() => analyzeGoal(goal.id, goal.question, goal.conviction, goal.status, goal.evidence)}
+                                        className="text-[11px] font-semibold text-primary hover:text-primary/70 flex items-center gap-1 mx-auto transition-colors"
+                                      >
+                                        <Zap className="w-3.5 h-3.5" /> Run Deep Dive Analysis
+                                      </button>
+                                    </div>
+                                  )}
+                                  {goalRun?.durationMs && (
+                                    <div className="mt-2 pt-2 border-t border-black/[0.04] flex items-center gap-2 text-[10px] text-foreground/25">
+                                      <Clock className="w-3 h-3" />
+                                      <span>{(goalRun.durationMs / 1000).toFixed(1)}s</span>
+                                      <span>·</span>
+                                      <span>{goalRun.output?.split(/\s+/).length || 0} words</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </motion.div>
-                      ))}
+                        );
+                      })}
                     </div>
                     <div className="mt-4 flex items-center justify-between">
                       <p className="text-[12px] text-foreground/30">
@@ -733,7 +845,7 @@ export default function NeuralCommand() {
 
         {/* Footer */}
         <div className="text-center text-[12px] text-foreground/20 font-medium pb-6">
-          CTV AI Commercial Engine · Beth Berger · 2 FTEs · {stats.totalPrompts} Agents · Moloco
+          CTV AI Engine · 2 FTEs · {stats.totalPrompts} Agents · Moloco
         </div>
       </motion.div>
     </NeuralShell>

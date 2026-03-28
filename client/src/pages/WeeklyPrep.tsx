@@ -1,7 +1,7 @@
 /*
  * WeeklyPrep — Auto-generated XFN Leadership Weekly
  * Pulls from all 4 modules to generate a pre-read for the weekly standup.
- * Beth reviews and edits before the meeting. This is the "second brain" in action.
+ * The operator reviews and edits before the meeting. This is the "second brain" in action.
  */
 import Layout from "@/components/Layout";
 import { motion } from "framer-motion";

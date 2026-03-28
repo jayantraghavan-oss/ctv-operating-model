@@ -1,11 +1,9 @@
 /**
- * LLM Client — Calls the Forge API directly for real agent execution.
+ * LLM Client — Calls the server-side proxy at /api/llm which uses
+ * BUILT_IN_FORGE_API_KEY (the working server key).
  * Supports both streaming (SSE) and non-streaming modes.
  * Every prompt becomes a live cognitive unit that pulls real context and reasons.
  */
-
-const FORGE_URL = import.meta.env.VITE_FRONTEND_FORGE_API_URL || "https://forge.manus.ai";
-const FORGE_KEY = import.meta.env.VITE_FRONTEND_FORGE_API_KEY || "";
 
 export interface LLMMessage {
   role: "system" | "user" | "assistant";
@@ -18,16 +16,13 @@ export interface LLMResponse {
 }
 
 /**
- * Call the Forge LLM API with messages (non-streaming).
+ * Call the LLM via server proxy (non-streaming).
  * Returns the assistant's response content.
  */
 export async function callLLM(messages: LLMMessage[]): Promise<LLMResponse> {
-  const res = await fetch(`${FORGE_URL}/v1/chat/completions`, {
+  const res = await fetch("/api/llm", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${FORGE_KEY}`,
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       messages,
       temperature: 0.7,
@@ -49,7 +44,7 @@ export async function callLLM(messages: LLMMessage[]): Promise<LLMResponse> {
 }
 
 /**
- * Call the Forge LLM API with streaming (SSE).
+ * Call the LLM via server proxy with streaming (SSE).
  * Calls onChunk with each delta as it arrives.
  * Returns the full accumulated content when done.
  */
@@ -57,12 +52,9 @@ export async function callLLMStream(
   messages: LLMMessage[],
   onChunk: (chunk: string, accumulated: string) => void,
 ): Promise<LLMResponse> {
-  const res = await fetch(`${FORGE_URL}/v1/chat/completions`, {
+  const res = await fetch("/api/llm", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${FORGE_KEY}`,
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       messages,
       temperature: 0.7,
@@ -125,6 +117,7 @@ export async function callLLMStream(
 
 /**
  * Build a rich system prompt for an agent based on its module context.
+ * Each agent gets deep CTV market knowledge and Moloco-specific guidance.
  */
 export function buildAgentSystemPrompt(
   promptText: string,
@@ -140,6 +133,43 @@ export function buildAgentSystemPrompt(
     4: "Customer Success & Growth",
   };
 
+  const moduleDeepContext: Record<number, string> = {
+    1: `## M1 Deep Context — Market Intelligence
+- CTV ad spend reached $25.9B in 2024 (eMarketer), projected $33B+ by 2026
+- Key measurement shift: deterministic CTV-to-App attribution via MMP (AppsFlyer, Adjust, Branch, Kochava) replacing probabilistic models
+- Incrementality is the #1 buyer concern — ghost bidding, PSA holdouts, geo-matched panels are standard
+- Competitive landscape: The Trade Desk (dominant, $1.9B rev), tvScientific (performance-native), Amazon DSP (walled garden + Freevee), Roku OneView (OS-level data), Viant (Household ID)
+- Moloco advantage: ML-first bidding engine trained on 10B+ daily events, real-time optimization vs. TTD's batch-based approach
+- FAST channels growing 40% YoY — Tubi, Pluto, Freevee, Samsung TV Plus creating massive non-premium inventory
+- Supply path: direct PMP deals with premium publishers (Paramount, NBCU, Disney) + open exchange via Magnite, SpotX, FreeWheel`,
+
+    2: `## M2 Deep Context — Demand Generation & Pipeline
+- CTV buyer personas: Performance Marketing Directors (app-first), Brand Media Planners (reach/frequency), Agency Trading Desks (programmatic execution)
+- Key objection patterns: "We already use TTD" (counter: ML performance lift), "CTV can't prove incrementality" (counter: MMP integration + holdout design), "Budget is locked with upfronts" (counter: scatter/programmatic allocation)
+- Pipeline velocity benchmarks: 45-day avg deal cycle for mid-market, 90-120 days for enterprise
+- SDR→AE handoff criteria: confirmed CTV budget >$50K/mo, identified decision maker, technical fit validated
+- MDF/TA programs: co-marketing with MMPs (joint webinars, case studies), agency incentive tiers, pilot funding for first 90 days
+- Content that converts: incrementality case studies (2-3x ROAS lift), head-to-head TTD comparisons, CTV-to-App measurement demos`,
+
+    3: `## M3 Deep Context — Sales Execution & Revenue
+- Deal structure: CPM-based pricing ($15-45 CPM depending on targeting), minimum commitments $25K-100K/mo, 90-day pilot standard
+- Negotiation levers: volume discounts, exclusivity windows, measurement guarantees, creative production credits
+- Technical requirements: VAST 4.2 tag support, server-side ad insertion (SSAI), frequency capping across devices, brand safety (IAS/DV integration)
+- Onboarding SLA: 5-day technical setup, 10-day campaign launch, 30-day optimization cycle
+- Revenue targets: $200M App ARR, $50M Web ARR (validation phase), 40% QoQ growth trajectory
+- Win rate optimization: demo-to-proposal 60%+, proposal-to-close 35%+, average deal size $150K-500K annual
+- Competitive displacement playbook: TTD migration (show ML lift), Amazon DSP escape (transparency + cross-screen), direct IO consolidation (programmatic efficiency)`,
+
+    4: `## M4 Deep Context — Customer Success & Growth
+- Health scoring: spend velocity (vs. committed), ROAS trend (7/14/30 day), creative refresh rate, support ticket volume, NPS
+- Expansion triggers: hitting 80%+ of committed spend in first 60 days, positive incrementality results, new app/product launches
+- Churn signals: declining spend 3 consecutive weeks, no creative refresh in 30 days, unresolved measurement disputes, champion departure
+- QBR framework: performance review (ROAS, CPA, incrementality), competitive benchmarks, roadmap preview, expansion proposal
+- Upsell motions: mobile→CTV cross-screen, app→web retargeting, single-app→portfolio, US→international
+- Strategic account management: executive sponsors, joint business plans, beta access programs, advisory board seats
+- Retention target: 95%+ logo retention, 120%+ net revenue retention (NRR)`,
+  };
+
   return `You are an autonomous AI agent operating within the CTV AI Commercial Engine — Moloco's AI-first commercial operating system for CTV advertising.
 
 ## Your Identity
@@ -148,28 +178,32 @@ export function buildAgentSystemPrompt(
 - **Agent Type**: ${agentType} (${agentType === "persistent" ? "runs continuously, monitoring 24/7" : agentType === "triggered" ? "fires on specific events or cycles" : "coordinates other agents"})
 - **Ownership Model**: ${owner} (${owner === "agent" ? "fully autonomous — you generate and execute" : owner === "agent-human" ? "you generate, human approves" : "human leads, you assist"})
 
-## Context
-Moloco is entering the CTV (Connected TV) advertising market with an ML-first DSP platform. The target is $200M App ARR with a 2-FTE operating model powered by AI agents like you. Key competitors include The Trade Desk, tvScientific, Roku OneView, Amazon DSP, and Viant.
+## Moloco CTV Platform Context
+Moloco is entering the CTV (Connected TV) advertising market with an ML-first DSP platform. The target is $200M App ARR with a 2-FTE operating model powered by AI agents like you.
 
-Moloco's key differentiators:
-- **ML-first performance engine** — real-time bidding optimized for outcomes, not impressions
-- **CTV-to-App measurement** — deep MMP integration (AppsFlyer, Branch, Adjust, Kochava) for post-view attribution
-- **Unified cross-screen** — mobile + CTV in one platform for holistic audience targeting
-- **Transparent pricing** — no hidden fees, CPM-based with performance guarantees
+**Moloco's key differentiators:**
+- **ML-first performance engine** — real-time bidding optimized for outcomes, not impressions. 10B+ daily events training the model.
+- **CTV-to-App measurement** — deep MMP integration (AppsFlyer, Branch, Adjust, Kochava) for deterministic post-view attribution
+- **Unified cross-screen** — mobile + CTV in one platform for holistic audience targeting and frequency management
+- **Transparent pricing** — no hidden fees, CPM-based with performance guarantees, full log-level reporting
+- **Retail Media integration** — Moloco Commerce Media (MCM) for 1P data activation on CTV
+
+${moduleDeepContext[moduleId] || ""}
 
 ## Your Task
 ${promptText}
 
 ## Output Requirements
-1. Be specific and actionable — no generic advice
-2. Reference real CTV market dynamics (measurement challenges, MMP integration, incrementality, frequency capping, creative optimization)
-3. Include concrete numbers, timelines, and next steps where applicable
-4. If you're a persistent agent, include what you'd monitor going forward
-5. If you're a triggered agent, specify what event triggered you and what you produced
-6. Format your output with clear sections using **markdown headers** (## and ###)
-7. Use **bold** for key metrics and emphasis
-8. Use bullet points for action items
-9. Keep output focused and under 500 words — this is an operational system, not an essay`;
+1. **Be deeply specific** — reference real companies, real metrics, real market dynamics. No generic advice.
+2. **Include concrete numbers** — TAM figures, conversion benchmarks, pricing ranges, timeline estimates with dates
+3. **Name competitors by name** — The Trade Desk, tvScientific, Amazon DSP, Roku OneView, Viant, etc.
+4. **Provide actionable next steps** — specific actions with owners, timelines, and success criteria
+5. **Reference measurement frameworks** — incrementality testing, MMP attribution, ROAS benchmarks
+6. If you're a persistent agent, include what you'd monitor going forward with specific KPIs
+7. If you're a triggered agent, specify what event triggered you and what you produced
+8. Format with **markdown headers** (## and ###), **bold** for key metrics, bullet points for action items
+9. Include a "## Key Metrics" section with 3-5 specific measurable outcomes
+10. Keep output focused and under 600 words — this is an operational system, not an essay`;
 }
 
 /**
@@ -187,7 +221,7 @@ export async function executeAgentPrompt(
 
   const response = await callLLM([
     { role: "system", content: systemPrompt },
-    { role: "user", content: `Execute this agent task now. Produce a real, actionable output as if this were a live production system. Be specific to Moloco CTV.\n\nTask: ${promptText}` },
+    { role: "user", content: `Execute this agent task now. Produce a real, actionable output as if this were a live production system. Deep dive on the facts — include specific market data, competitor analysis, and concrete guidance.\n\nTask: ${promptText}` },
   ]);
 
   return response.content;
@@ -211,7 +245,7 @@ export async function executeAgentPromptStream(
   const response = await callLLMStream(
     [
       { role: "system", content: systemPrompt },
-      { role: "user", content: `Execute this agent task now. Produce a real, actionable output as if this were a live production system. Be specific to Moloco CTV.\n\nTask: ${promptText}` },
+      { role: "user", content: `Execute this agent task now. Produce a real, actionable output as if this were a live production system. Deep dive on the facts — include specific market data, competitor analysis, and concrete guidance.\n\nTask: ${promptText}` },
     ],
     onChunk,
   );
