@@ -29,14 +29,14 @@
 ## Phase 15: Rebrand + Mobile + 100x UX Upgrade
 - [x] Rename to "CTV AI Commercial Engine" throughout (updated NeuralShell, Home, NeuralCommand)
 - [x] New brand identity — CTV AI Engine with gradient brain icon, primary accent, distinctive mark (already in NeuralShell)
-- [ ] Mobile-first responsive design — all pages work on phone/tablet
+- [x] Mobile-first responsive design — all pages work on phone/tablet (fixed BuyerSim, ApprovalQueue, LearningLoops, Home, WeeklyPrep grids)
 - [x] Collapsible mobile sidebar with hamburger menu and gesture support (already implemented: bottom nav + slide-over menu)
 - [x] Magical micro-interactions: spring physics, stagger animations, parallax, shimmer loading (done in Phase 17)
 - [x] NeuralCommand: live agent execution with real streaming, rich cluster drill-down, animated KPIs (streaming Streamdown output in live feed)
 - [x] AgentSwarm: deep per-agent detail views, execution history, output previews, mobile card layout (done in Phase 16/17)
 - [x] DataPulse: interactive data exploration, expandable Gong insights, brand pipeline drill-down (AI Analysis buttons on every insight + pipeline analysis)
 - [x] WarRoom: interactive competitive matrix, scenario builder, real-time battle analysis (done in Phase 17)
-- [ ] BuyerSim: mobile-friendly conversation view, swipe gestures, floating controls
+- [x] BuyerSim: mobile-friendly conversation view, stacked layout on mobile, Deal Intelligence sidebar hidden on small screens
 - [x] Global: toast notifications, keyboard shortcuts, command palette, breadcrumb navigation (done in Phase 17)
 - [x] Performance: lazy loading, virtualized lists, optimistic UI everywhere (lazy routes in App.tsx, Suspense boundaries)
 

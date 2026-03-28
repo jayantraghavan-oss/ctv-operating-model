@@ -262,7 +262,7 @@ export default function WeeklyPrep() {
                     </div>
 
                     {/* Metrics */}
-                    <div className="grid grid-cols-3 gap-2 mb-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
                       {Object.entries(mh.metrics).map(([key, val]) => (
                         <div key={key} className="bg-muted/50 rounded-lg px-3 py-2">
                           <div className="text-[10px] text-muted-foreground capitalize">

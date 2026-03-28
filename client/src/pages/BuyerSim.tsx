@@ -604,7 +604,7 @@ export default function BuyerSim() {
           </div>
         ) : (
           /* ── Active Simulation ─────────────────────────────────── */
-          <div className="flex gap-4" style={{ height: "calc(100vh - 200px)" }}>
+          <div className="flex flex-col lg:flex-row gap-4" style={{ height: "calc(100vh - 200px)", minHeight: "400px" }}>
             {/* Main conversation */}
             <div className="flex-1 flex flex-col min-w-0">
               {/* Persona + progress bar */}
@@ -703,37 +703,39 @@ export default function BuyerSim() {
                 )}
               </div>
 
-              {/* Controls */}
-              <div className="glass-card rounded-b-xl rounded-t-none border-t-0 px-4 py-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+              {/* Controls — floating on mobile, inline on desktop */}
+              <div className="glass-card rounded-b-xl rounded-t-none border-t-0 px-3 sm:px-4 py-3 lg:relative fixed bottom-16 sm:bottom-0 left-0 right-0 lg:left-auto lg:right-auto z-20 lg:z-auto" style={{ backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 sm:gap-3">
                     <button
                       onClick={nextTurn}
                       disabled={thinking || currentTurn >= script.length}
-                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-violet-500 to-purple-600 text-white text-sm font-medium hover:from-violet-600 hover:to-purple-700 transition-all disabled:opacity-40 shadow-sm"
+                      className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg bg-gradient-to-r from-violet-500 to-purple-600 text-white text-xs sm:text-sm font-medium hover:from-violet-600 hover:to-purple-700 transition-all disabled:opacity-40 shadow-sm"
                     >
                       <ChevronRight className="w-4 h-4" />
-                      {currentTurn >= script.length ? "Simulation Complete" : "Next Turn"}
+                      <span className="hidden sm:inline">{currentTurn >= script.length ? "Simulation Complete" : "Next Turn"}</span>
+                      <span className="sm:hidden">{currentTurn >= script.length ? "Done" : "Next"}</span>
                     </button>
                     <button
                       onClick={toggleAutoPlay}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-all ${autoPlay ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-white border-gray-200 text-gray-600 hover:text-gray-800"}`}
+                      className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-medium border transition-all ${autoPlay ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-white border-gray-200 text-gray-600 hover:text-gray-800"}`}
                     >
                       <Activity className={`w-3.5 h-3.5 ${autoPlay ? "animate-pulse" : ""}`} />
-                      {autoPlay ? "Auto-Playing..." : "Auto-Play"}
+                      <span className="hidden sm:inline">{autoPlay ? "Auto-Playing..." : "Auto-Play"}</span>
+                      <span className="sm:hidden">{autoPlay ? "Auto" : "Auto"}</span>
                     </button>
                   </div>
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1"><Zap className="w-3 h-3 text-amber-500" /> {totalAgentsActivated} agents activated</span>
-                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {currentTurn}/{script.length} turns</span>
+                  <div className="flex items-center gap-2 sm:gap-4 text-[10px] sm:text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1"><Zap className="w-3 h-3 text-amber-500" /> <span className="hidden sm:inline">{totalAgentsActivated} agents</span><span className="sm:hidden">{totalAgentsActivated}</span></span>
+                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {currentTurn}/{script.length}</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Right sidebar — Deal Intelligence */}
+            {/* Right sidebar — Deal Intelligence (hidden on mobile, shown on lg+) */}
             {showTraces && (
-              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="w-72 shrink-0 glass-card rounded-xl overflow-y-auto">
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="hidden lg:block w-72 shrink-0 glass-card rounded-xl overflow-y-auto">
                 <div className="p-4 border-b border-gray-100">
                   <div className="text-xs font-semibold text-foreground uppercase tracking-wider">Deal Intelligence</div>
                 </div>

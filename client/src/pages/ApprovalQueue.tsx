@@ -49,7 +49,7 @@ export default function ApprovalQueue() {
         </div>
 
         {/* KPI strip */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <motion.div whileHover={{ y: -2, scale: 1.01 }} transition={spring} className="glass rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-7 h-7 rounded-xl bg-amber-signal/10 flex items-center justify-center"><Clock className="w-3.5 h-3.5 text-amber-signal" /></div>

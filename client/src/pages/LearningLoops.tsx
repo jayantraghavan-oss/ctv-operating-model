@@ -213,7 +213,7 @@ export default function LearningLoops() {
         </motion.div>
 
         {/* Status summary */}
-        <motion.div {...fade} transition={{ delay: 0.05 }} className="grid grid-cols-3 gap-3 mb-6">
+        <motion.div {...fade} transition={{ delay: 0.05 }} className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
           <button
             onClick={() => setFilterStatus(filterStatus === "active" ? "all" : "active")}
             className={`p-3 rounded-xl border transition-all ${

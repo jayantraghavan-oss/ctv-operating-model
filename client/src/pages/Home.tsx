@@ -244,7 +244,7 @@ export default function Home() {
                   <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
                     By Ownership Model
                   </div>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {(["agent", "agent-human", "human-led"] as const).map((owner) => {
                       const count =
                         owner === "agent"
