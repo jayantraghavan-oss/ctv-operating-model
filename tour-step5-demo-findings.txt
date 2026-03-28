@@ -1,0 +1,10 @@
+Tour Step 5 - Watch It Come Alive (Demo auto-triggered)
+- Title: "Watch It Come Alive" with animated icon
+- Body: "Now let's see the system in action. Watch as all 200 agents activate in sequence — data flows from governance down through each cluster, just like it would in a real operating cycle."
+- Tip: "The green pulses show agents coming online. In the real tool, each one generates live output."
+- Demo button in header changed to "Stop" (toggle working)
+- GREEN BORDERS visible on Cluster 5 nodes - agents are activating with green dashed borders
+- The cascading animation is running - C5 nodes lit up with green outlines
+- Progress bar shows 5/7
+- Click blocker still working - can't click through to nodes
+- This is the key "wow" moment of the tour

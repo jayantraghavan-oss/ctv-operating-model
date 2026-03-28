@@ -1,0 +1,8 @@
+Tour Step 2 - "The DRI Sits at the Top":
+- Step 2/7 showing correctly with progress bar
+- Title: "The DRI Sits at the Top"
+- Description: "Cluster 5 is the executive governance layer. Module 4 agents handle pipeline visibility, conviction tracking, weekly prep, exec communications — so leadership stays informed without manual reporting."
+- Tip: "These agents generate the weekly operating rhythm — XFN prep, CS reviews, OKR tracking."
+- Back, Skip tour, and Next buttons all visible
+- Cluster 5 highlighted at top with all 11 sub-modules visible
+- All working correctly

@@ -1,0 +1,13 @@
+Tour Test Findings - Step 1:
+- App correctly redirected to /org-chart on first visit
+- Tour overlay is showing at the bottom with step 1/7
+- Title: "Welcome to the CTV AI Engine"
+- Description visible and correct
+- Tip box: "This org chart is your home base. Every box is a real AI assistant you can run."
+- Skip tour and Next buttons visible
+- Progress bar showing 7 segments with first one highlighted
+- Cluster 5 (DRI/XFN Management) visible at top with all 11 sub-modules
+- All ownership badges (A+H, H) showing correctly
+- Sidebar shows "Org Map" as active in REFERENCE section
+- The org chart renders all nodes correctly
+- No console errors visible

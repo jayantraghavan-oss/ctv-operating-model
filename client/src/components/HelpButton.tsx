@@ -62,10 +62,14 @@ export default function HelpButton() {
 
   const resetOnboarding = () => {
     try {
-      // Reset welcome modal
+      // Reset org chart guided tour (the first-time experience)
+      localStorage.removeItem("ctv-orgchart-tour-completed");
+      localStorage.removeItem("ctv-orgchart-walkthrough-seen");
+      // Reset welcome modal (legacy)
       localStorage.removeItem("ctv-welcome-seen-v3");
       localStorage.removeItem("ctv-welcome-seen-v2");
       // Reset all tip banners
+      localStorage.removeItem("ctv-dismissed-tips");
       const keys = Object.keys(localStorage);
       keys.forEach((key) => {
         if (key.startsWith("tip-dismissed-")) {
@@ -73,7 +77,7 @@ export default function HelpButton() {
         }
       });
       toast.success("Onboarding reset", {
-        description: "Refresh the page to see the welcome guide and all tips again.",
+        description: "Refresh the page to replay the guided tour from the Org Map.",
       });
       setOpen(false);
     } catch { /* ignore */ }

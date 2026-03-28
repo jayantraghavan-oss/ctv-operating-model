@@ -1,0 +1,7 @@
+Tour Step 3 - "Four Clusters, Four Missions":
+- Shows correctly at step 3/7
+- Description: "Below the DRI, four clusters each handle a critical function: Market Intelligence, Growth & Demand, Commercial Sales, Customer Success. Each cluster has a single human orchestrator who connects the dots AI can't see alone."
+- Tip box: "Blue = Market Intel · Teal = Growth · Amber = Sales · Orange = Customer Success"
+- The org chart nodes behind are dimmed/blurred by the click-blocker overlay
+- Back, Skip tour, and Next buttons all visible
+- Progress bar shows 3 of 7 segments filled

@@ -1,0 +1,9 @@
+Tour Step 5 - "Watch It Come Alive" (Demo auto-triggered):
+- Demo button changed to "Stop" (red) in the header, confirming demo is running
+- All C5 DRI nodes now have green dashed borders indicating activation
+- Tour overlay shows: "Now let's see the system in action. Watch as all 200 agents activate in sequence — data flows from governance down through each cluster, just like it would in a real operating cycle."
+- Tip: "The green pulses show agents coming online. In the real tool, each one generates live output."
+- Status indicator: "Agents activating across all clusters..." with green dot
+- "Continue >" button instead of "Next >" for this step
+- The cascading activation is visible with green borders on all C5 nodes
+- Progress bar shows 5/7 segments filled

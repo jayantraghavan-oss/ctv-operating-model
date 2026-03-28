@@ -202,3 +202,21 @@
 - [x] All 48 vitest tests passing, zero TypeScript errors, zero console errors
 - [x] Added animated data-flow particles during demo mode (green pulse traveling down connector + branching dots)
 - [x] Updated node click to deep-link with section and sub-module query params (/module/:id?section=...&sub=...)
+
+## Phase 26: Guided Tour First-Time Experience via Org Map
+- [x] Redirect first-time visitors to /org-chart instead of Dashboard
+- [x] Build 7-step guided tour on Org Map that explains the full system
+- [x] Tour Step 1: Welcome — "This is your AI-powered CTV engine" with system overview
+- [x] Tour Step 2: Org Map overview — highlight C5 at top, explain DRI/governance layer
+- [x] Tour Step 3: Show the 4 operational clusters, explain what each does
+- [x] Tour Step 4: Explain ownership model (AI-Driven, AI+Review, Human-Led) with legend
+- [x] Tour Step 5: Auto-trigger demo mode — show all agents activating in cascade
+- [x] Tour Step 6: Explain what just happened — "200 agents across 4 modules just activated"
+- [x] Tour Step 7: Invite user to explore — "Click any node to dive in, or go to Dashboard"
+- [x] Smooth transition from tour completion to Dashboard with "Enter the Engine" CTA
+- [x] Remove old WelcomeModal from App.tsx (replaced by Org Map tour)
+- [x] Remember tour completion in localStorage so returning users go straight to Dashboard
+- [x] Click-blocker overlay prevents accidental navigation during tour
+- [x] HelpButton "Reset Onboarding" clears org chart tour key + tip banners
+- [x] All 48 vitest tests passing
+- [x] Added animated pointer-hint gestures (bouncing MousePointer icon + directional text) to tour steps 2-4 and 6

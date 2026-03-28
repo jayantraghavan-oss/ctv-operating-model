@@ -1,13 +1,10 @@
 /**
  * OrgChart — Interactive AI-First Org Map
- * Replicates the source document's organizational hierarchy with:
- * - Cluster 5 (DRI/XFN) at top → Module 4 sub-modules branching down
- * - 4 cluster cards (C1-C4) below with color-coded borders
- * - Clickable sub-module nodes that navigate to the agent in the tool
- * - Ownership badges (A, A+H, H) on every node
- * - Demo mode: cascading activation animation across all nodes
- * - Guided walkthrough: step-by-step explanation of the system
- * - Reference guide tab: source-to-feature mapping
+ * The FIRST page new users see. A guided tour explains the system,
+ * auto-triggers a demo showing all agents activating, then transitions
+ * the user into the Dashboard with an "Enter the Engine" CTA.
+ *
+ * Returning users see the org chart as a reference/operational tool.
  */
 import NeuralShell from "@/components/NeuralShell";
 import { motion, AnimatePresence } from "framer-motion";
@@ -47,8 +44,15 @@ import {
   Brain,
   Radar,
   Megaphone,
+  Rocket,
+  MousePointer,
+  Layers,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+
+// ── Constants ──
+const TOUR_KEY = "ctv-orgchart-tour-completed";
+const MOLOCO_LOGO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663459898851/Wr22fCMnjpJGgmtKZSL2hG/moloco-logo-blue_486481be.png";
 
 // ── Color system matching source image ──
 const ownerColors: Record<OwnerType, { bg: string; text: string; border: string; badge: string; label: string; short: string }> = {
@@ -65,37 +69,63 @@ const clusterColors: Record<number, { border: string; bg: string; text: string; 
   5: { border: "border-slate-500", bg: "bg-slate-800", text: "text-white", accent: "bg-slate-600" },
 };
 
-// ── Walkthrough steps ──
-const walkthroughSteps = [
+// ── Tour steps (the guided experience) ──
+const tourSteps = [
   {
-    title: "Welcome to the AI-First Org Map",
-    description: "This is your operating model visualized. Two humans orchestrate 200 AI assistants across 4 work modules — everything you need to run a CTV business at scale.",
-    highlight: "overview",
-    tip: "Think of this as your org chart, except most of the \"employees\" are AI agents.",
+    title: "Welcome to the CTV AI Engine",
+    description: "You're looking at the operating model for an entire CTV business — powered by 200 AI assistants, organized into 4 work modules, and orchestrated by just 2 humans.",
+    highlight: "none",
+    icon: Sparkles,
+    tip: "This org chart is your home base. Every box is a real AI assistant you can run.",
+    action: null,
   },
   {
     title: "The DRI Sits at the Top",
-    description: "Cluster 5 is the executive layer — Module 4 (Governance & BI) feeds the DRI with pipeline visibility, conviction tracking, and operating rhythm. This is how leadership stays informed without manual reporting.",
+    description: "Cluster 5 is the executive governance layer. Module 4 agents handle pipeline visibility, conviction tracking, weekly prep, and exec communications — so leadership stays informed without manual reporting.",
     highlight: "cluster-5",
-    tip: "Click any sub-module in the DRI cluster to see the AI assistants that generate executive reports.",
+    icon: Shield,
+    tip: "These agents generate the weekly operating rhythm — XFN prep, CS reviews, OKR tracking.",
+    action: null,
   },
   {
-    title: "Four Clusters, Four Humans",
-    description: "Below the DRI, four clusters each have a single human orchestrator who connects the dots that AI can't see alone. Market Intel, Growth, Sales, and Customer Success — each cluster is a coherent set of agents under one brain.",
+    title: "Four Clusters, Four Missions",
+    description: "Below the DRI, four clusters each handle a critical function: Market Intelligence, Growth & Demand, Commercial Sales, and Customer Success. Each cluster has a single human orchestrator who connects the dots AI can't see alone.",
     highlight: "clusters",
-    tip: "The color-coded borders match the source document. Blue = Market Intel, Teal = Growth, Amber = Sales, Orange = Customer Success.",
+    icon: Layers,
+    tip: "Blue = Market Intel · Teal = Growth · Amber = Sales · Orange = Customer Success",
+    action: null,
   },
   {
-    title: "Sub-Modules Are Your Building Blocks",
-    description: "Each box is a sub-module — a discrete unit of work with an ownership model. 'A' means AI-driven, 'A+H' means AI generates and human reviews, 'H' means human-led with AI support. Click any box to jump to that agent in the tool.",
+    title: "The Ownership Model",
+    description: "Every box has a badge: 'A' means AI-driven (runs autonomously), 'A+H' means AI generates and human reviews, 'H' means human-led with AI support. The system is designed so AI does the heavy lifting, but humans approve everything going to market.",
     highlight: "nodes",
-    tip: "Hover over any ownership badge to see what it means. The system is designed so AI does the heavy lifting, but humans approve everything that goes to market.",
+    icon: Users,
+    tip: "Most work is A+H — the AI drafts, the human approves. This is the safety layer.",
+    action: null,
   },
   {
     title: "Watch It Come Alive",
-    description: "Hit the Demo button to see all 200 agents activate in sequence — data flows from Market Intel through Growth and Sales into Customer Success, then up to the DRI. This is how the system runs in practice.",
+    description: "Now let's see the system in action. Watch as all 200 agents activate in sequence — data flows from governance down through each cluster, just like it would in a real operating cycle.",
     highlight: "demo",
-    tip: "In the real tool, you can click 'Run' on any individual agent to fire a live LLM call. The org chart shows their status in real-time.",
+    icon: Rocket,
+    tip: "The green pulses show agents coming online. In the real tool, each one generates live output.",
+    action: "demo",
+  },
+  {
+    title: "That's 200 Agents Working for You",
+    description: "What you just saw is the entire CTV commercial engine activating. Market intelligence feeds growth campaigns, which feed sales motions, which feed customer success — all coordinated through the DRI layer at the top.",
+    highlight: "overview",
+    icon: Brain,
+    tip: "In the tool, click any box to see its agents, then hit 'Run' to generate real outputs.",
+    action: null,
+  },
+  {
+    title: "Ready to Explore?",
+    description: "You can click any node on this map to jump directly to that agent. Or head to the Dashboard to see the full control center — run agents, review outputs, simulate buyer conversations, and more.",
+    highlight: "none",
+    icon: MousePointer,
+    tip: "Come back to this Org Map anytime from the sidebar under Reference.",
+    action: "navigate",
   },
 ];
 
@@ -195,6 +225,7 @@ function ClusterCard({
   highlightAll,
   onNodeClick,
   demoDelay,
+  dimmed,
 }: {
   cluster: Cluster;
   nodes: OrgNode[];
@@ -202,19 +233,17 @@ function ClusterCard({
   highlightAll: boolean;
   onNodeClick: (node: OrgNode) => void;
   demoDelay: number;
+  dimmed?: boolean;
 }) {
   const colors = clusterColors[cluster.id];
   const isC5 = cluster.id === 5;
 
-  // Group passed-in nodes by sectionKey, preserving order from the data model
+  // Group passed-in nodes by sectionKey
   const sectionGroups: { name: string; key: string; nodes: OrgNode[] }[] = [];
   const seenKeys = new Set<string>();
-  
-  // Build a section name lookup from all modules
   const sectionNameMap: Record<string, string> = {};
   modules.forEach((m) => m.sections.forEach((s) => { sectionNameMap[`${m.id}-${s.key}`] = s.name; }));
-  
-  // Iterate nodes in order and group by sectionKey
+
   nodes.forEach((node) => {
     const groupKey = `${node.moduleId}-${node.sectionKey}`;
     if (!seenKeys.has(groupKey)) {
@@ -229,9 +258,9 @@ function ClusterCard({
 
   return (
     <motion.div
-      className={`rounded-2xl border-2 ${colors.border} ${isC5 ? colors.bg : "bg-white/80"} backdrop-blur-sm overflow-hidden`}
+      className={`rounded-2xl border-2 ${colors.border} ${isC5 ? colors.bg : "bg-white/80"} backdrop-blur-sm overflow-hidden transition-all duration-500 ${dimmed ? "opacity-30 scale-[0.98]" : ""}`}
       initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
+      animate={{ opacity: dimmed ? 0.3 : 1, y: 0 }}
       transition={{ delay: demoDelay * 0.1, type: "spring", stiffness: 200, damping: 25 }}
     >
       {/* Cluster header */}
@@ -282,91 +311,172 @@ function ClusterCard({
   );
 }
 
-// ── Walkthrough overlay ──
-function WalkthroughOverlay({
+// ── Tour Overlay (the guided experience) ──
+function TourOverlay({
   step,
   totalSteps,
   onNext,
   onPrev,
-  onClose,
+  onSkip,
+  onEnterEngine,
+  demoRunning,
 }: {
   step: number;
   totalSteps: number;
   onNext: () => void;
   onPrev: () => void;
-  onClose: () => void;
+  onSkip: () => void;
+  onEnterEngine: () => void;
+  demoRunning: boolean;
 }) {
-  const s = walkthroughSteps[step];
+  const s = tourSteps[step];
+  const Icon = s.icon;
+  const isLastStep = step === totalSteps - 1;
+  const isDemoStep = s.action === "demo";
+  const isNavigateStep = s.action === "navigate";
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 20 }}
-      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[90vw] max-w-lg"
+      exit={{ opacity: 0, y: 24 }}
+      transition={{ type: "spring", stiffness: 300, damping: 28 }}
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[92vw] max-w-xl"
     >
       <div
-        className="rounded-2xl border border-black/[0.08] p-5 shadow-2xl"
+        className="rounded-3xl border border-black/[0.08] p-6 shadow-2xl shadow-black/[0.12]"
         style={{
-          background: "oklch(1 0 0 / 0.95)",
+          background: "oklch(1 0 0 / 0.96)",
           backdropFilter: "blur(24px) saturate(1.5)",
         }}
       >
-        {/* Progress */}
-        <div className="flex items-center gap-1.5 mb-3">
-          {walkthroughSteps.map((_, i) => (
-            <div
+        {/* Progress bar */}
+        <div className="flex items-center gap-1 mb-4">
+          {tourSteps.map((_, i) => (
+            <motion.div
               key={i}
-              className={`h-1 rounded-full transition-all duration-300 ${
-                i === step ? "w-8 bg-primary" : i < step ? "w-4 bg-primary/30" : "w-4 bg-black/[0.06]"
+              className={`h-1.5 rounded-full transition-all duration-500 ${
+                i === step ? "flex-[3] bg-primary" : i < step ? "flex-[2] bg-primary/30" : "flex-1 bg-black/[0.06]"
               }`}
+              layout
             />
           ))}
-          <button onClick={onClose} className="ml-auto p-1 rounded-lg hover:bg-black/[0.04] text-foreground/30">
-            <X className="w-4 h-4" />
-          </button>
         </div>
 
-        <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-            <Sparkles className="w-4 h-4 text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-[14px] font-bold text-foreground mb-1">{s.title}</h3>
-            <p className="text-[12px] text-foreground/60 leading-relaxed mb-2">{s.description}</p>
-            <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-primary/[0.04] border border-primary/10">
-              <Info className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
-              <span className="text-[11px] text-primary/80 leading-relaxed">{s.tip}</span>
+        {/* Content */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={step}
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -30 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+          >
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+                <Icon className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-[16px] font-bold text-foreground mb-1.5">{s.title}</h3>
+                <p className="text-[13px] text-foreground/55 leading-relaxed">{s.description}</p>
+              </div>
             </div>
-          </div>
-        </div>
+
+            {/* Pointer hint gesture */}
+            {s.highlight !== "none" && s.highlight !== "demo" && (
+              <motion.div
+                className="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-black/[0.03]"
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
+              >
+                <motion.div
+                  animate={{ y: [0, -3, 0], x: [0, 4, 0] }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <MousePointer className="w-3.5 h-3.5 text-primary/60" />
+                </motion.div>
+                <span className="text-[11px] text-foreground/40 italic">
+                  {s.highlight === "cluster-5" && "Look at the dark card at the top ↑"}
+                  {s.highlight === "clusters" && "See the four colored cards below ↓"}
+                  {s.highlight === "nodes" && "Notice the A, A+H, and H badges on each box"}
+                  {s.highlight === "overview" && "Click any box to jump to that assistant"}
+                </span>
+              </motion.div>
+            )}
+
+            {/* Tip box */}
+            <div className="mt-3 flex items-start gap-2.5 px-4 py-3 rounded-xl bg-primary/[0.04] border border-primary/10">
+              <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+              <span className="text-[12px] text-primary/80 leading-relaxed">{s.tip}</span>
+            </div>
+
+            {/* Demo running indicator */}
+            {isDemoStep && demoRunning && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                className="mt-3 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200"
+              >
+                <motion.div
+                  className="w-2.5 h-2.5 rounded-full bg-emerald-500"
+                  animate={{ scale: [1, 1.3, 1], opacity: [1, 0.6, 1] }}
+                  transition={{ duration: 1, repeat: Infinity }}
+                />
+                <span className="text-[12px] font-semibold text-emerald-700">Agents activating across all clusters...</span>
+              </motion.div>
+            )}
+          </motion.div>
+        </AnimatePresence>
 
         {/* Navigation */}
-        <div className="flex items-center justify-between mt-4 pt-3 border-t border-black/[0.04]">
-          <button
-            onClick={onPrev}
-            disabled={step === 0}
-            className="flex items-center gap-1 text-[12px] font-medium text-foreground/40 hover:text-foreground/60 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
-            <ChevronLeft className="w-3.5 h-3.5" /> Back
-          </button>
-          <span className="text-[11px] text-foreground/25 font-medium">
-            {step + 1} of {totalSteps}
-          </span>
-          {step < totalSteps - 1 ? (
+        <div className="flex items-center justify-between mt-5 pt-4 border-t border-black/[0.05]">
+          <div className="flex items-center gap-3">
+            {step > 0 && (
+              <button
+                onClick={onPrev}
+                className="flex items-center gap-1 text-[12px] font-medium text-foreground/40 hover:text-foreground/60 transition-colors"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" /> Back
+              </button>
+            )}
             <button
-              onClick={onNext}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary text-white text-[12px] font-semibold hover:bg-primary/90 transition-colors"
+              onClick={onSkip}
+              className="text-[12px] font-medium text-foreground/30 hover:text-foreground/50 transition-colors"
             >
-              Next <ChevronRight className="w-3.5 h-3.5" />
+              Skip tour
             </button>
-          ) : (
-            <button
-              onClick={onClose}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary text-white text-[12px] font-semibold hover:bg-primary/90 transition-colors"
-            >
-              Explore <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          )}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span className="text-[11px] text-foreground/20 font-mono tabular-nums">
+              {step + 1}/{totalSteps}
+            </span>
+
+            {isNavigateStep ? (
+              <button
+                onClick={onEnterEngine}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-primary text-white text-[13px] font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/25"
+              >
+                <Rocket className="w-4 h-4" />
+                Enter the Engine
+              </button>
+            ) : isDemoStep && demoRunning ? (
+              <button
+                onClick={onNext}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold text-foreground/40 hover:text-foreground/60 border border-black/[0.08] hover:bg-black/[0.02] transition-all"
+              >
+                Continue <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            ) : (
+              <button
+                onClick={onNext}
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-primary text-white text-[13px] font-semibold hover:bg-primary/90 transition-all shadow-sm"
+              >
+                Next <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </motion.div>
@@ -398,105 +508,68 @@ function ReferenceGuide() {
       <div className="border border-border rounded-xl bg-white/60 p-5">
         <h3 className="text-[15px] font-bold text-foreground mb-2">Source Document → App Mapping</h3>
         <p className="text-[12px] text-foreground/50 leading-relaxed mb-4">
-          Every feature in this tool traces back to the AI-First CTV Commercial Operating Model document (Mar 9, 2026).
-          Below is a complete mapping of how the source material is implemented.
+          Every feature in this tool traces back to the AI-First CTV Commercial Operating Model (Mar 9, 2026).
+          Below is a complete cross-reference showing how the source document maps to the app.
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="text-center p-3 rounded-xl bg-black/[0.02]">
-            <div className="text-[20px] font-bold text-foreground">{stats.modules}</div>
-            <div className="text-[10px] text-foreground/35 font-semibold uppercase">Modules</div>
-          </div>
-          <div className="text-center p-3 rounded-xl bg-black/[0.02]">
-            <div className="text-[20px] font-bold text-foreground">{stats.clusters}</div>
-            <div className="text-[10px] text-foreground/35 font-semibold uppercase">Clusters</div>
-          </div>
-          <div className="text-center p-3 rounded-xl bg-black/[0.02]">
-            <div className="text-[20px] font-bold text-foreground">{stats.totalSubModules}</div>
-            <div className="text-[10px] text-foreground/35 font-semibold uppercase">Sub-Modules</div>
-          </div>
-          <div className="text-center p-3 rounded-xl bg-black/[0.02]">
-            <div className="text-[20px] font-bold text-foreground">{stats.totalPrompts}</div>
-            <div className="text-[10px] text-foreground/35 font-semibold uppercase">AI Agents</div>
-          </div>
+          {[
+            { label: "Modules", value: stats.modules, sub: "Work modules" },
+            { label: "Agents", value: stats.totalPrompts, sub: "AI assistants" },
+            { label: "Clusters", value: stats.clusters, sub: "Human orchestrators" },
+            { label: "Sub-modules", value: stats.totalSubModules, sub: "Discrete work units" },
+          ].map((s, i) => (
+            <div key={i} className="text-center p-3 rounded-xl bg-black/[0.02] border border-black/[0.04]">
+              <div className="text-[20px] font-bold text-foreground">{s.value}</div>
+              <div className="text-[10px] text-foreground/40 font-semibold uppercase tracking-wider">{s.label}</div>
+              <div className="text-[10px] text-foreground/25">{s.sub}</div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Module-by-module mapping */}
-      <div className="space-y-4">
-        <h3 className="text-[14px] font-bold text-foreground">Module → Feature Mapping</h3>
-        {moduleMapping.map(({ mod, sectionCount, subModCount, promptCount }) => (
-          <div key={mod.id} className="border border-border rounded-xl bg-white/60 overflow-hidden">
-            <div className="px-4 py-3 border-b border-border bg-black/[0.01]">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center text-[11px] font-bold text-primary">
-                  {mod.id}
-                </div>
+      {/* Module mapping */}
+      <div>
+        <h3 className="text-[14px] font-bold text-foreground mb-3">Module → Feature Mapping</h3>
+        <div className="space-y-3">
+          {moduleMapping.map(({ mod, sectionCount, subModCount, promptCount }) => (
+            <div key={mod.id} className="border border-border rounded-xl bg-white/60 p-4">
+              <div className="flex items-center justify-between mb-2">
                 <div>
-                  <div className="text-[13px] font-bold text-foreground">{mod.name}</div>
-                  <div className="text-[10px] text-foreground/40">
-                    {sectionCount} sections · {subModCount} sub-modules · {promptCount} executable agents
-                  </div>
+                  <span className="text-[10px] font-bold text-foreground/30 uppercase tracking-wider">Module {mod.id}</span>
+                  <h4 className="text-[13px] font-bold text-foreground">{mod.name}</h4>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-[10px] px-2 py-1 rounded-lg bg-black/[0.03] text-foreground/40 font-semibold">{sectionCount} sections</span>
+                  <span className="text-[10px] px-2 py-1 rounded-lg bg-black/[0.03] text-foreground/40 font-semibold">{subModCount} sub-modules</span>
+                  <span className="text-[10px] px-2 py-1 rounded-lg bg-primary/10 text-primary font-semibold">{promptCount} agents</span>
                 </div>
               </div>
+              <div className="text-[11px] text-foreground/40 leading-relaxed">{mod.description}</div>
             </div>
-            <div className="p-4">
-              <p className="text-[11px] text-foreground/50 leading-relaxed mb-3">{mod.description}</p>
-              <div className="space-y-1.5">
-                {mod.sections.map((sec) => (
-                  <div key={sec.key} className="flex items-center gap-2 text-[11px]">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary/30 shrink-0" />
-                    <span className="font-medium text-foreground/70">{sec.name}</span>
-                    <span className="text-foreground/25">→</span>
-                    <span className="text-foreground/40">{sec.subModules.length} sub-modules</span>
-                    <span className="text-foreground/20 ml-auto font-mono text-[10px]">
-                      {sec.subModules.reduce((a, sm) => a + sm.prompts.length, 0)} agents
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
-      {/* Design principles mapping */}
+      {/* Design principles */}
       <div>
         <h3 className="text-[14px] font-bold text-foreground mb-3">Design Principles → Implementation</h3>
         <div className="border border-border rounded-xl bg-white/60 overflow-hidden">
-          <div className="divide-y divide-border">
-            {principleRows.map((row, i) => (
-              <div key={i} className="px-4 py-3">
-                <div className="text-[12px] font-semibold text-foreground mb-1">{row.principle}</div>
-                <div className="text-[11px] text-foreground/50 leading-relaxed">{row.implementation}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Cluster mapping */}
-      <div>
-        <h3 className="text-[14px] font-bold text-foreground mb-3">Cluster → App Surface Mapping</h3>
-        <div className="space-y-2">
-          {clusters.map((c) => {
-            const colors = clusterColors[c.id];
-            return (
-              <div key={c.id} className={`border-2 ${colors.border} rounded-xl p-4 ${c.id === 5 ? colors.bg : "bg-white/60"}`}>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className={`text-[10px] font-bold uppercase tracking-wider ${c.id === 5 ? "text-white/50" : colors.text + " opacity-60"}`}>
-                    Cluster {c.id}
-                  </span>
-                </div>
-                <div className={`text-[13px] font-bold ${c.id === 5 ? "text-white" : colors.text} mb-1`}>{c.name}</div>
-                <div className={`text-[11px] ${c.id === 5 ? "text-white/60" : "text-foreground/50"} leading-relaxed`}>
-                  {c.primaryModuleCoverage}
-                </div>
-                <div className={`text-[11px] mt-2 ${c.id === 5 ? "text-white/40" : "text-foreground/35"} italic`}>
-                  App: Dashboard → Cluster {c.id} card, /cluster/{c.id} detail page, Module {c.moduleIds.join(" & ")} deep-dive
-                </div>
-              </div>
-            );
-          })}
+          <table className="w-full text-[11px]">
+            <thead>
+              <tr className="border-b border-border bg-black/[0.02]">
+                <th className="text-left px-4 py-2.5 font-bold text-foreground/50 uppercase tracking-wider text-[10px]">Principle</th>
+                <th className="text-left px-4 py-2.5 font-bold text-foreground/50 uppercase tracking-wider text-[10px]">Implementation</th>
+              </tr>
+            </thead>
+            <tbody>
+              {principleRows.map((row, i) => (
+                <tr key={i} className="border-b border-border/50 last:border-0">
+                  <td className="px-4 py-3 font-semibold text-foreground align-top w-[200px]">{row.principle}</td>
+                  <td className="px-4 py-3 text-foreground/50 leading-relaxed">{row.implementation}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -537,8 +610,8 @@ export default function OrgChart() {
   const [, navigate] = useLocation();
   const { recentRuns } = useAgent();
   const [activeTab, setActiveTab] = useState("chart");
-  const [showWalkthrough, setShowWalkthrough] = useState(false);
-  const [walkthroughStep, setWalkthroughStep] = useState(0);
+  const [tourActive, setTourActive] = useState(false);
+  const [tourStep, setTourStep] = useState(0);
   const [demoRunning, setDemoRunning] = useState(false);
   const [demoActiveNodes, setDemoActiveNodes] = useState<Set<string>>(new Set());
   const demoTimerRef = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -547,13 +620,24 @@ export default function OrgChart() {
   // Build org nodes
   const allNodes = useMemo(() => buildOrgNodes(), []);
 
-  // Check if user has seen walkthrough
+  // Check if user has completed the tour
   useEffect(() => {
-    const seen = localStorage.getItem("ctv-orgchart-walkthrough-seen");
-    if (!seen) {
-      setShowWalkthrough(true);
+    const completed = localStorage.getItem(TOUR_KEY);
+    if (!completed) {
+      // First visit — start the guided tour after a brief delay
+      const timer = setTimeout(() => setTourActive(true), 600);
+      return () => clearTimeout(timer);
     }
   }, []);
+
+  // Auto-trigger demo when reaching the demo step
+  useEffect(() => {
+    if (tourActive && tourSteps[tourStep]?.action === "demo" && !demoRunning) {
+      // Small delay so the step text renders first
+      const timer = setTimeout(() => startDemo(), 400);
+      return () => clearTimeout(timer);
+    }
+  }, [tourActive, tourStep]);
 
   // Get active agent runs for real-time status
   const activeRunNodeIds = useMemo(() => {
@@ -571,22 +655,16 @@ export default function OrgChart() {
 
   // Navigate to agent — deep-link to specific section
   const handleNodeClick = useCallback((node: OrgNode) => {
-    // Navigate to the module page with section hash for scroll-to
     navigate(`/module/${node.moduleId}?section=${encodeURIComponent(node.sectionKey)}&sub=${encodeURIComponent(node.name)}`);
   }, [navigate]);
 
   // Demo mode
   const startDemo = useCallback(() => {
-    // Dismiss walkthrough if showing
-    setShowWalkthrough(false);
-    localStorage.setItem("ctv-orgchart-walkthrough-seen", "true");
-    // Clear any existing timers
     demoTimerRef.current.forEach(clearTimeout);
     demoTimerRef.current = [];
     setDemoActiveNodes(new Set());
     setDemoRunning(true);
 
-    // Activation order: C5 (governance) → C1 (market intel) → C2 (growth) → C3 (sales) → C4 (customer success)
     const clusterOrder = [5, 1, 2, 3, 4];
     let delay = 0;
 
@@ -613,12 +691,9 @@ export default function OrgChart() {
         demoTimerRef.current.push(timer);
         delay += 80;
       });
-
-      // Pause between clusters
       delay += 400;
     });
 
-    // End demo
     const endTimer = setTimeout(() => {
       setDemoRunning(false);
     }, delay + 1000);
@@ -632,10 +707,34 @@ export default function OrgChart() {
     setDemoActiveNodes(new Set());
   }, []);
 
-  const closeWalkthrough = useCallback(() => {
-    setShowWalkthrough(false);
+  const completeTour = useCallback(() => {
+    setTourActive(false);
+    localStorage.setItem(TOUR_KEY, "true");
+    // Also mark old keys as seen so WelcomeModal doesn't show
+    localStorage.setItem("ctv-welcome-seen-v3", "true");
     localStorage.setItem("ctv-orgchart-walkthrough-seen", "true");
   }, []);
+
+  const handleTourNext = useCallback(() => {
+    if (tourStep < tourSteps.length - 1) {
+      setTourStep((s) => s + 1);
+    }
+  }, [tourStep]);
+
+  const handleTourPrev = useCallback(() => {
+    setTourStep((s) => Math.max(s - 1, 0));
+  }, []);
+
+  const handleEnterEngine = useCallback(() => {
+    completeTour();
+    stopDemo();
+    navigate("/");
+  }, [completeTour, stopDemo, navigate]);
+
+  const handleSkipTour = useCallback(() => {
+    completeTour();
+    stopDemo();
+  }, [completeTour, stopDemo]);
 
   // Get nodes per cluster
   const getClusterNodes = useCallback((clusterId: number) => {
@@ -660,6 +759,9 @@ export default function OrgChart() {
     return merged;
   }, [demoActiveNodes, activeRunNodeIds]);
 
+  // Determine which clusters to highlight/dim during tour
+  const tourHighlight = tourActive ? tourSteps[tourStep]?.highlight : "none";
+
   return (
     <NeuralShell>
       <div className="max-w-[1400px]">
@@ -673,7 +775,7 @@ export default function OrgChart() {
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => { setShowWalkthrough(true); setWalkthroughStep(0); }}
+              onClick={() => { setTourActive(true); setTourStep(0); }}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-semibold text-foreground/50 hover:text-foreground hover:bg-black/[0.04] transition-all"
             >
               <Eye className="w-3.5 h-3.5" /> Guide
@@ -683,11 +785,11 @@ export default function OrgChart() {
                 onClick={stopDemo}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold bg-red-500 text-white hover:bg-red-600 transition-all"
               >
-                <Pause className="w-3.5 h-3.5" /> Stop Demo
+                <Pause className="w-3.5 h-3.5" /> Stop
               </button>
             ) : (
               <button
-                onClick={startDemo}
+                onClick={() => { if (tourActive) { completeTour(); } startDemo(); }}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold bg-primary text-white hover:bg-primary/90 transition-all shadow-sm"
               >
                 <Play className="w-3.5 h-3.5" /> Demo
@@ -734,14 +836,15 @@ export default function OrgChart() {
             </motion.div>
 
             {/* Cluster 5 — DRI at top */}
-            <div className="mb-6">
+            <div className={`mb-6 transition-all duration-500 ${tourHighlight === "clusters" || tourHighlight === "nodes" ? "opacity-40" : ""}`}>
               <ClusterCard
                 cluster={clusters.find((c) => c.id === 5)!}
                 nodes={getClusterNodes(5)}
                 activeNodes={mergedActiveNodes}
-                highlightAll={showWalkthrough && walkthroughSteps[walkthroughStep]?.highlight === "cluster-5"}
+                highlightAll={tourHighlight === "cluster-5"}
                 onNodeClick={handleNodeClick}
                 demoDelay={0}
+                dimmed={tourHighlight === "clusters" || tourHighlight === "nodes"}
               />
             </div>
 
@@ -756,17 +859,16 @@ export default function OrgChart() {
                   />
                 )}
               </div>
-              {/* Branching lines to 4 clusters */}
               {demoRunning && (
                 <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex items-end gap-0">
                   {[1, 2, 3, 4].map((i) => (
                     <motion.div
                       key={i}
-                      className="w-1 h-1 rounded-full bg-emerald-400"
+                      className="w-1.5 h-1.5 rounded-full bg-emerald-400"
                       initial={{ opacity: 0, scale: 0 }}
                       animate={{ opacity: [0, 1, 0], scale: [0.5, 1.2, 0.5] }}
                       transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
-                      style={{ margin: "0 8px" }}
+                      style={{ margin: "0 10px" }}
                     />
                   ))}
                 </div>
@@ -774,16 +876,17 @@ export default function OrgChart() {
             </div>
 
             {/* Clusters 1-4 grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div className={`grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 transition-all duration-500 ${tourHighlight === "cluster-5" ? "opacity-40" : ""}`}>
               {[1, 2, 3, 4].map((cId) => (
                 <ClusterCard
                   key={cId}
                   cluster={clusters.find((c) => c.id === cId)!}
                   nodes={getClusterNodes(cId)}
                   activeNodes={mergedActiveNodes}
-                  highlightAll={showWalkthrough && (walkthroughSteps[walkthroughStep]?.highlight === "clusters" || walkthroughSteps[walkthroughStep]?.highlight === "nodes")}
+                  highlightAll={tourHighlight === "clusters" || tourHighlight === "nodes"}
                   onNodeClick={handleNodeClick}
                   demoDelay={cId}
+                  dimmed={tourHighlight === "cluster-5"}
                 />
               ))}
             </div>
@@ -804,16 +907,29 @@ export default function OrgChart() {
           </TabsContent>
         </Tabs>
 
-        {/* Walkthrough overlay */}
+        {/* Tour overlay — includes a full-screen click blocker so nodes behind can't be tapped */}
         <AnimatePresence>
-          {showWalkthrough && (
-            <WalkthroughOverlay
-              step={walkthroughStep}
-              totalSteps={walkthroughSteps.length}
-              onNext={() => setWalkthroughStep((s) => Math.min(s + 1, walkthroughSteps.length - 1))}
-              onPrev={() => setWalkthroughStep((s) => Math.max(s - 1, 0))}
-              onClose={closeWalkthrough}
-            />
+          {tourActive && (
+            <>
+              {/* Invisible click-blocker covers the entire viewport */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-40"
+                style={{ background: "oklch(0 0 0 / 0.05)" }}
+                onClick={(e) => e.stopPropagation()}
+              />
+              <TourOverlay
+                step={tourStep}
+                totalSteps={tourSteps.length}
+                onNext={handleTourNext}
+                onPrev={handleTourPrev}
+                onSkip={handleSkipTour}
+                onEnterEngine={handleEnterEngine}
+                demoRunning={demoRunning}
+              />
+            </>
           )}
         </AnimatePresence>
       </div>

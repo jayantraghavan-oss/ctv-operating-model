@@ -1,0 +1,10 @@
+Tour Step 5 - "Watch It Come Alive":
+- Step 5/7 showing correctly
+- Title: "Watch It Come Alive"
+- Description: "Now let's see the system in action. Watch as all 200 agents activate in sequence — data flows from governance down through each cluster, just like it would in a real operating cycle."
+- Tip: "The green pulses show agents coming online. In the real tool, each one generates live output."
+- DEMO MODE AUTO-TRIGGERED: The Demo button in the header now shows "Stop" instead of "Demo"
+- Green pulsing borders visible on Cluster 5 nodes - the cascading activation is running!
+- The nodes have green glow/pulse effects showing activation
+- This is exactly the behavior we wanted - the demo auto-starts when reaching step 5
+- Back, Skip tour, Next buttons visible

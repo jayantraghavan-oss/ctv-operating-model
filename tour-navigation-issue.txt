@@ -1,0 +1,6 @@
+Issue: Clicking "Next" on step 5 accidentally navigated to Module 4 page instead of advancing to step 6.
+Root cause: The click at coordinates (600, 718) hit a node button behind the tour overlay instead of the Next button.
+The tour overlay needs higher z-index or the Next button needs to be more precisely targeted.
+Actually looking more carefully - the Next button IS at index 122 but the click coordinates may have hit the XFN Leadership Weekly Preparation node behind it.
+The tour overlay should prevent clicks from passing through to the org chart nodes underneath.
+Fix needed: Add pointer-events: none to the org chart content when tour is active, or ensure the tour overlay captures all clicks.

@@ -1,0 +1,7 @@
+Tour Step 4 - The Ownership Model
+- Shows correctly: "Every box has a badge: 'A' means AI-driven, 'A+H' means AI generates and human reviews, 'H' means human-led with AI support"
+- Tip: "Most work is A+H — the AI drafts, the human approves. This is the safety layer."
+- Progress bar shows 4/7
+- Back, Skip tour, Next buttons all visible
+- Click blocker is working - can't click through to org chart nodes
+- Need to scroll down slightly to see the Next button at bottom

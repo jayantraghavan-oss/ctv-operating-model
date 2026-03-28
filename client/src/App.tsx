@@ -1,15 +1,16 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation, Redirect } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AgentProvider } from "./contexts/AgentContext";
 import CommandPalette from "./components/CommandPalette";
-import WelcomeModal from "./components/WelcomeModal";
 import HelpButton from "./components/HelpButton";
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+
+const TOUR_KEY = "ctv-orgchart-tour-completed";
 
 // Neural command center pages
 import NeuralCommand from "./pages/NeuralCommand";
@@ -48,9 +49,33 @@ function PageLoader() {
   );
 }
 
+/**
+ * FirstVisitRedirect — On first visit, redirect from / to /org-chart
+ * so the guided tour is the first thing users see.
+ * After the tour is completed, / goes to Dashboard as normal.
+ */
+function FirstVisitRedirect() {
+  const [location] = useLocation();
+
+  // Only redirect from the root path
+  if (location !== "/") return null;
+
+  try {
+    const tourCompleted = localStorage.getItem(TOUR_KEY);
+    if (!tourCompleted) {
+      return <Redirect to="/org-chart" />;
+    }
+  } catch {
+    // If localStorage fails, just show Dashboard
+  }
+
+  return null;
+}
+
 function Router() {
   return (
     <Suspense fallback={<PageLoader />}>
+      <FirstVisitRedirect />
       <AnimatePresence mode="wait">
         <Switch>
           {/* Neural command center */}
@@ -103,7 +128,6 @@ function App() {
               }}
             />
             <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} />
-            <WelcomeModal />
             <HelpButton />
             <Router />
           </TooltipProvider>

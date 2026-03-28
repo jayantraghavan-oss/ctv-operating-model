@@ -1,0 +1,8 @@
+Tour Step 7 - "Ready to Explore?" (Final step):
+- Title: "Ready to Explore?"
+- Description: "You can click any node on this map to jump directly to that agent. Or head to the Dashboard to see the full control center — run agents, review outputs, simulate buyer conversations, and more."
+- Tip: "Come back to this Org Map anytime from the sidebar under Reference."
+- CTA button: "Enter the Engine" with rocket icon - blue/Moloco branded
+- Progress bar shows 7/7 segments filled
+- Back and Skip tour buttons still available
+- All green activation borders still visible on the org chart nodes behind

@@ -1,0 +1,11 @@
+First-Time Flow Test Results:
+1. Navigated to / (root) → successfully redirected to /org-chart
+2. Tour overlay auto-appeared at bottom of page with Step 1/7: "Welcome to the CTV AI Engine"
+3. Description: "You're looking at the operating model for an entire CTV business — powered by 200 AI assistants, organized into 4 work modules, and orchestrated by just 2 humans."
+4. Tip box: "This org chart is your home base. Every box is a real AI assistant you can run."
+5. Progress bar shows 7 segments, first one highlighted
+6. Skip tour button and Next button visible
+7. Click-blocker overlay prevents clicking org chart nodes behind the tour
+8. The tour panel has a frosted glass effect with rounded corners - looks polished
+9. Next button at index 122 is clearly visible
+10. The redirect from / to /org-chart works correctly for first-time visitors
