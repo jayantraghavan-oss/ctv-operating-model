@@ -112,5 +112,5 @@
 ## Phase 22: Add Refresh/Reset Button + Cross-Page Agent Testing
 - [x] Add "Clear History" button to Agent Swarm page header (appears when failed > 0)
 - [x] Add resetAgentRuns function to AgentContext (clears runs from state + localStorage)
-- [ ] Test agents on War Room, Command Center, Module pages on production
-- [ ] Save checkpoint and verify on production
+- [x] Test agents on War Room, Command Center, Module pages on production — all passing
+- [x] All 5 cross-page tests passed (Swarm #4/#5, War Room #1, Deep Dive, Module M1 #8)
