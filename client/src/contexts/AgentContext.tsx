@@ -1,10 +1,12 @@
 /*
  * AgentContext — The "second brain" state engine
+ * Now with REAL LLM execution — every agent fires a live cognitive call.
  * Manages: agent run history, sub-module statuses, cluster notes,
  * notifications, conviction scores, and learning loop events.
  * All state persisted to localStorage so Beth never loses context.
  */
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
+import { executeAgentPrompt } from "@/lib/llm";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -20,6 +22,9 @@ export interface AgentRun {
   startedAt: string;
   completedAt?: string;
   output?: string;
+  durationMs?: number;
+  agentType?: string;
+  owner?: string;
 }
 
 export interface ClusterNote {
@@ -43,7 +48,7 @@ export interface Notification {
 export interface LearningGoal {
   id: string;
   question: string;
-  conviction: number; // 0-100
+  conviction: number;
   evidence: string[];
   lastUpdated: string;
   status: "strong" | "moderate" | "weak" | "insufficient";
@@ -66,7 +71,7 @@ interface AgentState {
 
 interface AgentContextType extends AgentState {
   setSubModuleStatus: (key: string, status: SubModuleStatus) => void;
-  runAgent: (promptId: number, promptText: string, moduleId: number, subModuleName: string) => void;
+  runAgent: (promptId: number, promptText: string, moduleId: number, subModuleName: string, agentType?: string, owner?: string) => void;
   addClusterNote: (clusterId: number, text: string) => void;
   deleteClusterNote: (noteId: string) => void;
   markNotificationRead: (id: string) => void;
@@ -76,9 +81,11 @@ interface AgentContextType extends AgentState {
   getClusterHealth: (clusterId: number) => { active: number; total: number; percent: number };
   unreadCount: number;
   recentRuns: AgentRun[];
+  isExecuting: boolean;
+  executionQueue: number;
 }
 
-// ── Default Learning Goals (from the doc's EOQ2 framework) ─────────────
+// ── Default Learning Goals ─────────────────────────────────────────────────
 
 const defaultLearningGoals: LearningGoal[] = [
   {
@@ -154,21 +161,6 @@ const defaultConviction: ConvictionScore = {
   recommendation: "extend",
 };
 
-// ── Simulated agent outputs ────────────────────────────────────────────
-
-const simulatedOutputs = [
-  "Scan complete. 3 new market signals detected: (1) Roku expanding self-serve CTV buying, (2) TTD launching new CTV measurement suite, (3) Retail media networks increasing CTV spend 40% YoY. Implications flagged for positioning review.",
-  "Battlecard updated for tvScientific. Key change: they've added incrementality measurement as a core feature. Counter-positioning recommendation: emphasize Moloco's ML-driven optimization vs. their rules-based approach.",
-  "Weekly win/loss synthesis: 4 wins, 2 losses this week. Top win driver: performance proof from existing tests. Top loss driver: lack of brand safety certification. Recommendation: accelerate brand safety partnership.",
-  "ICP analysis complete. Gaming vertical continues to show highest conversion (12% MQL→SQL). New signal: streaming aggregators emerging as high-potential segment. Recommend adding to test matrix.",
-  "Outbound cycle #7 complete. Email response rate: 4.2% (up from 3.1%). LinkedIn InMail: 8.7%. Top-performing message: ROI-focused with specific competitor comparison. Recommend doubling down on this angle.",
-  "Campaign performance alert: Account XYZ showing 25% ROAS decline over 3 days. Root cause analysis: creative fatigue detected. Recommended action: rotate creative set and adjust frequency cap.",
-  "Pipeline visibility update: 12 active opportunities, $4.2M weighted pipeline. 3 deals in negotiation stage. Test fund utilization: 67% committed, 42% deployed. $180K remaining.",
-  "Cross-account pattern detected: Accounts using video completion rate as primary KPI consistently outperform those using CTR. Recommend updating onboarding guidance to steer toward VCR-based optimization.",
-  "Executive weekly prep generated. Key items for XFN discussion: (1) Brand safety certification timeline, (2) Web product beta readiness, (3) Q2 pipeline gap of $1.8M vs target. Pre-read attached.",
-  "Conviction tracker updated. Learning Goal #1 (ML performance) moved from 'moderate' to 'strong' based on latest test results. Overall conviction: 52% (up from 47%). Recommendation unchanged: extend.",
-];
-
 // ── Helper ─────────────────────────────────────────────────────────────
 
 function genId() {
@@ -177,7 +169,7 @@ function genId() {
 
 function loadState(): AgentState | null {
   try {
-    const raw = localStorage.getItem("ctv-ops-state");
+    const raw = localStorage.getItem("ctv-ops-state-v2");
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -186,7 +178,7 @@ function loadState(): AgentState | null {
 
 function saveState(state: AgentState) {
   try {
-    localStorage.setItem("ctv-ops-state", JSON.stringify(state));
+    localStorage.setItem("ctv-ops-state-v2", JSON.stringify(state));
   } catch { /* quota exceeded — silent */ }
 }
 
@@ -207,11 +199,10 @@ function getAllSubModuleKeysForModule(moduleId: number): string[] {
 }
 
 function getAllSubModuleKeysForCluster(clusterId: number): string[] {
-  // Cluster → Module mapping from the doc
   const clusterModuleMap: Record<number, number[]> = {
     1: [1],
-    2: [2], // demand side of M2
-    3: [2], // sales side of M2
+    2: [2],
+    3: [2],
     4: [3],
     5: [4],
   };
@@ -234,25 +225,17 @@ export function AgentProvider({ children }: { children: ReactNode }) {
         {
           id: genId(),
           type: "weekly-prep",
-          title: "Weekly Prep Ready",
-          description: "XFN Leadership Weekly agenda auto-generated from all modules. Review before Monday standup.",
+          title: "System Online",
+          description: "CTV AI Commercial Engine initialized. All 200 agents ready for execution. Click any agent to fire a real LLM call.",
           timestamp: new Date().toISOString(),
           read: false,
-          link: "/weekly-prep",
-        },
-        {
-          id: genId(),
-          type: "conviction-update",
-          title: "Conviction Score Updated",
-          description: "Overall conviction moved to 47%. Learning Goal #4 (CTV-to-Web) flagged as insufficient data.",
-          timestamp: new Date(Date.now() - 3600000).toISOString(),
-          read: false,
-          link: "/conviction",
         },
       ],
       convictionScore: defaultConviction,
     };
   });
+
+  const [executionQueue, setExecutionQueue] = useState(0);
 
   // Persist on every change
   useEffect(() => {
@@ -277,8 +260,20 @@ export function AgentProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const runAgent = useCallback((promptId: number, promptText: string, moduleId: number, subModuleName: string) => {
+  /**
+   * Run an agent with REAL LLM execution.
+   * Fires the Forge API, streams the output back, updates state.
+   */
+  const runAgent = useCallback((
+    promptId: number,
+    promptText: string,
+    moduleId: number,
+    subModuleName: string,
+    agentType: string = "persistent",
+    owner: string = "agent",
+  ) => {
     const runId = genId();
+    const startTime = Date.now();
     const run: AgentRun = {
       id: runId,
       promptId,
@@ -287,38 +282,54 @@ export function AgentProvider({ children }: { children: ReactNode }) {
       subModuleName,
       status: "running",
       startedAt: new Date().toISOString(),
+      agentType,
+      owner,
     };
 
     setState((prev) => ({
       ...prev,
-      agentRuns: [run, ...prev.agentRuns].slice(0, 100),
+      agentRuns: [run, ...prev.agentRuns].slice(0, 200),
     }));
+    setExecutionQueue((q) => q + 1);
 
-    // Simulate agent execution (1.5-4 seconds)
-    const delay = 1500 + Math.random() * 2500;
-    setTimeout(() => {
-      const output = simulatedOutputs[Math.floor(Math.random() * simulatedOutputs.length)];
-      setState((prev) => {
-        const updatedRuns = prev.agentRuns.map((r) =>
-          r.id === runId
-            ? { ...r, status: "completed" as const, completedAt: new Date().toISOString(), output }
-            : r
-        );
-        const notif: Notification = {
-          id: genId(),
-          type: "agent-complete",
-          title: "Agent Run Complete",
-          description: `Prompt #${promptId}: ${promptText.slice(0, 80)}...`,
-          timestamp: new Date().toISOString(),
-          read: false,
-        };
-        return {
-          ...prev,
-          agentRuns: updatedRuns,
-          notifications: [notif, ...prev.notifications].slice(0, 50),
-        };
+    // Fire real LLM call
+    executeAgentPrompt(promptText, moduleId, subModuleName, agentType, owner)
+      .then((output) => {
+        const durationMs = Date.now() - startTime;
+        setState((prev) => {
+          const updatedRuns = prev.agentRuns.map((r) =>
+            r.id === runId
+              ? { ...r, status: "completed" as const, completedAt: new Date().toISOString(), output, durationMs }
+              : r
+          );
+          const notif: Notification = {
+            id: genId(),
+            type: "agent-complete",
+            title: `Agent #${promptId} Complete`,
+            description: `${subModuleName} — ${(durationMs / 1000).toFixed(1)}s — ${output.slice(0, 100)}...`,
+            timestamp: new Date().toISOString(),
+            read: false,
+          };
+          return {
+            ...prev,
+            agentRuns: updatedRuns,
+            notifications: [notif, ...prev.notifications].slice(0, 50),
+          };
+        });
+        setExecutionQueue((q) => Math.max(0, q - 1));
+      })
+      .catch((err) => {
+        const durationMs = Date.now() - startTime;
+        setState((prev) => {
+          const updatedRuns = prev.agentRuns.map((r) =>
+            r.id === runId
+              ? { ...r, status: "failed" as const, completedAt: new Date().toISOString(), output: `Error: ${err.message}`, durationMs }
+              : r
+          );
+          return { ...prev, agentRuns: updatedRuns };
+        });
+        setExecutionQueue((q) => Math.max(0, q - 1));
       });
-    }, delay);
   }, []);
 
   const addClusterNote = useCallback((clusterId: number, text: string) => {
@@ -387,7 +398,6 @@ export function AgentProvider({ children }: { children: ReactNode }) {
             description: `Overall conviction: ${overall}%. Recommendation: ${rec}.`,
             timestamp: new Date().toISOString(),
             read: false,
-            link: "/conviction",
           },
           ...prev.notifications,
         ].slice(0, 50),
@@ -416,7 +426,8 @@ export function AgentProvider({ children }: { children: ReactNode }) {
   }, [state.subModuleStatuses]);
 
   const unreadCount = state.notifications.filter((n) => !n.read).length;
-  const recentRuns = state.agentRuns.slice(0, 10);
+  const recentRuns = state.agentRuns.slice(0, 20);
+  const isExecuting = executionQueue > 0;
 
   return (
     <AgentContext.Provider
@@ -433,6 +444,8 @@ export function AgentProvider({ children }: { children: ReactNode }) {
         getClusterHealth,
         unreadCount,
         recentRuns,
+        isExecuting,
+        executionQueue,
       }}
     >
       {children}
