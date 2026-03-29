@@ -1216,8 +1216,164 @@ function ReferenceGuide() {
     );
   };
 
+  const [onePagerExpanded, setOnePagerExpanded] = useState(true);
+
   return (
     <div className="space-y-8">
+      {/* 1-Pager: AI-First CTV Operating Model Overview */}
+      <div>
+        <button
+          onClick={() => setOnePagerExpanded(!onePagerExpanded)}
+          className="flex items-center gap-2 w-full text-left mb-3 group"
+        >
+          <ChevronDown className={`w-4 h-4 text-foreground/30 transition-transform ${onePagerExpanded ? '' : '-rotate-90'}`} />
+          <h3 className="text-[14px] font-bold text-foreground">AI-First CTV Operating Model — Overview</h3>
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 font-semibold">1-Pager</span>
+        </button>
+        {onePagerExpanded && (
+          <div className="border border-border rounded-xl bg-white/60 p-5 sm:p-6 space-y-5">
+            {/* What this is */}
+            <div>
+              <p className="text-[12px] text-foreground/70 leading-relaxed">
+                <span className="font-bold text-foreground">200 AI agents. 2 humans. 4 work modules. 5 orchestration clusters.</span> One commercial org for Moloco's CTV business.
+              </p>
+              <p className="text-[12px] text-foreground/50 leading-relaxed mt-2">
+                The agents do the cognitive volume — research, drafting, analysis, monitoring, competitive tracking, outbound, pipeline ops. The humans hold judgment: what goes to market, what gets pitched, where to invest. Agents generate. Humans approve. Nothing reaches a buyer without a human decision.
+              </p>
+              <p className="text-[12px] text-foreground/50 leading-relaxed mt-2">
+                This is not automation bolted onto a traditional org. There is no 20-person team underneath. The agents ARE the team. The humans are orchestrators, not managers.
+              </p>
+            </div>
+
+            {/* Why it matters */}
+            <div>
+              <h4 className="text-[11px] font-bold text-foreground/40 uppercase tracking-wider mb-2">Why it matters</h4>
+              <p className="text-[12px] text-foreground/50 leading-relaxed">
+                CTV is a nascent product competing against TTD, Amazon, Roku. The window to establish position is narrow. A traditional GTM build takes 6+ months to staff, ramp, and produce. This model produces from day one — with the depth of a large team and the cost structure of a small one.
+              </p>
+              <p className="text-[12px] font-semibold text-foreground mt-2">
+                Target: $200M App ARR + Web product validation. EOQ2 investment decision.
+              </p>
+            </div>
+
+            {/* Ownership modes */}
+            <div>
+              <h4 className="text-[11px] font-bold text-foreground/40 uppercase tracking-wider mb-2">How it works</h4>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="rounded-lg border border-blue-200 bg-blue-50/60 p-2.5 text-center">
+                  <div className="text-[10px] font-bold text-blue-700">A (Agent)</div>
+                  <div className="text-[9px] text-blue-600/70 mt-0.5">Autonomous. Generates and delivers. No human in the loop.</div>
+                </div>
+                <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-2.5 text-center">
+                  <div className="text-[10px] font-bold text-amber-700">A+H (Agent+Human)</div>
+                  <div className="text-[9px] text-amber-600/70 mt-0.5">Agent generates first. Human edits, re-prompts, or approves.</div>
+                </div>
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-2.5 text-center">
+                  <div className="text-[10px] font-bold text-emerald-700">H (Human-led)</div>
+                  <div className="text-[9px] text-emerald-600/70 mt-0.5">Human drives. Agent assists on request.</div>
+                </div>
+              </div>
+              <p className="text-[11px] text-foreground/40 mt-2 italic">A+H is where the system earns trust. Agent does 80% of the work. Human makes it right.</p>
+            </div>
+
+            {/* Use-cases table */}
+            <div>
+              <h4 className="text-[11px] font-bold text-foreground/40 uppercase tracking-wider mb-2">Use-cases</h4>
+              <div className="border border-border rounded-lg overflow-hidden">
+                <table className="w-full text-[11px]">
+                  <thead>
+                    <tr className="border-b border-border bg-black/[0.02]">
+                      <th className="text-left px-3 py-2 font-bold text-foreground/50 uppercase tracking-wider text-[9px]">Use-Case</th>
+                      <th className="text-left px-3 py-2 font-bold text-foreground/50 uppercase tracking-wider text-[9px]">Agent Does</th>
+                      <th className="text-left px-3 py-2 font-bold text-foreground/50 uppercase tracking-wider text-[9px]">Human Does</th>
+                      <th className="text-left px-3 py-2 font-bold text-foreground/50 uppercase tracking-wider text-[9px] w-[100px]">In Tool</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      { uc: "Competitive positioning", agent: "Monitors TTD/Amazon/Roku; generates battlecards", human: "Approves positioning before enablement", feature: "Toolkit → Competitive Intel", path: "/toolkit" },
+                      { uc: "Buyer research & ICP", agent: "Profiles accounts, scores ICP fit, maps buying committees", human: "Validates prioritization", feature: "Org Chart → M1 agents", path: "/" },
+                      { uc: "Campaign & content", agent: "Drafts outbound sequences, event briefs, case studies", human: "Edits copy, approves messaging", feature: "Toolkit → Demand Gen", path: "/toolkit" },
+                      { uc: "Deal strategy & pitch prep", agent: "Builds pitch decks, pricing scenarios, objection guides", human: "Reviews strategy; practices via roleplay", feature: "Workflow → Roleplay", path: "/simulation" },
+                      { uc: "Pipeline analytics", agent: "Tracks pipeline health, win/loss, conversion", human: "Uses for forecast calls", feature: "Toolkit → Pipeline", path: "/toolkit" },
+                      { uc: "Customer health", agent: "Monitors campaigns, flags at-risk, drafts QBRs", human: "Approves interventions", feature: "Toolkit → Customer Success", path: "/toolkit" },
+                      { uc: "Exec reporting", agent: "Aggregates cross-module insights, tracks OKRs", human: "Presents to leadership; makes decisions", feature: "Toolkit → Governance", path: "/toolkit" },
+                      { uc: "Seller training", agent: "Simulates buyer personas with contextual pushback", human: "Practices pitch; reviews performance", feature: "Buyer Roleplay + Chat", path: "/simulation" },
+                    ].map((row, i) => (
+                      <tr key={i} className="border-b border-border/50 last:border-0 hover:bg-black/[0.01] cursor-pointer" onClick={() => navigate(row.path)}>
+                        <td className="px-3 py-2 font-semibold text-foreground align-top whitespace-nowrap">{row.uc}</td>
+                        <td className="px-3 py-2 text-foreground/50">{row.agent}</td>
+                        <td className="px-3 py-2 text-foreground/50">{row.human}</td>
+                        <td className="px-3 py-2">
+                          <span className="text-[10px] text-primary font-semibold flex items-center gap-1 hover:underline">
+                            {row.feature} <ArrowRight className="w-3 h-3" />
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* V0 — what it does / doesn't */}
+            <div>
+              <h4 className="text-[11px] font-bold text-foreground/40 uppercase tracking-wider mb-2">V0 — what it does today</h4>
+              <div className="space-y-1.5 text-[12px] text-foreground/50">
+                <p><span className="font-semibold text-foreground">Org Chart.</span> Full 200-agent architecture as a clickable tree. Click any node → real agent execution with streaming output. Execute Workflow → cascading multi-agent runs.</p>
+                <p><span className="font-semibold text-foreground">A+H Collaboration.</span> Agent generates → human gets inline edit, re-prompt, approve/reject. Revision history tracked. Persisted to DB.</p>
+                <p><span className="font-semibold text-foreground">Buyer Roleplay.</span> After a workflow completes, a live chat opens. AI buyer persona adapted to the scenario challenges you in real-time. Pushes back on vague claims.</p>
+                <p><span className="font-semibold text-foreground">Toolkit.</span> All 200 agents organized by module and section. Searchable. Directly executable.</p>
+                <p><span className="font-semibold text-foreground">Approval Queue.</span> Review all A+H outputs. Filter by pending/approved/rejected. Edit and re-prompt inline.</p>
+              </div>
+            </div>
+
+            {/* What V0 doesn't do yet */}
+            <div>
+              <h4 className="text-[11px] font-bold text-foreground/40 uppercase tracking-wider mb-2">What V0 does not do yet</h4>
+              <div className="border border-border rounded-lg overflow-hidden">
+                <table className="w-full text-[11px]">
+                  <thead>
+                    <tr className="border-b border-border bg-black/[0.02]">
+                      <th className="text-left px-3 py-1.5 font-bold text-foreground/50 uppercase tracking-wider text-[9px]">Area</th>
+                      <th className="text-left px-3 py-1.5 font-bold text-foreground/50 uppercase tracking-wider text-[9px]">Now</th>
+                      <th className="text-left px-3 py-1.5 font-bold text-foreground/50 uppercase tracking-wider text-[9px]">Next</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      { area: "Data grounding", now: "Rich synthetic context", next: "Live Gong, Salesforce, Sensor Tower via MCP" },
+                      { area: "Knowledge loops", now: "Outputs saved to DB", next: "Agent outputs feed future runs" },
+                      { area: "Scheduling", now: "Manual trigger", next: "Cron-based persistent agents" },
+                      { area: "Roleplay scoring", now: "Unscored", next: "Post-session scorecards + coaching" },
+                      { area: "Export", now: "In-tool only", next: "Push to GDocs, Slides, Slack" },
+                      { area: "Multi-user", now: "Single operator", next: "Role-based access for 2 FTEs + leadership" },
+                    ].map((item, i) => (
+                      <tr key={i} className="border-b border-border/50 last:border-0">
+                        <td className="px-3 py-1.5 font-semibold text-foreground">{item.area}</td>
+                        <td className="px-3 py-1.5 text-foreground/40">{item.now}</td>
+                        <td className="px-3 py-1.5 text-primary/80">{item.next}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Bigger picture */}
+            <div className="rounded-lg bg-black/[0.02] border border-border p-3">
+              <p className="text-[12px] text-foreground/50 leading-relaxed">
+                If 2 humans can orchestrate 200 agents to run a commercial motion for CTV, the same architecture applies to any product line Moloco launches. Modules → clusters → human orchestrators. <span className="font-semibold text-foreground">The CTV org is the proving ground.</span>
+              </p>
+            </div>
+
+            <div className="text-[10px] text-foreground/30 text-center pt-2 border-t border-border/50">
+              V0 · GTM Program Design & Tools · March 2026
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Source document mapping */}
       <div>
         <h3 className="text-[14px] font-bold text-foreground mb-3">Source Document → Live System</h3>

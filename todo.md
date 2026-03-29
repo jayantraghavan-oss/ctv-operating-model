@@ -477,3 +477,10 @@
 - [x] Mobile-friendly chat UI with floating input bar
 - [x] Reset/close chat and return to summary
 - [x] Save chat session to DB alongside workflow session (onSaveSession prop wired)
+
+## Phase 42: AI-First CTV Org 1-Pager
+- [x] Write narrative 1-pager doc (vision, use-cases table, V0 considerations)
+- [x] Embed 1-pager as first section in Reference Guide tab
+- [x] Standalone markdown doc for sharing
+- [x] Rewrite 1-pager in Sushant's terse writing style from original doc
+- [x] Update Reference Guide embed to match terse rewrite
