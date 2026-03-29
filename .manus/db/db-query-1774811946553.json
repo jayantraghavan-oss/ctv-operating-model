@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `workflow_sessions` (\n  `id` varchar(64) NOT NULL,\n  `name` varchar(500) NOT NULL,\n  `description` text,\n  `query_type` enum('preset','custom') NOT NULL,\n  `custom_query` text,\n  `agent_count` int NOT NULL,\n  `completed_count` int NOT NULL,\n  `total_duration_ms` int,\n  `compiled_output` text NOT NULL,\n  `node_details` text,\n  `user_id` varchar(255),\n  `started_at` bigint NOT NULL,\n  `completed_at` bigint,\n  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3pmUMCqAYdoymgd.604dbdf7168e --database Wr22fCMnjpJGgmtKZSL2hG --execute CREATE TABLE IF NOT EXISTS `workflow_sessions` (\n  `id` varchar(64) NOT NULL,\n  `name` varchar(500) NOT NULL,\n  `description` text,\n  `query_type` enum('preset','custom') NOT NULL,\n  `custom_query` text,\n  `agent_count` int NOT NULL,\n  `completed_count` int NOT NULL,\n  `total_duration_ms` int,\n  `compiled_output` text NOT NULL,\n  `node_details` text,\n  `user_id` varchar(255),\n  `started_at` bigint NOT NULL,\n  `completed_at` bigint,\n  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2231
+}

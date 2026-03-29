@@ -37,3 +37,25 @@ export const agentRuns = mysqlTable("agent_runs", {
   scenarioName: varchar("scenario_name", { length: 255 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+/**
+ * Workflow Sessions table — persists complete workflow executions.
+ * Each session stores the scenario/query, all agent outputs compiled into a single doc,
+ * and metadata about the run.
+ */
+export const workflowSessions = mysqlTable("workflow_sessions", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  name: varchar("name", { length: 500 }).notNull(),
+  description: text("description"),
+  queryType: mysqlEnum("query_type", ["preset", "custom"]).notNull(),
+  customQuery: text("custom_query"),
+  agentCount: int("agent_count").notNull(),
+  completedCount: int("completed_count").notNull(),
+  totalDurationMs: int("total_duration_ms"),
+  compiledOutput: text("compiled_output").notNull(),
+  nodeDetails: text("node_details"), // JSON array of { nodeId, nodeName, output, durationMs, status }
+  userId: varchar("user_id", { length: 255 }),
+  startedAt: bigint("started_at", { mode: "number" }).notNull(),
+  completedAt: bigint("completed_at", { mode: "number" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});

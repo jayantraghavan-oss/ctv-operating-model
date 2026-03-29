@@ -7,6 +7,10 @@ import {
   listAgentRuns,
   getAgentRun,
   getAgentRunStats,
+  saveWorkflowSession,
+  listWorkflowSessions,
+  getWorkflowSession,
+  getWorkflowSessionStats,
 } from "./db";
 
 export const appRouter = router({
@@ -125,6 +129,62 @@ export const appRouter = router({
      */
     stats: publicProcedure.query(async () => {
       return getAgentRunStats();
+    }),
+  }),
+
+  workflowSessions: router({
+    /**
+     * Save a completed workflow session.
+     */
+    save: publicProcedure
+      .input(
+        z.object({
+          id: z.string(),
+          name: z.string(),
+          description: z.string().optional(),
+          queryType: z.enum(["preset", "custom"]),
+          customQuery: z.string().optional(),
+          agentCount: z.number(),
+          completedCount: z.number(),
+          totalDurationMs: z.number().optional(),
+          compiledOutput: z.string(),
+          nodeDetails: z.string().optional(),
+          startedAt: z.number(),
+          completedAt: z.number().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        return saveWorkflowSession(input);
+      }),
+
+    /**
+     * List workflow sessions (most recent first).
+     */
+    list: publicProcedure
+      .input(
+        z.object({
+          limit: z.number().optional(),
+          offset: z.number().optional(),
+        }).optional()
+      )
+      .query(async ({ input }) => {
+        return listWorkflowSessions(input || undefined);
+      }),
+
+    /**
+     * Get a single workflow session by ID.
+     */
+    get: publicProcedure
+      .input(z.object({ id: z.string() }))
+      .query(async ({ input }) => {
+        return getWorkflowSession(input.id);
+      }),
+
+    /**
+     * Get aggregate stats about workflow sessions.
+     */
+    stats: publicProcedure.query(async () => {
+      return getWorkflowSessionStats();
     }),
   }),
 });

@@ -374,3 +374,14 @@
 - [x] Mobile polish: Agent Registry page — filters stack vertically, search full-width, chips wrap, rows compact, expanded output less indented
 - [x] Scenario output summary — ScenarioSummaryPanel shows after demo completes with per-node expandable outputs, copy all, re-run, total duration
 - [x] Persist agent runs to database — agent_runs table, tRPC save/update/list/get/stats, AgentContext auto-persists on start/complete/fail, 10 new tests passing (58 total)
+
+## Phase 37: Execute Workflow + Custom Queries + Session Runs
+
+- [x] Rename "Demo" → "Execute Workflow" in header button, narration bar, tour steps, footer text
+- [x] ScenarioPickerModal → WorkflowPickerModal with custom query text input at top
+- [x] Custom query: user types free-form query → LLM selects relevant agents → fires them in sequence
+- [x] Session run: after workflow completes, compile all outputs into a single document
+- [x] Session run saved to DB with: query, scenario name, agent outputs, timestamps, total duration (workflow_sessions table)
+- [x] Session history: tRPC list/get/stats endpoints for workflow sessions
+- [x] ScenarioSummaryPanel: Save Session button with green Saved badge after persist
+- [x] All 69 tests passing (11 new workflow session tests)

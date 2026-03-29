@@ -3,7 +3,7 @@
  * Pixel-perfect tree layout matching the source document.
  * C5 DRI at top → sub-modules in rows → connector → 4 cluster columns.
  * Every node is clickable → fires real agent execution with inline streaming output.
- * Demo mode: scenario picker → cascading real agent execution with narration.
+ * Execute Workflow: workflow picker → cascading real agent execution with narration.
  */
 import NeuralShell from "@/components/NeuralShell";
 import OutputInterstitial from "@/components/OutputInterstitial";
@@ -51,10 +51,15 @@ import {
   Copy,
   CheckCircle2,
   Clock,
+  MessageSquare,
+  Send,
+  History,
+  Save,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useIsMobile } from "@/hooks/useMobile";
 import { toast } from "sonner";
+import { callLLM } from "@/lib/llm";
 
 // ── Constants ──
 const TOUR_KEY = "ctv-orgchart-tour-completed";
@@ -120,7 +125,7 @@ const tourSteps = [
     description: "What you just saw is the entire CTV commercial engine activating. Market intelligence feeds growth campaigns, which feed sales motions, which feed customer success — all coordinated through the DRI layer at the top.",
     highlight: "overview" as const,
     icon: Brain,
-    tip: "In the tool, click any box to see its agents, then hit 'Run' to generate real outputs.",
+    tip: "In the tool, click any box to see its agents, then hit 'Execute Workflow' to run a full scenario.",
     action: null as string | null,
   },
   {
@@ -147,7 +152,7 @@ interface TreeNode {
   agentType: string;
 }
 
-// ── Scenario definitions for Demo mode ──
+// ── Workflow definitions ──
 interface DemoScenario {
   id: string;
   name: string;
@@ -568,16 +573,27 @@ function TreeNodeBox({
   );
 }
 
-// ── Scenario Picker Modal ──
-function ScenarioPickerModal({
+// ── Workflow Picker Modal (with custom query) ──
+function WorkflowPickerModal({
   scenarios,
   onSelect,
+  onCustomQuery,
   onClose,
 }: {
   scenarios: DemoScenario[];
   onSelect: (scenario: DemoScenario) => void;
+  onCustomQuery: (query: string) => void;
   onClose: () => void;
 }) {
+  const [customQuery, setCustomQuery] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const handleCustomSubmit = async () => {
+    if (!customQuery.trim() || isAnalyzing) return;
+    setIsAnalyzing(true);
+    onCustomQuery(customQuery.trim());
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -603,9 +619,9 @@ function ScenarioPickerModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-black/[0.06]">
           <div>
-            <h2 className="text-[18px] font-bold text-foreground">Run a Scenario</h2>
+            <h2 className="text-[18px] font-bold text-foreground">Execute Workflow</h2>
             <p className="text-[13px] text-foreground/40 mt-0.5">
-              Choose a CTV selling scenario. Real agents will execute in cascade with live LLM output.
+              Describe what you need or pick a preset scenario. Agents execute in cascade with live output.
             </p>
           </div>
           <button
@@ -616,8 +632,46 @@ function ScenarioPickerModal({
           </button>
         </div>
 
-        {/* Scenario cards */}
-        <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* Custom query input */}
+        <div className="px-5 pt-5 pb-3">
+          <div className="relative">
+            <textarea
+              value={customQuery}
+              onChange={(e) => setCustomQuery(e.target.value)}
+              placeholder='Describe your workflow... e.g. "Prepare everything for a pitch to a retail brand considering CTV for the first time" or "Run a full competitive analysis against The Trade Desk"'
+              className="w-full h-24 px-4 py-3 pr-12 rounded-xl border border-black/[0.08] bg-black/[0.015] text-[13px] text-foreground placeholder:text-foreground/25 resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/30 transition-all"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                  handleCustomSubmit();
+                }
+              }}
+            />
+            <button
+              onClick={handleCustomSubmit}
+              disabled={!customQuery.trim() || isAnalyzing}
+              className="absolute bottom-3 right-3 w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center hover:bg-primary/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            >
+              {isAnalyzing ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+            </button>
+          </div>
+          <p className="text-[11px] text-foreground/25 mt-1.5 ml-1">
+            AI will analyze your query and select the right agents. Press ⌘+Enter to submit.
+          </p>
+        </div>
+
+        {/* Divider */}
+        <div className="flex items-center gap-3 px-5 py-2">
+          <div className="flex-1 h-px bg-black/[0.06]" />
+          <span className="text-[11px] font-semibold text-foreground/25 uppercase tracking-wider">or choose a preset</span>
+          <div className="flex-1 h-px bg-black/[0.06]" />
+        </div>
+
+        {/* Preset scenario cards */}
+        <div className="p-5 pt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
           {scenarios.map((scenario) => {
             const Icon = scenario.icon;
             return (
@@ -647,7 +701,7 @@ function ScenarioPickerModal({
         {/* Footer hint */}
         <div className="px-6 pb-4 text-center">
           <p className="text-[11px] text-foreground/25">
-            Each scenario fires real LLM calls. Agents execute in order with streaming output.
+            Each workflow fires real LLM calls. Agents execute in order with streaming output.
           </p>
         </div>
       </motion.div>
@@ -655,7 +709,7 @@ function ScenarioPickerModal({
   );
 }
 
-// ── Demo Narration Bar ──
+// ── Workflow Narration Bar ──
 function DemoNarrationBar({
   scenario,
   currentStep,
@@ -749,20 +803,75 @@ function ScenarioSummaryPanel({
   onRerun: () => void;
 }) {
   const [expandedNode, setExpandedNode] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [savedSessionId, setSavedSessionId] = useState<string | null>(null);
   const completedNodes = scenario.nodeSequence.filter(id => {
     const info = nodeOutputs[id];
     return info && !info.isStreaming && info.output;
   });
   const totalDuration = completedNodes.reduce((sum, id) => sum + (nodeOutputs[id]?.durationMs || 0), 0);
 
-  const copyAll = () => {
-    const text = completedNodes.map(id => {
+  const buildCompiledOutput = () => {
+    return completedNodes.map(id => {
       const node = nodeMap[id];
       const info = nodeOutputs[id];
       return `## ${node?.name || id}\n\n${info?.output || "No output"}`;
     }).join("\n\n---\n\n");
+  };
+
+  const copyAll = () => {
+    const text = buildCompiledOutput();
     navigator.clipboard.writeText(`# ${scenario.name} — Executive Summary\n\n${text}`);
     toast.success("Full summary copied to clipboard");
+  };
+
+  const saveSession = async () => {
+    if (isSaving || savedSessionId) return;
+    setIsSaving(true);
+    try {
+      const sessionId = `ws-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const compiledOutput = `# ${scenario.name} — Executive Summary\n\n${buildCompiledOutput()}`;
+      const nodeDetails = JSON.stringify(
+        scenario.nodeSequence.map(id => ({
+          nodeId: id,
+          nodeName: nodeMap[id]?.name || id,
+          output: nodeOutputs[id]?.output || "",
+          durationMs: nodeOutputs[id]?.durationMs || 0,
+          status: nodeOutputs[id]?.output ? "completed" : "skipped",
+        }))
+      );
+
+      const isCustom = scenario.id.startsWith("custom-");
+
+      await fetch("/api/trpc/workflowSessions.save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          json: {
+            id: sessionId,
+            name: scenario.name,
+            description: scenario.description,
+            queryType: isCustom ? "custom" : "preset",
+            customQuery: isCustom ? scenario.description : undefined,
+            agentCount: scenario.nodeSequence.length,
+            completedCount: completedNodes.length,
+            totalDurationMs: totalDuration,
+            compiledOutput,
+            nodeDetails,
+            startedAt: Date.now() - totalDuration,
+            completedAt: Date.now(),
+          },
+        }),
+      });
+
+      setSavedSessionId(sessionId);
+      toast.success("Session saved! You can revisit it anytime.");
+    } catch (err: any) {
+      toast.error(`Failed to save session: ${err.message?.slice(0, 60)}`);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -798,6 +907,23 @@ function ScenarioSummaryPanel({
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-foreground/50 hover:text-foreground hover:bg-black/[0.04] transition-all"
             >
               <Copy className="w-3.5 h-3.5" /> Copy All
+            </button>
+            <button
+              onClick={saveSession}
+              disabled={isSaving || !!savedSessionId}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${
+                savedSessionId
+                  ? "bg-emerald-50 text-emerald-600 cursor-default"
+                  : "bg-primary text-white hover:bg-primary/90 disabled:opacity-50"
+              }`}
+            >
+              {isSaving ? (
+                <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...</>
+              ) : savedSessionId ? (
+                <><CheckCircle2 className="w-3.5 h-3.5" /> Saved</>
+              ) : (
+                <><Save className="w-3.5 h-3.5" /> Save Session</>
+              )}
             </button>
             <button
               onClick={onRerun}
@@ -1363,7 +1489,7 @@ export default function OrgChart() {
   const [tourDemoActiveNodes, setTourDemoActiveNodes] = useState<Set<string>>(new Set());
   const tourDemoTimerRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
-  // Scenario demo state
+  // Workflow execution state
   const [showScenarioPicker, setShowScenarioPicker] = useState(false);
   const [activeScenario, setActiveScenario] = useState<DemoScenario | null>(null);
   const [scenarioStep, setScenarioStep] = useState(0);
@@ -1590,7 +1716,7 @@ export default function OrgChart() {
     setTourDemoActiveNodes(new Set());
   }, []);
 
-  // ── Scenario demo (real agent execution) ──
+  // ── Workflow execution (real agent execution) ──
   const startScenarioDemo = useCallback((scenario: DemoScenario) => {
     setShowScenarioPicker(false);
     setActiveScenario(scenario);
@@ -1657,6 +1783,79 @@ export default function OrgChart() {
     setScenarioStep(0);
     setScenarioRunningNodes(new Set());
   }, []);
+
+  // ── Custom query → LLM selects agents → builds dynamic scenario ──
+  const handleCustomQuery = useCallback(async (query: string) => {
+    setShowScenarioPicker(false);
+    toast("Analyzing your query...", { description: "AI is selecting the right agents for your workflow.", duration: 3000 });
+
+    try {
+      // Build a compact catalog of all tree nodes for the LLM
+      const nodeCatalog = Object.entries(nodeMap).map(([id, node]) => ({
+        id,
+        name: node.name,
+        module: node.moduleId,
+        section: node.sectionKey,
+        description: node.description?.slice(0, 120) || "",
+        prompts: node.promptCount,
+      }));
+
+      const response = await callLLM([
+        {
+          role: "system",
+          content: `You are an AI workflow planner for a CTV (Connected TV) advertising operating model. Given a user's query, select the most relevant agent nodes to execute in the optimal order.
+
+Rules:
+- Select 3-10 nodes that are most relevant to the query
+- Order them logically (research first, then analysis, then action, then reporting)
+- For each selected node, write a brief narration step (what it's doing)
+- Return ONLY valid JSON, no markdown
+
+Available nodes:\n${JSON.stringify(nodeCatalog, null, 0)}
+
+Return format: { "name": "<workflow name>", "nodeIds": ["id1", "id2", ...], "narration": ["Step 1 description...", "Step 2 description...", ...] }`,
+        },
+        {
+          role: "user",
+          content: query,
+        },
+      ]);
+
+      // Parse LLM response
+      let parsed: { name: string; nodeIds: string[]; narration: string[] };
+      try {
+        const cleaned = response.content.replace(/```json?\n?/g, "").replace(/```/g, "").trim();
+        parsed = JSON.parse(cleaned);
+      } catch {
+        toast.error("Failed to parse AI response. Try rephrasing your query.");
+        return;
+      }
+
+      // Validate node IDs exist
+      const validNodeIds = parsed.nodeIds.filter(id => nodeMap[id]);
+      if (validNodeIds.length === 0) {
+        toast.error("No matching agents found. Try a more specific query.");
+        return;
+      }
+
+      // Build a dynamic scenario
+      const dynamicScenario: DemoScenario = {
+        id: `custom-${Date.now()}`,
+        name: parsed.name || `Custom: ${query.slice(0, 40)}...`,
+        icon: MessageSquare,
+        description: query,
+        narration: parsed.narration.length >= validNodeIds.length
+          ? parsed.narration
+          : validNodeIds.map((id, i) => parsed.narration[i] || `Executing ${nodeMap[id]?.name || id}...`),
+        nodeSequence: validNodeIds,
+      };
+
+      toast.success(`Workflow planned: ${validNodeIds.length} agents selected`, { duration: 2000 });
+      startScenarioDemo(dynamicScenario);
+    } catch (err: any) {
+      toast.error(`Failed to plan workflow: ${err.message?.slice(0, 80)}`);
+    }
+  }, [nodeMap, startScenarioDemo]);
 
   const completeTour = useCallback(() => {
     setTourActive(false);
@@ -1746,7 +1945,7 @@ export default function OrgChart() {
                 onClick={() => { if (tourActive) completeTour(); setShowScenarioPicker(true); }}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold bg-primary text-white hover:bg-primary/90 transition-all shadow-sm"
               >
-                <Play className="w-3.5 h-3.5" /> Demo
+                <Play className="w-3.5 h-3.5" /> Execute Workflow
               </button>
             )}
           </div>
@@ -1959,7 +2158,7 @@ export default function OrgChart() {
               transition={{ delay: 0.5 }}
               className={`${isMobile ? "mt-4" : "mt-6"} text-center text-[10px] sm:text-[11px] text-foreground/25 font-medium`}
             >
-              Click any node to execute its agent · Hit Demo to run a full scenario · Source: AI-First CTV Commercial Operating Model (Mar 9, 2026)
+              Click any node to execute its agent · Hit Execute Workflow to run a full scenario · Source: AI-First CTV Commercial Operating Model (Mar 9, 2026)
             </motion.div>
           </TabsContent>
 
@@ -1993,12 +2192,13 @@ export default function OrgChart() {
           )}
         </AnimatePresence>
 
-        {/* Scenario picker modal */}
+        {/* Workflow picker modal */}
         <AnimatePresence>
           {showScenarioPicker && (
-            <ScenarioPickerModal
+            <WorkflowPickerModal
               scenarios={scenarios}
               onSelect={startScenarioDemo}
+              onCustomQuery={handleCustomQuery}
               onClose={() => setShowScenarioPicker(false)}
             />
           )}

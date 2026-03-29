@@ -4,7 +4,7 @@
  */
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import { agentRuns } from "../drizzle/schema";
+import { agentRuns, workflowSessions } from "../drizzle/schema";
 import { eq, desc, and, sql } from "drizzle-orm";
 
 // Lazy singleton connection
@@ -120,6 +120,81 @@ export async function getAgentRun(id: string) {
     .where(eq(agentRuns.id, id))
     .limit(1);
   return rows[0] || null;
+}
+
+// ── Workflow Session Helpers ─────────────────────────────────────────
+
+export interface SaveWorkflowSessionInput {
+  id: string;
+  name: string;
+  description?: string;
+  queryType: "preset" | "custom";
+  customQuery?: string;
+  agentCount: number;
+  completedCount: number;
+  totalDurationMs?: number;
+  compiledOutput: string;
+  nodeDetails?: string; // JSON string
+  userId?: string;
+  startedAt: number;
+  completedAt?: number;
+}
+
+export async function saveWorkflowSession(input: SaveWorkflowSessionInput) {
+  const db = getDb();
+  await db.insert(workflowSessions).values({
+    id: input.id,
+    name: input.name,
+    description: input.description || null,
+    queryType: input.queryType,
+    customQuery: input.customQuery || null,
+    agentCount: input.agentCount,
+    completedCount: input.completedCount,
+    totalDurationMs: input.totalDurationMs || null,
+    compiledOutput: input.compiledOutput,
+    nodeDetails: input.nodeDetails || null,
+    userId: input.userId || null,
+    startedAt: input.startedAt,
+    completedAt: input.completedAt || null,
+  });
+  return { id: input.id };
+}
+
+export async function listWorkflowSessions(opts?: { limit?: number; offset?: number }) {
+  const db = getDb();
+  const limit = opts?.limit || 20;
+  const offset = opts?.offset || 0;
+  const rows = await db
+    .select()
+    .from(workflowSessions)
+    .orderBy(desc(workflowSessions.startedAt))
+    .limit(limit)
+    .offset(offset);
+  return rows;
+}
+
+export async function getWorkflowSession(id: string) {
+  const db = getDb();
+  const rows = await db
+    .select()
+    .from(workflowSessions)
+    .where(eq(workflowSessions.id, id))
+    .limit(1);
+  return rows[0] || null;
+}
+
+export async function getWorkflowSessionStats() {
+  const db = getDb();
+  const [result] = await db
+    .select({
+      total: sql<number>`COUNT(*)`,
+      totalAgentsRun: sql<number>`SUM(agent_count)`,
+      avgDurationMs: sql<number>`AVG(total_duration_ms)`,
+      presetCount: sql<number>`SUM(CASE WHEN query_type = 'preset' THEN 1 ELSE 0 END)`,
+      customCount: sql<number>`SUM(CASE WHEN query_type = 'custom' THEN 1 ELSE 0 END)`,
+    })
+    .from(workflowSessions);
+  return result;
 }
 
 export async function getAgentRunStats() {
