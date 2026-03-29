@@ -39,8 +39,8 @@ interface NavItem {
 
 /* ── Simplified seller-friendly nav ── */
 const mainNav: NavItem[] = [
-  { path: "/", label: "Dashboard", shortLabel: "Home", icon: Brain },
-  { path: "/org-chart", label: "Org Map", shortLabel: "Org Map", icon: Network },
+  { path: "/", label: "Org Map", shortLabel: "Org Map", icon: Network },
+  { path: "/dashboard", label: "Dashboard", shortLabel: "Dashboard", icon: Brain },
 ];
 
 const runNav: NavItem[] = [
@@ -59,8 +59,8 @@ const analyzeNav: NavItem[] = [
 
 // Bottom nav items for mobile — most important screens
 const bottomNav: NavItem[] = [
-  { path: "/", label: "Home", icon: Brain },
-  { path: "/org-chart", label: "Org Map", icon: Network },
+  { path: "/", label: "Org Map", icon: Network },
+  { path: "/dashboard", label: "Dashboard", icon: Brain },
   { path: "/swarm", label: "Assistants", icon: Zap },
   { path: "/simulation", label: "Roleplay", icon: MessageSquare },
   { path: "/data-pulse", label: "Insights", icon: Radio },
@@ -99,7 +99,8 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
   // Friendly page name for breadcrumb
   const pageName = (() => {
     const map: Record<string, string> = {
-      "/": "Dashboard",
+      "/": "Org Map",
+      "/dashboard": "Dashboard",
       "/org-chart": "Org Map",
       "/swarm": "AI Assistants",
       "/approvals": "Approvals",

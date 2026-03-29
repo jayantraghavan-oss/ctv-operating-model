@@ -288,3 +288,19 @@
 - [x] Wire OutputInterstitial into Dashboard and AI Assistants — "View Full Output" button on each run
 - [x] Simplify sidebar: consolidated into clear seller-friendly sections, removed jargon
 - [x] Reference Guide tab: embedded exact tree layout from source image with C5 box, connectors, 4 cluster columns
+
+## Phase 31: Center Tour Overlay
+- [x] Move guide/tour overlay from bottom-anchored to vertically centered on screen
+- [x] Fix all broken sidebar links — all 7 sidebar links verified working (Org Map, Dashboard, AI Assistants, Approvals, Competitive Sims, Buyer Roleplay, Insights)
+- [x] Center the tour overlay on screen (moved to fixed inset-0 centered layout)
+
+## Phase 31b: Org Map as Main Screen + Fix Links
+- [x] Make Org Map the default home route (/) — first thing users see
+- [x] Move Dashboard to /dashboard as secondary screen
+- [x] Update sidebar nav order: Org Map first, Dashboard second
+- [x] Fix all broken sidebar links — verified all 7 working
+- [x] Center the tour overlay on screen
+- [x] Update CommandPalette nav items to match new routes
+- [x] Update Reference Guide feature links to use new routes
+- [x] Update tour "Enter the Engine" CTA to navigate to /dashboard
+- [x] All 48 tests passing

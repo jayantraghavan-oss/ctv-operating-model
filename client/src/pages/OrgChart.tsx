@@ -600,7 +600,7 @@ function TourOverlay({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 24 }}
       transition={{ type: "spring", stiffness: 300, damping: 28 }}
-      className="fixed bottom-[72px] sm:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[96vw] sm:w-[92vw] max-w-xl"
+      className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[96vw] sm:w-[92vw] max-w-xl"
     >
       <div
         className="rounded-2xl sm:rounded-3xl border border-black/[0.08] p-4 sm:p-6 shadow-2xl shadow-black/[0.12]"
@@ -916,8 +916,8 @@ function ReferenceGuide() {
               { name: "Competitive Sims", desc: "Head-to-head simulations against TTD, tvScientific, Roku, Amazon", path: "/war-room" },
               { name: "AI Insights", desc: "Market intelligence, deal analysis, and pipeline insights on demand", path: "/data-pulse" },
               { name: "Approval Queue", desc: "Review and approve AI-generated content before it goes to market", path: "/approvals" },
-              { name: "Dashboard", desc: "Full command center — run clusters, track outputs, monitor system health", path: "/" },
-              { name: "Org Chart + Demo", desc: "This page — visualize the entire system and watch it activate", path: "/org-chart" },
+              { name: "Dashboard", desc: "Full command center — run clusters, track outputs, monitor system health", path: "/dashboard" },
+              { name: "Org Chart + Demo", desc: "This page — visualize the entire system and watch it activate", path: "/" },
             ].map((f, i) => (
               <button
                 key={i}
@@ -1058,7 +1058,7 @@ export default function OrgChart() {
   const handleEnterEngine = useCallback(() => {
     completeTour();
     stopDemo();
-    navigate("/");
+    navigate("/dashboard");
   }, [completeTour, stopDemo, navigate]);
 
   const handleSkipTour = useCallback(() => {

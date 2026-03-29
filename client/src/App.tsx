@@ -1,19 +1,18 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch, useLocation, Redirect } from "wouter";
+import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AgentProvider } from "./contexts/AgentContext";
 import CommandPalette from "./components/CommandPalette";
 import HelpButton from "./components/HelpButton";
-import { lazy, Suspense, useState, useEffect } from "react";
+import { lazy, Suspense, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
-const TOUR_KEY = "ctv-orgchart-tour-completed";
-
-// Neural command center pages
-import NeuralCommand from "./pages/NeuralCommand";
+// Primary pages
+import OrgChart from "./pages/OrgChart";
+const NeuralCommand = lazy(() => import("./pages/NeuralCommand"));
 const AgentSwarm = lazy(() => import("./pages/AgentSwarm"));
 const ApprovalQueue = lazy(() => import("./pages/ApprovalQueue"));
 const DataPulse = lazy(() => import("./pages/DataPulse"));
@@ -28,7 +27,6 @@ const ModelOverview = lazy(() => import("./pages/ModelOverview"));
 const WeeklyPrep = lazy(() => import("./pages/WeeklyPrep"));
 const ConvictionDashboard = lazy(() => import("./pages/ConvictionDashboard"));
 const LearningLoops = lazy(() => import("./pages/LearningLoops"));
-const OrgChart = lazy(() => import("./pages/OrgChart"));
 
 function PageLoader() {
   return (
@@ -49,37 +47,14 @@ function PageLoader() {
   );
 }
 
-/**
- * FirstVisitRedirect — On first visit, redirect from / to /org-chart
- * so the guided tour is the first thing users see.
- * After the tour is completed, / goes to Dashboard as normal.
- */
-function FirstVisitRedirect() {
-  const [location] = useLocation();
-
-  // Only redirect from the root path
-  if (location !== "/") return null;
-
-  try {
-    const tourCompleted = localStorage.getItem(TOUR_KEY);
-    if (!tourCompleted) {
-      return <Redirect to="/org-chart" />;
-    }
-  } catch {
-    // If localStorage fails, just show Dashboard
-  }
-
-  return null;
-}
-
 function Router() {
   return (
     <Suspense fallback={<PageLoader />}>
-      <FirstVisitRedirect />
       <AnimatePresence mode="wait">
         <Switch>
-          {/* Neural command center */}
-          <Route path="/" component={NeuralCommand} />
+          {/* Org Map is the main screen */}
+          <Route path="/" component={OrgChart} />
+          <Route path="/dashboard" component={NeuralCommand} />
           <Route path="/swarm" component={AgentSwarm} />
           <Route path="/approvals" component={ApprovalQueue} />
           <Route path="/data-pulse" component={DataPulse} />
@@ -94,6 +69,8 @@ function Router() {
           <Route path="/weekly-prep" component={WeeklyPrep} />
           <Route path="/conviction" component={ConvictionDashboard} />
           <Route path="/learning-loops" component={LearningLoops} />
+
+          {/* Keep /org-chart as alias for / */}
           <Route path="/org-chart" component={OrgChart} />
 
           <Route path="/404" component={NotFound} />

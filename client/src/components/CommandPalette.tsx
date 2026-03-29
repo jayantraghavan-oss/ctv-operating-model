@@ -17,7 +17,7 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 import {
-  Brain, Zap, Shield, Radio, Crosshair, MessageSquare,
+  Brain, Zap, Shield, Radio, Crosshair, MessageSquare, Network,
   Play, Search, ArrowRight, Sparkles, BarChart3, BookOpen,
   Target, Radar, Megaphone, Users,
 } from "lucide-react";
@@ -95,9 +95,13 @@ export default function CommandPalette({ open: controlledOpen, onOpenChange }: C
         {/* Navigation */}
         <CommandGroup heading="Navigate">
           <CommandItem onSelect={() => navigateTo("/")}>
+            <Network className="w-4 h-4 text-primary" />
+            <span>Org Map</span>
+            <span className="ml-auto text-xs text-foreground/25">Home</span>
+          </CommandItem>
+          <CommandItem onSelect={() => navigateTo("/dashboard")}>
             <Brain className="w-4 h-4 text-primary" />
             <span>Dashboard</span>
-            <span className="ml-auto text-xs text-foreground/25">Home</span>
           </CommandItem>
           <CommandItem onSelect={() => navigateTo("/swarm")}>
             <Zap className="w-4 h-4 text-amber-500" />
