@@ -304,3 +304,20 @@
 - [x] Update Reference Guide feature links to use new routes
 - [x] Update tour "Enter the Engine" CTA to navigate to /dashboard
 - [x] All 48 tests passing
+
+## Phase 32: Control Center + Live Demo Execution
+- [x] Rename "Org Map" to "Control Center" in sidebar, breadcrumb, page title, CommandPalette, HelpButton
+- [x] Control Center remains the default home screen (/)
+- [x] Demo mode replaced with Scenario Picker — 4 real CTV selling scenarios (New Advertiser Pitch, QBR Prep, Competitive Win-Back, Campaign Optimization)
+- [x] Each node lights up with streaming LLM output as it executes
+- [x] Visual cascade: nodes activate sequentially with 3s stagger per agent
+- [x] Progress indicator: narration bar with progress bar, step counter, narration text per step
+- [x] Clicking a node during demo opens the interstitial drawer with live streaming output
+- [x] Demo can be paused/stopped mid-execution (Stop button in narration bar + header)
+- [x] After demo completes, all nodes show completed state with cached output
+- [x] All 48 tests still passing
+- [x] Click any node → execute agent directly from org chart (fires real LLM call)
+- [x] Node shows inline streaming output preview (first 300 chars) while running
+- [x] Node shows completion state with output snippet after agent finishes
+- [x] Expand button on each node with output → opens OutputInterstitial for full scrollable view
+- [x] Elegant output lacing: spring animation on inline output appearance, Streamdown markdown rendering

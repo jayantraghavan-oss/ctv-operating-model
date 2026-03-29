@@ -96,7 +96,7 @@ export default function CommandPalette({ open: controlledOpen, onOpenChange }: C
         <CommandGroup heading="Navigate">
           <CommandItem onSelect={() => navigateTo("/")}>
             <Network className="w-4 h-4 text-primary" />
-            <span>Org Map</span>
+            <span>Control Center</span>
             <span className="ml-auto text-xs text-foreground/25">Home</span>
           </CommandItem>
           <CommandItem onSelect={() => navigateTo("/dashboard")}>
@@ -155,13 +155,9 @@ export default function CommandPalette({ open: controlledOpen, onOpenChange }: C
             <Sparkles className="w-4 h-4 text-primary" />
             <span>Run Top 5 Assistants</span>
           </CommandItem>
-          <CommandItem onSelect={() => navigateTo("/model")}>
+          <CommandItem onSelect={() => navigateTo("/")}>
             <BookOpen className="w-4 h-4 text-foreground/40" />
-            <span>View Operating Model</span>
-          </CommandItem>
-          <CommandItem onSelect={() => navigateTo("/conviction")}>
-            <Target className="w-4 h-4 text-foreground/40" />
-            <span>View Conviction Dashboard</span>
+            <span>View Reference Guide</span>
           </CommandItem>
         </CommandGroup>
 

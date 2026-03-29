@@ -1,11 +1,12 @@
-/*
- * OrgChart — Interactive AI-First Org Map (Tree Layout)
+/**
+ * OrgChart — Control Center (Tree Layout)
  * Pixel-perfect tree layout matching the source document.
  * C5 DRI at top → sub-modules in rows → connector → 4 cluster columns.
- * Every node is clickable → fires agent execution via interstitial drawer.
- * Preserves: tour, demo mode, reference guide, all existing wiring.
+ * Every node is clickable → fires real agent execution with inline streaming output.
+ * Demo mode: scenario picker → cascading real agent execution with narration.
  */
 import NeuralShell from "@/components/NeuralShell";
+import OutputInterstitial from "@/components/OutputInterstitial";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAgent } from "@/contexts/AgentContext";
 import { useLocation } from "wouter";
@@ -40,6 +41,11 @@ import {
   Loader2,
   ExternalLink,
   ChevronDown,
+  Maximize2,
+  Target,
+  TrendingUp,
+  Swords,
+  RefreshCw,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
@@ -112,10 +118,10 @@ const tourSteps = [
   },
   {
     title: "Ready to Explore?",
-    description: "You can click any node on this map to jump directly to that agent. Or head to the Dashboard to see the full control center — run agents, review outputs, simulate buyer conversations, and more.",
+    description: "You can click any node on this map to run that agent directly. Or head to the Dashboard to see the full control center — run agents, review outputs, simulate buyer conversations, and more.",
     highlight: "none" as const,
     icon: MousePointer,
-    tip: "Come back to this Org Map anytime from the sidebar under Reference.",
+    tip: "Come back to this Control Center anytime from the sidebar.",
     action: "navigate" as string | null,
   },
 ];
@@ -132,6 +138,16 @@ interface TreeNode {
   promptIds: number[];
   firstPromptText: string;
   agentType: string;
+}
+
+// ── Scenario definitions for Demo mode ──
+interface DemoScenario {
+  id: string;
+  name: string;
+  icon: typeof Target;
+  description: string;
+  narration: string[];
+  nodeSequence: string[]; // node IDs to fire in order
 }
 
 // ── Build the exact tree data matching the source image ──
@@ -171,36 +187,7 @@ function buildClusterColumns(): ClusterColumn[] {
   const mod2 = modules.find(m => m.id === 2)!;
   const mod3 = modules.find(m => m.id === 3)!;
 
-  const buildNodes = (mod: typeof mod1, sectionKeys: string[]): TreeNode[] => {
-    const nodes: TreeNode[] = [];
-    mod.sections.filter(s => sectionKeys.includes(s.key)).forEach(sec => {
-      // For the source image, we show section-level items (collapsed)
-      // Each section becomes one node with the section name
-      const allPromptIds = sec.subModules.flatMap(sm => sm.prompts);
-      const primaryOwner = sec.subModules.length > 0
-        ? (sec.subModules.filter(sm => sm.owner === "agent-human").length >= sec.subModules.length / 2
-          ? "agent-human" as OwnerType
-          : sec.subModules[0].owner)
-        : "agent-human" as OwnerType;
-      const smPrompts = prompts.filter(p => allPromptIds.includes(p.id));
-      nodes.push({
-        id: `${mod.id}-${sec.key}`,
-        name: sec.name,
-        owner: primaryOwner,
-        description: sec.description,
-        moduleId: mod.id,
-        sectionKey: sec.key,
-        promptCount: allPromptIds.length,
-        promptIds: allPromptIds,
-        firstPromptText: smPrompts[0]?.text || sec.description,
-        agentType: smPrompts[0]?.agentType || "triggered",
-      });
-    });
-    return nodes;
-  };
-
-  // Cluster 1 — Module 1 (all sections), but use specific names from source image
-  const c1Nodes: TreeNode[] = [];
+  // Cluster 1 — Module 1
   const c1SectionMap: { name: string; key: string; owner: OwnerType }[] = [
     { name: "Industry Landscape Monitoring", key: "industry-sensing", owner: "agent" },
     { name: "Competitor Intelligence", key: "competitor-intel", owner: "agent" },
@@ -211,6 +198,7 @@ function buildClusterColumns(): ClusterColumn[] {
     { name: "Industry Events & Spaces", key: "analyst-tracking", owner: "agent-human" },
     { name: "Positioning Intelligence", key: "analyst-tracking", owner: "human-led" },
   ];
+  const c1Nodes: TreeNode[] = [];
   c1SectionMap.forEach(item => {
     const sec = mod1.sections.find(s => s.key === item.key);
     if (!sec) return;
@@ -232,7 +220,6 @@ function buildClusterColumns(): ClusterColumn[] {
   });
 
   // Cluster 2 — Module 2 Demand sections
-  const c2Keys = ["icp-intelligence", "outbound-system", "digital-awareness", "content-engine", "website-digital"];
   const c2SectionMap: { name: string; key: string; owner: OwnerType }[] = [
     { name: "ICP Intelligence (all layers)", key: "icp-intelligence", owner: "agent-human" },
     { name: "AI-Native Outbounding", key: "outbound-system", owner: "agent-human" },
@@ -299,8 +286,7 @@ function buildClusterColumns(): ClusterColumn[] {
     agentType: "triggered",
   };
 
-  // Cluster 4 — Module 3 (all except case-study-pipeline)
-  const c4Keys = ["onboarding", "campaign-monitoring", "performance-scaling", "case-study-pipeline", "churn-prevention", "long-term-health", "cross-account", "customer-comms", "feedback-routing"];
+  // Cluster 4 — Module 3
   const c4SectionMap: { name: string; key: string; owner: OwnerType }[] = [
     { name: "Test Onboarding & Setup", key: "onboarding", owner: "human-led" },
     { name: "Campaign Monitoring & Optimization", key: "campaign-monitoring", owner: "agent-human" },
@@ -365,220 +351,379 @@ function getAllTreeNodeIds(c5Nodes: TreeNode[], columns: ClusterColumn[]): strin
   return ids;
 }
 
-// ── Single tree node component ──
+// ── Build a flat lookup of all nodes by ID ──
+function buildNodeMap(c5Nodes: TreeNode[], columns: ClusterColumn[]): Record<string, TreeNode> {
+  const map: Record<string, TreeNode> = {};
+  c5Nodes.forEach(n => { map[n.id] = n; });
+  columns.forEach(col => col.sections.forEach(sec => sec.nodes.forEach(n => { map[n.id] = n; })));
+  return map;
+}
+
+// ── Build scenarios from real node IDs ──
+function buildScenarios(c5Nodes: TreeNode[], columns: ClusterColumn[]): DemoScenario[] {
+  const nodeMap = buildNodeMap(c5Nodes, columns);
+  const findNode = (partial: string): string | null => {
+    const keys = Object.keys(nodeMap);
+    return keys.find(k => k.toLowerCase().includes(partial.toLowerCase())) || null;
+  };
+
+  // Helper to collect first N valid node IDs from a list of partial matches
+  const collect = (partials: string[]): string[] =>
+    partials.map(p => findNode(p)).filter((id): id is string => id !== null);
+
+  return [
+    {
+      id: "new-advertiser",
+      name: "New CTV Advertiser Pitch",
+      icon: Target,
+      description: "Full pipeline from market research to pitch deck to sales coaching — everything needed to win a new CTV advertiser.",
+      narration: [
+        "Scanning CTV market landscape and competitive positioning...",
+        "Building ideal customer profile and identifying decision-makers...",
+        "Generating outbound messaging and pitch materials...",
+        "Preparing sales coaching and engagement strategy...",
+        "Structuring test funding proposal and commitment framework...",
+        "Finalizing executive communications and pipeline visibility...",
+      ],
+      nodeSequence: collect([
+        "industry-sensing-Industry",
+        "competitor-intel-Competitor",
+        "analyst-tracking-Positioning",
+        "icp-intelligence",
+        "outbound-system",
+        "content-engine",
+        "sales-engagement-Pitch",
+        "sales-engagement-Sales Coaching",
+        "test-funding",
+        "pipeline-visibility",
+      ]),
+    },
+    {
+      id: "qbr-prep",
+      name: "Quarterly Business Review",
+      icon: TrendingUp,
+      description: "Prepare a complete QBR — performance readout, pipeline visibility, conviction tracking, and executive communications.",
+      narration: [
+        "Pulling pipeline visibility and revenue pacing data...",
+        "Generating performance readout and scale recommendations...",
+        "Analyzing cross-account intelligence patterns...",
+        "Updating conviction tracker with latest learnings...",
+        "Preparing executive communications and weekly prep...",
+      ],
+      nodeSequence: collect([
+        "pipeline-visibility",
+        "revenue-pacing",
+        "campaign-monitoring",
+        "performance-scaling",
+        "cross-account",
+        "conviction",
+        "executive-comms",
+        "weekly-prep",
+      ]),
+    },
+    {
+      id: "competitive-win",
+      name: "Competitive Win-Back",
+      icon: Swords,
+      description: "Counter a competitive threat — from intelligence gathering to repositioned messaging to sales re-engagement.",
+      narration: [
+        "Gathering competitive intelligence on incumbent DSP...",
+        "Analyzing positioning gaps and differentiation angles...",
+        "Generating counter-messaging and updated pitch materials...",
+        "Preparing sales coaching for competitive objection handling...",
+        "Building case study evidence from similar wins...",
+      ],
+      nodeSequence: collect([
+        "competitor-intel-Competitor",
+        "analyst-tracking-Positioning",
+        "analyst-tracking-Message",
+        "content-engine",
+        "sales-engagement-Pitch",
+        "sales-engagement-Sales Coaching",
+        "case-study",
+      ]),
+    },
+    {
+      id: "campaign-optimization",
+      name: "Campaign Optimization Cycle",
+      icon: RefreshCw,
+      description: "End-to-end optimization loop — monitoring, performance readout, churn prevention, and feedback routing back to product.",
+      narration: [
+        "Running campaign monitoring and optimization checks...",
+        "Generating performance readout with scale recommendations...",
+        "Checking churn prevention early warning signals...",
+        "Analyzing cross-account intelligence for patterns...",
+        "Routing feedback to product and exec reporting...",
+      ],
+      nodeSequence: collect([
+        "campaign-monitoring",
+        "performance-scaling",
+        "churn-prevention",
+        "long-term-health",
+        "cross-account",
+        "feedback-routing",
+        "customer-comms",
+      ]),
+    },
+  ];
+}
+
+// ── Single tree node component with inline output ──
 function TreeNodeBox({
   node,
   isActive,
   isHighlighted,
+  isDemoActive,
   onClick,
   delay = 0,
+  inlineOutput,
+  isRunning,
+  onExpand,
 }: {
   node: TreeNode;
   isActive: boolean;
   isHighlighted: boolean;
+  isDemoActive: boolean;
   onClick: () => void;
   delay?: number;
+  inlineOutput?: string;
+  isRunning?: boolean;
+  onExpand?: () => void;
 }) {
   const s = ownerStyle[node.owner];
+  const hasOutput = !!inlineOutput;
   return (
-    <motion.button
-      onClick={onClick}
-      className={`relative text-left w-full px-3 py-2 rounded-lg border-l-[3px] border border-black/[0.06] transition-all duration-200 group cursor-pointer
-        ${s.border} ${s.bg}
-        ${isHighlighted ? "ring-2 ring-primary/30 shadow-md" : ""}
-        ${isActive ? "ring-2 ring-emerald-400 shadow-lg shadow-emerald-100/50" : ""}
-        hover:shadow-md hover:translate-y-[-1px] active:scale-[0.98]`}
+    <motion.div
+      className="relative"
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: delay * 0.015, type: "spring", stiffness: 400, damping: 30 }}
     >
-      {isActive && (
-        <motion.div
-          className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400"
-          animate={{ scale: [1, 1.4, 1], opacity: [1, 0.5, 1] }}
-          transition={{ duration: 1.5, repeat: Infinity }}
-        />
-      )}
-      <div className="flex items-center justify-between gap-2">
-        <span className={`text-[12px] font-semibold leading-tight ${s.text}`}>{node.name}</span>
-        <span className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded text-white ${s.badgeBg}`}>
-          {s.short}
-        </span>
-      </div>
-    </motion.button>
+      <button
+        onClick={onClick}
+        className={`relative text-left w-full px-3 py-2 rounded-lg border-l-[3px] border border-black/[0.06] transition-all duration-200 group cursor-pointer
+          ${s.border} ${s.bg}
+          ${isHighlighted ? "ring-2 ring-primary/30 shadow-md" : ""}
+          ${isActive || isDemoActive ? "ring-2 ring-emerald-400 shadow-lg shadow-emerald-100/50" : ""}
+          hover:shadow-md hover:translate-y-[-1px] active:scale-[0.98]`}
+      >
+        {(isActive || isDemoActive) && (
+          <motion.div
+            className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400"
+            animate={{ scale: [1, 1.4, 1], opacity: [1, 0.5, 1] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          />
+        )}
+        {isRunning && (
+          <motion.div
+            className="absolute -top-1 -left-1 w-2.5 h-2.5 rounded-full bg-blue-500"
+            animate={{ scale: [1, 1.3, 1] }}
+            transition={{ duration: 0.8, repeat: Infinity }}
+          />
+        )}
+        <div className="flex items-center justify-between gap-2">
+          <span className={`text-[12px] font-semibold leading-tight ${s.text}`}>{node.name}</span>
+          <span className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded text-white ${s.badgeBg}`}>
+            {s.short}
+          </span>
+        </div>
+      </button>
+
+      {/* Inline output preview */}
+      <AnimatePresence>
+        {hasOutput && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            className="mt-1 rounded-lg border border-black/[0.04] bg-white/90 overflow-hidden"
+          >
+            <div className="px-2.5 py-2 max-h-[80px] overflow-hidden relative">
+              <div className="text-[10px] leading-relaxed text-foreground/50 line-clamp-3">
+                <Streamdown>{inlineOutput!.slice(0, 300)}</Streamdown>
+              </div>
+              {/* Fade-out gradient */}
+              <div className="absolute bottom-0 left-0 right-0 h-5 bg-gradient-to-t from-white/90 to-transparent" />
+            </div>
+            {onExpand && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onExpand(); }}
+                className="w-full flex items-center justify-center gap-1 px-2 py-1.5 text-[10px] font-semibold text-primary/70 hover:text-primary hover:bg-primary/[0.04] transition-colors border-t border-black/[0.04]"
+              >
+                <Maximize2 className="w-3 h-3" /> Expand
+              </button>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
 
-// ── Interstitial Drawer for agent output ──
-function AgentDrawer({
-  node,
+// ── Scenario Picker Modal ──
+function ScenarioPickerModal({
+  scenarios,
+  onSelect,
   onClose,
-  onNavigate,
 }: {
-  node: TreeNode | null;
+  scenarios: DemoScenario[];
+  onSelect: (scenario: DemoScenario) => void;
   onClose: () => void;
-  onNavigate: (moduleId: number, sectionKey: string) => void;
 }) {
-  const { runAgent, agentRuns, getStreamingOutput } = useAgent();
-  const [isRunning, setIsRunning] = useState(false);
-  const [currentRunId, setCurrentRunId] = useState<string | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
+      <motion.div
+        initial={{ opacity: 0, y: 30, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 30, scale: 0.95 }}
+        transition={{ type: "spring", stiffness: 300, damping: 28 }}
+        className="relative w-full max-w-2xl rounded-2xl overflow-hidden"
+        style={{
+          background: "oklch(1 0 0 / 0.97)",
+          backdropFilter: "blur(24px) saturate(1.5)",
+          boxShadow: "0 24px 80px oklch(0 0 0 / 0.15), 0 2px 8px oklch(0 0 0 / 0.06)",
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-black/[0.06]">
+          <div>
+            <h2 className="text-[18px] font-bold text-foreground">Run a Scenario</h2>
+            <p className="text-[13px] text-foreground/40 mt-0.5">
+              Choose a CTV selling scenario. Real agents will execute in cascade with live LLM output.
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-black/[0.04] hover:bg-black/[0.08] flex items-center justify-center transition-colors"
+          >
+            <X className="w-4 h-4 text-foreground/40" />
+          </button>
+        </div>
 
-  // Find the latest run for this node
-  const latestRun = useMemo(() => {
-    if (!node) return null;
-    return agentRuns.find(r =>
-      node.promptIds.includes(r.promptId) || r.subModuleName === node.name
-    ) || null;
-  }, [agentRuns, node]);
+        {/* Scenario cards */}
+        <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {scenarios.map((scenario) => {
+            const Icon = scenario.icon;
+            return (
+              <button
+                key={scenario.id}
+                onClick={() => onSelect(scenario)}
+                className="text-left p-4 rounded-xl border border-black/[0.06] hover:border-primary/30 hover:shadow-md hover:bg-primary/[0.02] transition-all group"
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <Icon className="w-4.5 h-4.5 text-primary" />
+                  </div>
+                  <h3 className="text-[14px] font-bold text-foreground group-hover:text-primary transition-colors">
+                    {scenario.name}
+                  </h3>
+                </div>
+                <p className="text-[12px] text-foreground/40 leading-relaxed">{scenario.description}</p>
+                <div className="mt-3 flex items-center gap-1.5 text-[11px] text-primary/60 font-semibold">
+                  <Play className="w-3 h-3" />
+                  {scenario.nodeSequence.length} agents in sequence
+                </div>
+              </button>
+            );
+          })}
+        </div>
 
-  const streamingOutput = currentRunId ? getStreamingOutput(currentRunId) : undefined;
-  const displayOutput = streamingOutput || latestRun?.output || null;
-  const isStreaming = latestRun?.status === "running" || !!streamingOutput;
+        {/* Footer hint */}
+        <div className="px-6 pb-4 text-center">
+          <p className="text-[11px] text-foreground/25">
+            Each scenario fires real LLM calls. Agents execute in order with streaming output.
+          </p>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
 
-  // Auto-scroll during streaming
-  useEffect(() => {
-    if (isStreaming && scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [displayOutput, isStreaming]);
-
-  const handleRun = useCallback(() => {
-    if (!node || node.promptIds.length === 0) return;
-    const pid = node.promptIds[0];
-    const promptObj = prompts.find(p => p.id === pid);
-    if (!promptObj) return;
-    setIsRunning(true);
-    // Track the run
-    const runIdBefore = agentRuns[0]?.id;
-    runAgent(pid, promptObj.text, node.moduleId, node.name, node.agentType, node.owner);
-    // The new run will be at index 0 after state update
-    setTimeout(() => {
-      setIsRunning(false);
-    }, 500);
-  }, [node, runAgent, agentRuns]);
-
-  if (!node) return null;
+// ── Demo Narration Bar ──
+function DemoNarrationBar({
+  scenario,
+  currentStep,
+  totalSteps,
+  completedCount,
+  isRunning,
+  onStop,
+}: {
+  scenario: DemoScenario;
+  currentStep: number;
+  totalSteps: number;
+  completedCount: number;
+  isRunning: boolean;
+  onStop: () => void;
+}) {
+  const narrationText = scenario.narration[Math.min(currentStep, scenario.narration.length - 1)] || "Executing agents...";
+  const progress = totalSteps > 0 ? (completedCount / totalSteps) * 100 : 0;
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
-        onClick={onClose}
-      >
-        {/* Backdrop */}
-        <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
-
-        {/* Drawer */}
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      className="mb-5 rounded-xl border border-primary/20 bg-primary/[0.03] overflow-hidden"
+    >
+      {/* Progress bar */}
+      <div className="h-1 bg-primary/10">
         <motion.div
-          initial={{ opacity: 0, y: 100, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 100, scale: 0.95 }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="relative w-full sm:w-[560px] max-h-[85vh] sm:max-h-[80vh] rounded-t-2xl sm:rounded-2xl overflow-hidden"
-          style={{
-            background: "oklch(1 0 0 / 0.97)",
-            backdropFilter: "blur(24px) saturate(1.5)",
-            boxShadow: "0 -8px 40px oklch(0 0 0 / 0.12), 0 2px 8px oklch(0 0 0 / 0.06)",
-          }}
-          onClick={e => e.stopPropagation()}
-        >
-          {/* Handle bar (mobile) */}
-          <div className="sm:hidden flex justify-center pt-2 pb-1">
-            <div className="w-10 h-1 rounded-full bg-black/10" />
-          </div>
+          className="h-full bg-primary"
+          animate={{ width: `${progress}%` }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        />
+      </div>
 
-          {/* Header */}
-          <div className="flex items-start justify-between px-5 pt-4 pb-3 border-b border-black/[0.06]">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded text-white ${ownerStyle[node.owner].badgeBg}`}>
-                  {ownerStyle[node.owner].short}
-                </span>
-                <span className="text-[10px] text-foreground/30 font-medium">
-                  Module {node.moduleId}
-                </span>
-              </div>
-              <h3 className="text-[16px] font-bold text-foreground leading-tight">{node.name}</h3>
-              <p className="text-[12px] text-foreground/40 mt-1 leading-relaxed line-clamp-2">{node.description}</p>
-            </div>
-            <button
-              onClick={onClose}
-              className="shrink-0 ml-3 w-8 h-8 rounded-full bg-black/[0.04] hover:bg-black/[0.08] flex items-center justify-center transition-colors"
-            >
-              <X className="w-4 h-4 text-foreground/40" />
-            </button>
-          </div>
-
-          {/* Action bar */}
-          <div className="flex items-center gap-2 px-5 py-3 border-b border-black/[0.04]">
-            <button
-              onClick={handleRun}
-              disabled={node.promptIds.length === 0 || isStreaming}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-white text-[12px] font-semibold hover:bg-primary/90 transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
-            >
-              {isStreaming ? (
-                <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" /> Running...
-                </>
-              ) : (
-                <>
-                  <Play className="w-3.5 h-3.5" /> Run Agent
-                </>
-              )}
-            </button>
-            <button
-              onClick={() => onNavigate(node.moduleId, node.sectionKey)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-medium text-foreground/50 hover:text-foreground hover:bg-black/[0.04] transition-all"
-            >
-              <ExternalLink className="w-3.5 h-3.5" /> View Module
-            </button>
-            {node.promptIds.length > 0 && (
-              <span className="ml-auto text-[10px] text-foreground/25 font-medium">
-                {node.promptCount} agent{node.promptCount !== 1 ? "s" : ""}
-              </span>
-            )}
-          </div>
-
-          {/* Output area */}
-          <div ref={scrollRef} className="px-5 py-4 overflow-y-auto max-h-[50vh] sm:max-h-[45vh]">
-            {displayOutput ? (
-              <div className="prose prose-sm max-w-none text-[13px] leading-relaxed text-foreground/70">
-                <Streamdown>{displayOutput}</Streamdown>
-              </div>
-            ) : node.promptIds.length === 0 ? (
-              <div className="text-center py-8">
-                <div className="text-[13px] text-foreground/30 font-medium">No agents assigned yet</div>
-                <p className="text-[11px] text-foreground/20 mt-1">This sub-module is defined but has no executable prompts.</p>
-              </div>
+      <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            {isRunning ? (
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              >
+                <Loader2 className="w-4 h-4 text-primary" />
+              </motion.div>
             ) : (
-              <div className="text-center py-8">
-                <div className="w-12 h-12 rounded-2xl bg-primary/[0.06] flex items-center justify-center mx-auto mb-3">
-                  <Play className="w-5 h-5 text-primary/40" />
-                </div>
-                <div className="text-[13px] text-foreground/30 font-medium">Ready to execute</div>
-                <p className="text-[11px] text-foreground/20 mt-1">Click "Run Agent" to fire a live LLM call</p>
-              </div>
-            )}
-
-            {/* Streaming indicator */}
-            {isStreaming && (
-              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-black/[0.04]">
-                <motion.div
-                  className="w-2 h-2 rounded-full bg-emerald-500"
-                  animate={{ scale: [1, 1.3, 1], opacity: [1, 0.6, 1] }}
-                  transition={{ duration: 1, repeat: Infinity }}
-                />
-                <span className="text-[11px] text-emerald-600 font-medium">Generating output...</span>
-              </div>
+              <Sparkles className="w-4 h-4 text-primary" />
             )}
           </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
+          <div className="min-w-0">
+            <div className="text-[12px] font-bold text-foreground truncate">
+              {scenario.name}
+            </div>
+            <motion.div
+              key={currentStep}
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="text-[11px] text-foreground/40 truncate"
+            >
+              {narrationText}
+            </motion.div>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 shrink-0 ml-3">
+          <span className="text-[11px] font-mono text-foreground/30 tabular-nums">
+            {completedCount}/{totalSteps}
+          </span>
+          <button
+            onClick={onStop}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-red-500 text-white hover:bg-red-600 transition-all"
+          >
+            <Pause className="w-3 h-3" /> Stop
+          </button>
+        </div>
+      </div>
+    </motion.div>
   );
 }
 
@@ -736,7 +881,6 @@ function ReferenceGuide() {
     return { mod, sectionCount, subModCount, promptCount };
   });
 
-  // Mini tree node for reference guide
   const MiniNode = ({ name, owner }: { name: string; owner: OwnerType }) => {
     const s = ownerStyle[owner];
     return (
@@ -749,103 +893,72 @@ function ReferenceGuide() {
 
   return (
     <div className="space-y-8">
-      {/* ── Mini Tree Layout (matching source image) ── */}
-      <div className="border border-border rounded-xl bg-white/60 p-5">
-        <h3 className="text-[15px] font-bold text-foreground mb-1">System Architecture — Full Tree</h3>
-        <p className="text-[11px] text-foreground/40 mb-5">The complete org map from the source document. Every box maps to a real AI assistant in this tool.</p>
-
-        {/* Legend */}
-        <div className="flex items-center gap-4 mb-5 px-3 py-2 rounded-lg bg-black/[0.02] border border-black/[0.04] text-[10px] justify-center">
-          <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm bg-blue-500" /><span className="text-foreground/50 font-medium">Agent</span></div>
-          <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm bg-emerald-600" /><span className="text-foreground/50 font-medium">Human-led</span></div>
-          <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm bg-amber-500" /><span className="text-foreground/50 font-medium">Agent + Human</span></div>
-          <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm bg-red-400" /><span className="text-foreground/50 font-medium">DRI Cluster</span></div>
+      {/* Source document mapping */}
+      <div>
+        <h3 className="text-[14px] font-bold text-foreground mb-3">Source Document → Live System</h3>
+        <div className="border border-border rounded-xl bg-white/60 p-4">
+          <p className="text-[12px] text-foreground/50 leading-relaxed mb-4">
+            This tool implements the <span className="font-semibold text-foreground">AI-First CTV Commercial Operating Model</span> (March 9, 2026).
+            Every module, cluster, and agent below maps directly to the source document. The org chart on the previous tab is an interactive version of the document's architecture diagram.
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+            <div className="rounded-xl bg-primary/[0.04] border border-primary/10 p-3">
+              <div className="text-[20px] font-bold text-primary">{stats.modules}</div>
+              <div className="text-[10px] text-foreground/40 font-semibold mt-0.5">Work Modules</div>
+            </div>
+            <div className="rounded-xl bg-primary/[0.04] border border-primary/10 p-3">
+              <div className="text-[20px] font-bold text-primary">{stats.clusters}</div>
+              <div className="text-[10px] text-foreground/40 font-semibold mt-0.5">Clusters</div>
+            </div>
+            <div className="rounded-xl bg-primary/[0.04] border border-primary/10 p-3">
+              <div className="text-[20px] font-bold text-primary">{stats.totalSubModules}</div>
+              <div className="text-[10px] text-foreground/40 font-semibold mt-0.5">Sub-modules</div>
+            </div>
+            <div className="rounded-xl bg-primary/[0.04] border border-primary/10 p-3">
+              <div className="text-[20px] font-bold text-primary">{stats.totalPrompts}</div>
+              <div className="text-[10px] text-foreground/40 font-semibold mt-0.5">Agent Prompts</div>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <div className="overflow-x-auto">
-          <div className="min-w-[800px]">
-            {/* C5 DRI Box */}
+      {/* Embedded mini tree */}
+      <div>
+        <h3 className="text-[14px] font-bold text-foreground mb-3">Architecture (Source Image Match)</h3>
+        <div className="border border-border rounded-xl bg-white/60 p-4 overflow-x-auto">
+          <div className="min-w-[700px]">
+            {/* C5 */}
             <div className="flex justify-center mb-3">
-              <div className="bg-foreground text-white px-6 py-3 rounded-xl text-center">
-                <div className="text-[10px] font-bold text-white/60 uppercase tracking-wider">Cluster 5</div>
-                <div className="text-[13px] font-bold">DRI // XFN Management</div>
-                <div className="text-[10px] text-white/50">Module 4: Executive Governance & BI</div>
+              <div className="px-6 py-2.5 rounded-xl bg-slate-800 text-center">
+                <div className="text-[11px] font-bold text-white">Cluster 5 — DRI // XFN</div>
+                <div className="text-[9px] text-slate-400 mt-0.5">Module 4: Executive Governance</div>
               </div>
             </div>
-
-            {/* Connector */}
             <div className="flex justify-center mb-2">
-              <div className="w-px h-4 bg-foreground/20" />
+              <div className="w-px h-4 bg-slate-300" />
             </div>
-
-            {/* C5 sub-module nodes in rows */}
-            <div className="max-w-[700px] mx-auto mb-3">
-              {[c5Nodes.slice(0, 4), c5Nodes.slice(4, 8), c5Nodes.slice(8)].map((row, ri) => (
-                <div key={ri} className="flex justify-center gap-2 mb-2">
-                  {row.map(n => (
-                    <div key={n.id} className="w-[160px]">
-                      <MiniNode name={n.name} owner={n.owner} />
-                    </div>
-                  ))}
-                </div>
-              ))}
+            <div className="flex justify-center gap-1.5 flex-wrap max-w-[650px] mx-auto mb-3">
+              {c5Nodes.map(n => <div key={n.id} className="w-[150px]"><MiniNode name={n.name} owner={n.owner} /></div>)}
             </div>
-
-            {/* Connector + divider */}
-            <div className="flex justify-center mb-2">
-              <div className="w-px h-5 bg-foreground/20" />
-            </div>
-            <div className="border-t border-dashed border-foreground/15 mb-4" />
-
-            {/* 4 Cluster columns */}
+            <div className="border-t border-slate-200 mb-3 mx-6" />
             <div className="grid grid-cols-4 gap-3">
               {clusterCols.map(col => {
-                const colors = clusterHeaderColors[col.clusterId] || clusterHeaderColors[1];
+                const hc = clusterHeaderColors[col.clusterId];
                 return (
                   <div key={col.clusterId}>
-                    {/* Cluster header */}
-                    <div className={`border-2 ${colors.border} rounded-xl p-3 text-center mb-3 bg-white`}>
-                      <div className={`text-[9px] font-bold uppercase tracking-wider ${colors.labelColor}`}>Cluster {col.clusterId}</div>
-                      <div className="text-[12px] font-bold text-foreground leading-tight whitespace-pre-line">{col.clusterName}</div>
+                    <div className={`border-2 ${hc.border} rounded-lg px-2 py-1.5 text-center mb-2`}>
+                      <div className={`text-[8px] font-bold uppercase ${hc.labelColor}`}>C{col.clusterId}</div>
+                      <div className="text-[9px] font-bold text-foreground leading-tight whitespace-pre-line">{col.clusterName}</div>
                     </div>
-
-                    {/* Sections + nodes */}
-                    {col.sections.map((sec, si) => (
-                      <div key={si} className="mb-3">
-                        <div className="text-[9px] font-bold text-foreground/30 uppercase tracking-wider mb-1.5 px-1">{sec.label}</div>
-                        <div className="space-y-1.5">
-                          {sec.nodes.map(n => (
-                            <MiniNode key={n.id} name={n.name} owner={n.owner} />
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-
-                    {col.note && (
-                      <div className="text-[9px] text-foreground/30 italic text-center mt-2 whitespace-pre-line leading-relaxed">{col.note}</div>
-                    )}
+                    <div className="space-y-1">
+                      {col.sections.flatMap(s => s.nodes).map(n => <MiniNode key={n.id} name={n.name} owner={n.owner} />)}
+                    </div>
                   </div>
                 );
               })}
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          { label: "Modules", value: stats.modules, sub: "Work modules" },
-          { label: "Agents", value: stats.totalPrompts, sub: "AI assistants" },
-          { label: "Clusters", value: stats.clusters, sub: "Human orchestrators" },
-          { label: "Sub-modules", value: stats.totalSubModules, sub: "Discrete work units" },
-        ].map((s, i) => (
-          <div key={i} className="text-center p-3 rounded-xl bg-black/[0.02] border border-black/[0.04]">
-            <div className="text-[20px] font-bold text-foreground">{s.value}</div>
-            <div className="text-[10px] text-foreground/40 font-semibold uppercase tracking-wider">{s.label}</div>
-            <div className="text-[10px] text-foreground/25">{s.sub}</div>
-          </div>
-        ))}
       </div>
 
       {/* Module cards */}
@@ -911,13 +1024,13 @@ function ReferenceGuide() {
         <div className="border border-border rounded-xl bg-white/60 p-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[
-              { name: "Run Any Agent", desc: "Click any node on the Org Chart or go to AI Assistants to fire a real LLM call", path: "/swarm" },
+              { name: "Run Any Agent", desc: "Click any node on the Control Center or go to AI Assistants to fire a real LLM call", path: "/swarm" },
               { name: "Buyer Roleplay", desc: "Practice CTV pitches against AI-simulated buyers with deep technical knowledge", path: "/simulation" },
               { name: "Competitive Sims", desc: "Head-to-head simulations against TTD, tvScientific, Roku, Amazon", path: "/war-room" },
               { name: "AI Insights", desc: "Market intelligence, deal analysis, and pipeline insights on demand", path: "/data-pulse" },
               { name: "Approval Queue", desc: "Review and approve AI-generated content before it goes to market", path: "/approvals" },
               { name: "Dashboard", desc: "Full command center — run clusters, track outputs, monitor system health", path: "/dashboard" },
-              { name: "Org Chart + Demo", desc: "This page — visualize the entire system and watch it activate", path: "/" },
+              { name: "Control Center", desc: "This page — visualize the entire system and run scenarios", path: "/" },
             ].map((f, i) => (
               <button
                 key={i}
@@ -941,20 +1054,37 @@ function ReferenceGuide() {
 // ── Main OrgChart page ──
 export default function OrgChart() {
   const [, navigate] = useLocation();
-  const { recentRuns } = useAgent();
+  const { runAgent, agentRuns, recentRuns, getStreamingOutput } = useAgent();
   const [activeTab, setActiveTab] = useState("chart");
   const [tourActive, setTourActive] = useState(false);
   const [tourStep, setTourStep] = useState(0);
-  const [demoRunning, setDemoRunning] = useState(false);
-  const [demoActiveNodes, setDemoActiveNodes] = useState<Set<string>>(new Set());
-  const demoTimerRef = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
+  const [tourDemoRunning, setTourDemoRunning] = useState(false);
+  const [tourDemoActiveNodes, setTourDemoActiveNodes] = useState<Set<string>>(new Set());
+  const tourDemoTimerRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  // Scenario demo state
+  const [showScenarioPicker, setShowScenarioPicker] = useState(false);
+  const [activeScenario, setActiveScenario] = useState<DemoScenario | null>(null);
+  const [scenarioStep, setScenarioStep] = useState(0);
+  const [scenarioCompletedCount, setScenarioCompletedCount] = useState(0);
+  const [scenarioRunningNodes, setScenarioRunningNodes] = useState<Set<string>>(new Set());
+  const [scenarioCompletedNodes, setScenarioCompletedNodes] = useState<Set<string>>(new Set());
+  const scenarioTimerRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  // Node output tracking
+  const [nodeOutputs, setNodeOutputs] = useState<Record<string, { output: string; isStreaming: boolean; runId?: string; durationMs?: number }>>({});
+
+  // Interstitial state
+  const [interstitialNode, setInterstitialNode] = useState<TreeNode | null>(null);
+
   const stats = getTotalStats();
 
   // Build tree data
   const c5Nodes = useMemo(() => buildC5Nodes(), []);
   const clusterColumns = useMemo(() => buildClusterColumns(), []);
   const allNodeIds = useMemo(() => getAllTreeNodeIds(c5Nodes, clusterColumns), [c5Nodes, clusterColumns]);
+  const nodeMap = useMemo(() => buildNodeMap(c5Nodes, clusterColumns), [c5Nodes, clusterColumns]);
+  const scenarios = useMemo(() => buildScenarios(c5Nodes, clusterColumns), [c5Nodes, clusterColumns]);
 
   // First visit → tour
   useEffect(() => {
@@ -965,81 +1095,264 @@ export default function OrgChart() {
     }
   }, []);
 
-  // Auto-trigger demo on demo step
+  // Auto-trigger tour demo on demo step
   useEffect(() => {
-    if (tourActive && tourSteps[tourStep]?.action === "demo" && !demoRunning) {
-      const timer = setTimeout(() => startDemo(), 400);
+    if (tourActive && tourSteps[tourStep]?.action === "demo" && !tourDemoRunning) {
+      const timer = setTimeout(() => startTourDemo(), 400);
       return () => clearTimeout(timer);
     }
   }, [tourActive, tourStep]);
 
-  // Active run node IDs
-  const activeRunNodeIds = useMemo(() => {
-    const ids = new Set<string>();
-    recentRuns.forEach((run) => {
-      if (run.status === "running" || run.status === "completed") {
-        // Match by name
-        const matchId = allNodeIds.find(nid => nid.includes(run.subModuleName.toLowerCase().replace(/\s+/g, "-")));
-        if (matchId) ids.add(matchId);
+  // Track streaming outputs for nodes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNodeOutputs(prev => {
+        let changed = false;
+        const next = { ...prev };
+        for (const [nodeId, info] of Object.entries(prev)) {
+          if (info.isStreaming && info.runId) {
+            const streaming = getStreamingOutput(info.runId);
+            const run = agentRuns.find(r => r.id === info.runId);
+            if (run?.status === "completed" && run.output) {
+              next[nodeId] = { output: run.output, isStreaming: false, runId: info.runId, durationMs: run.durationMs };
+              changed = true;
+            } else if (streaming && streaming !== info.output) {
+              next[nodeId] = { ...info, output: streaming };
+              changed = true;
+            }
+          }
+        }
+        return changed ? next : prev;
+      });
+    }, 200);
+    return () => clearInterval(interval);
+  }, [agentRuns, getStreamingOutput]);
+
+  // Also check for completed runs that we haven't tracked yet
+  useEffect(() => {
+    setNodeOutputs(prev => {
+      let changed = false;
+      const next = { ...prev };
+      for (const [nodeId, info] of Object.entries(prev)) {
+        if (info.isStreaming && info.runId) {
+          const run = agentRuns.find(r => r.id === info.runId);
+          if (run?.status === "completed" && run.output) {
+            next[nodeId] = { output: run.output, isStreaming: false, runId: info.runId, durationMs: run.durationMs };
+            changed = true;
+          } else if (run?.status === "failed") {
+            next[nodeId] = { output: run.output || "Agent execution failed.", isStreaming: false, runId: info.runId };
+            changed = true;
+          }
+        }
       }
+      return changed ? next : prev;
     });
-    return ids;
-  }, [recentRuns, allNodeIds]);
+  }, [agentRuns]);
 
-  // Node click → open drawer
+  // Execute a single node's agent
+  const executeNode = useCallback((node: TreeNode): string | null => {
+    if (node.promptIds.length === 0) return null;
+    const pid = node.promptIds[0];
+    const promptObj = prompts.find(p => p.id === pid);
+    if (!promptObj) return null;
+
+    // Call runAgent — it creates a run with a generated ID
+    runAgent(pid, promptObj.text, node.moduleId, node.name, node.agentType, node.owner);
+
+    // Find the new run (it'll be at index 0 of agentRuns after state update)
+    // We need to track it by promptId + subModuleName since we don't get the runId back
+    // Use a timeout to let state settle, then find the run
+    return null; // We'll track via agentRuns matching
+  }, [runAgent]);
+
+  // Execute node and track its output
+  const executeAndTrackNode = useCallback((node: TreeNode) => {
+    if (node.promptIds.length === 0) return;
+    const pid = node.promptIds[0];
+    const promptObj = prompts.find(p => p.id === pid);
+    if (!promptObj) return;
+
+    runAgent(pid, promptObj.text, node.moduleId, node.name, node.agentType, node.owner);
+
+    // Track the run — find it after a tick
+    setTimeout(() => {
+      // The newest run should match our prompt
+      const run = agentRuns.find(r => r.promptId === pid && r.subModuleName === node.name && r.status === "running");
+      // If not found immediately, use the first running run
+      const latestRun = run || agentRuns[0];
+      if (latestRun) {
+        setNodeOutputs(prev => ({
+          ...prev,
+          [node.id]: { output: "", isStreaming: true, runId: latestRun.id },
+        }));
+      }
+    }, 50);
+  }, [runAgent, agentRuns]);
+
+  // Better tracking: watch for new runs appearing
+  const lastRunCountRef = useRef(agentRuns.length);
+  const pendingNodeTrackRef = useRef<string | null>(null);
+
+  const executeAndTrackNodeV2 = useCallback((node: TreeNode) => {
+    if (node.promptIds.length === 0) return;
+    const pid = node.promptIds[0];
+    const promptObj = prompts.find(p => p.id === pid);
+    if (!promptObj) return;
+
+    pendingNodeTrackRef.current = node.id;
+    lastRunCountRef.current = agentRuns.length;
+
+    runAgent(pid, promptObj.text, node.moduleId, node.name, node.agentType, node.owner);
+  }, [runAgent, agentRuns.length]);
+
+  // Watch for new runs and associate them with pending node tracking
+  useEffect(() => {
+    if (pendingNodeTrackRef.current && agentRuns.length > lastRunCountRef.current) {
+      const nodeId = pendingNodeTrackRef.current;
+      const newRun = agentRuns[0]; // Newest run is at index 0
+      if (newRun && newRun.status === "running") {
+        setNodeOutputs(prev => ({
+          ...prev,
+          [nodeId]: { output: "", isStreaming: true, runId: newRun.id },
+        }));
+      }
+      pendingNodeTrackRef.current = null;
+      lastRunCountRef.current = agentRuns.length;
+    }
+  }, [agentRuns]);
+
+  // Node click → execute agent directly
   const handleNodeClick = useCallback((node: TreeNode) => {
-    if (tourActive) return; // Don't open drawer during tour
-    setSelectedNode(node);
-  }, [tourActive]);
+    if (tourActive) return;
+    if (node.promptIds.length === 0) return;
 
-  const handleDrawerNavigate = useCallback((moduleId: number, sectionKey: string) => {
-    setSelectedNode(null);
-    navigate(`/module/${moduleId}?section=${encodeURIComponent(sectionKey)}`);
-  }, [navigate]);
+    // If already has output, open interstitial
+    if (nodeOutputs[node.id]?.output && !nodeOutputs[node.id]?.isStreaming) {
+      setInterstitialNode(node);
+      return;
+    }
 
-  // Demo mode
-  const startDemo = useCallback(() => {
-    demoTimerRef.current.forEach(clearTimeout);
-    demoTimerRef.current = [];
-    setDemoActiveNodes(new Set());
-    setDemoRunning(true);
+    // Execute the agent
+    executeAndTrackNodeV2(node);
+  }, [tourActive, nodeOutputs, executeAndTrackNodeV2]);
 
-    // Sequence: C5 first, then C1-C4
+  // Expand node output to interstitial
+  const handleExpandNode = useCallback((node: TreeNode) => {
+    setInterstitialNode(node);
+  }, []);
+
+  // Re-run from interstitial
+  const handleRerunFromInterstitial = useCallback(() => {
+    if (!interstitialNode) return;
+    executeAndTrackNodeV2(interstitialNode);
+  }, [interstitialNode, executeAndTrackNodeV2]);
+
+  // ── Tour demo (CSS-only animation, no real agents) ──
+  const startTourDemo = useCallback(() => {
+    tourDemoTimerRef.current.forEach(clearTimeout);
+    tourDemoTimerRef.current = [];
+    setTourDemoActiveNodes(new Set());
+    setTourDemoRunning(true);
+
     let delay = 0;
-
-    // C5 nodes
     c5Nodes.forEach((node) => {
       const timer = setTimeout(() => {
-        setDemoActiveNodes(prev => { const next = new Set(Array.from(prev)); next.add(node.id); return next; });
+        setTourDemoActiveNodes(prev => { const next = new Set(Array.from(prev)); next.add(node.id); return next; });
       }, delay);
-      demoTimerRef.current.push(timer);
+      tourDemoTimerRef.current.push(timer);
       delay += 60;
     });
     delay += 400;
 
-    // Cluster columns
     clusterColumns.forEach((col) => {
       col.sections.forEach(sec => {
         sec.nodes.forEach((node) => {
           const timer = setTimeout(() => {
-            setDemoActiveNodes(prev => { const next = new Set(Array.from(prev)); next.add(node.id); return next; });
+            setTourDemoActiveNodes(prev => { const next = new Set(Array.from(prev)); next.add(node.id); return next; });
           }, delay);
-          demoTimerRef.current.push(timer);
+          tourDemoTimerRef.current.push(timer);
           delay += 60;
         });
       });
       delay += 300;
     });
 
-    const endTimer = setTimeout(() => setDemoRunning(false), delay + 1000);
-    demoTimerRef.current.push(endTimer);
+    const endTimer = setTimeout(() => setTourDemoRunning(false), delay + 1000);
+    tourDemoTimerRef.current.push(endTimer);
   }, [c5Nodes, clusterColumns]);
 
-  const stopDemo = useCallback(() => {
-    demoTimerRef.current.forEach(clearTimeout);
-    demoTimerRef.current = [];
-    setDemoRunning(false);
-    setDemoActiveNodes(new Set());
+  const stopTourDemo = useCallback(() => {
+    tourDemoTimerRef.current.forEach(clearTimeout);
+    tourDemoTimerRef.current = [];
+    setTourDemoRunning(false);
+    setTourDemoActiveNodes(new Set());
+  }, []);
+
+  // ── Scenario demo (real agent execution) ──
+  const startScenarioDemo = useCallback((scenario: DemoScenario) => {
+    setShowScenarioPicker(false);
+    setActiveScenario(scenario);
+    setScenarioStep(0);
+    setScenarioCompletedCount(0);
+    setScenarioRunningNodes(new Set());
+    setScenarioCompletedNodes(new Set());
+
+    // Stagger agent execution: fire one every 3 seconds to avoid overwhelming
+    const STAGGER_MS = 3000;
+    scenarioTimerRef.current.forEach(clearTimeout);
+    scenarioTimerRef.current = [];
+
+    scenario.nodeSequence.forEach((nodeId, i) => {
+      const node = nodeMap[nodeId];
+      if (!node || node.promptIds.length === 0) return;
+
+      const timer = setTimeout(() => {
+        setScenarioStep(i);
+        setScenarioRunningNodes(prev => { const next = new Set(Array.from(prev)); next.add(nodeId); return next; });
+
+        // Execute the agent
+        const pid = node.promptIds[0];
+        const promptObj = prompts.find(p => p.id === pid);
+        if (!promptObj) return;
+
+        pendingNodeTrackRef.current = nodeId;
+        lastRunCountRef.current = agentRuns.length;
+        runAgent(pid, promptObj.text, node.moduleId, node.name, node.agentType, node.owner);
+      }, i * STAGGER_MS);
+      scenarioTimerRef.current.push(timer);
+    });
+  }, [nodeMap, runAgent, agentRuns.length]);
+
+  // Track scenario completion
+  useEffect(() => {
+    if (!activeScenario) return;
+    let completed = 0;
+    const newCompleted = new Set<string>();
+    activeScenario.nodeSequence.forEach(nodeId => {
+      const info = nodeOutputs[nodeId];
+      if (info && !info.isStreaming && info.output) {
+        completed++;
+        newCompleted.add(nodeId);
+      }
+    });
+    setScenarioCompletedCount(completed);
+    setScenarioCompletedNodes(newCompleted);
+
+    // Check if all done
+    if (completed >= activeScenario.nodeSequence.length && activeScenario.nodeSequence.length > 0) {
+      // Scenario complete
+      setTimeout(() => {
+        setActiveScenario(null);
+      }, 2000);
+    }
+  }, [nodeOutputs, activeScenario]);
+
+  const stopScenarioDemo = useCallback(() => {
+    scenarioTimerRef.current.forEach(clearTimeout);
+    scenarioTimerRef.current = [];
+    setActiveScenario(null);
+    setScenarioStep(0);
+    setScenarioRunningNodes(new Set());
   }, []);
 
   const completeTour = useCallback(() => {
@@ -1057,21 +1370,34 @@ export default function OrgChart() {
 
   const handleEnterEngine = useCallback(() => {
     completeTour();
-    stopDemo();
+    stopTourDemo();
     navigate("/dashboard");
-  }, [completeTour, stopDemo, navigate]);
+  }, [completeTour, stopTourDemo, navigate]);
 
   const handleSkipTour = useCallback(() => {
     completeTour();
-    stopDemo();
-  }, [completeTour, stopDemo]);
+    stopTourDemo();
+  }, [completeTour, stopTourDemo]);
 
-  // Merge demo + real active nodes
+  // Active run node IDs (from real runs, not demo)
+  const activeRunNodeIds = useMemo(() => {
+    const ids = new Set<string>();
+    recentRuns.forEach((run) => {
+      if (run.status === "running") {
+        const matchId = allNodeIds.find(nid => nid.includes(run.subModuleName.toLowerCase().replace(/\s+/g, "-")));
+        if (matchId) ids.add(matchId);
+      }
+    });
+    return ids;
+  }, [recentRuns, allNodeIds]);
+
+  // Merge all active states
   const mergedActiveNodes = useMemo(() => {
-    const merged = new Set(demoActiveNodes);
+    const merged = new Set(tourDemoActiveNodes);
     Array.from(activeRunNodeIds).forEach(id => merged.add(id));
+    Array.from(scenarioCompletedNodes).forEach(id => merged.add(id));
     return merged;
-  }, [demoActiveNodes, activeRunNodeIds]);
+  }, [tourDemoActiveNodes, activeRunNodeIds, scenarioCompletedNodes]);
 
   const tourHighlight = tourActive ? tourSteps[tourStep]?.highlight : "none";
 
@@ -1085,15 +1411,20 @@ export default function OrgChart() {
     return rows;
   }, [c5Nodes]);
 
+  // Interstitial data
+  const interstitialOutput = interstitialNode ? nodeOutputs[interstitialNode.id] : null;
+  const interstitialDisplayOutput = interstitialOutput?.output ||
+    (interstitialNode ? (agentRuns.find(r => interstitialNode.promptIds.includes(r.promptId))?.output || "") : "");
+
   return (
     <NeuralShell>
       <div className="max-w-[1400px]">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-5 sm:mb-6">
           <div>
-            <h1 className="text-[20px] sm:text-[22px] font-bold tracking-tight text-foreground">AI-First Org Map</h1>
+            <h1 className="text-[20px] sm:text-[22px] font-bold tracking-tight text-foreground">Control Center</h1>
             <p className="text-[12px] sm:text-[13px] text-foreground/40 mt-0.5">
-              {stats.totalPrompts} agents · {stats.modules} modules · {stats.clusters} clusters
+              {stats.totalPrompts} agents · {stats.modules} modules · {stats.clusters} clusters · Click any node to execute
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -1103,13 +1434,13 @@ export default function OrgChart() {
             >
               <Eye className="w-3.5 h-3.5" /> Guide
             </button>
-            {demoRunning ? (
-              <button onClick={stopDemo} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold bg-red-500 text-white hover:bg-red-600 transition-all">
+            {activeScenario ? (
+              <button onClick={stopScenarioDemo} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold bg-red-500 text-white hover:bg-red-600 transition-all">
                 <Pause className="w-3.5 h-3.5" /> Stop
               </button>
             ) : (
               <button
-                onClick={() => { if (tourActive) completeTour(); startDemo(); }}
+                onClick={() => { if (tourActive) completeTour(); setShowScenarioPicker(true); }}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold bg-primary text-white hover:bg-primary/90 transition-all shadow-sm"
               >
                 <Play className="w-3.5 h-3.5" /> Demo
@@ -1117,6 +1448,20 @@ export default function OrgChart() {
             )}
           </div>
         </div>
+
+        {/* Scenario narration bar */}
+        <AnimatePresence>
+          {activeScenario && (
+            <DemoNarrationBar
+              scenario={activeScenario}
+              currentStep={scenarioStep}
+              totalSteps={activeScenario.nodeSequence.length}
+              completedCount={scenarioCompletedCount}
+              isRunning={scenarioCompletedCount < activeScenario.nodeSequence.length}
+              onStop={stopScenarioDemo}
+            />
+          )}
+        </AnimatePresence>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -1152,7 +1497,7 @@ export default function OrgChart() {
                 <div className="w-3 h-3 rounded-sm bg-red-400" />
                 <span className="text-[11px] text-foreground/50 font-medium">DRI Cluster</span>
               </div>
-              {demoRunning && (
+              {(tourDemoRunning || activeScenario) && (
                 <div className="flex items-center gap-1.5 shrink-0">
                   <div className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse" />
                   <span className="text-[11px] text-foreground/50 font-medium">Active</span>
@@ -1179,7 +1524,7 @@ export default function OrgChart() {
                 {/* Vertical connector */}
                 <div className="flex justify-center">
                   <div className="w-px h-8 bg-slate-300 relative overflow-hidden">
-                    {demoRunning && (
+                    {(tourDemoRunning || activeScenario) && (
                       <motion.div
                         className="absolute left-0 w-full h-3 bg-gradient-to-b from-transparent via-emerald-400 to-transparent"
                         animate={{ top: ["-12px", "32px"] }}
@@ -1189,7 +1534,7 @@ export default function OrgChart() {
                   </div>
                 </div>
 
-                {/* ── C5 Sub-module rows (centered, red left-border) ── */}
+                {/* ── C5 Sub-module rows ── */}
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -1204,8 +1549,12 @@ export default function OrgChart() {
                             node={node}
                             isActive={mergedActiveNodes.has(node.id)}
                             isHighlighted={tourHighlight === "cluster-5" || tourHighlight === "nodes"}
+                            isDemoActive={tourDemoActiveNodes.has(node.id) || scenarioRunningNodes.has(node.id)}
                             onClick={() => handleNodeClick(node)}
                             delay={ri * 4 + ni}
+                            inlineOutput={nodeOutputs[node.id]?.output}
+                            isRunning={nodeOutputs[node.id]?.isStreaming}
+                            onExpand={nodeOutputs[node.id]?.output ? () => handleExpandNode(node) : undefined}
                           />
                         </div>
                       ))}
@@ -1216,7 +1565,7 @@ export default function OrgChart() {
                 {/* Vertical connector + horizontal divider */}
                 <div className="flex justify-center">
                   <div className="w-px h-8 bg-slate-300 relative overflow-hidden">
-                    {demoRunning && (
+                    {(tourDemoRunning || activeScenario) && (
                       <motion.div
                         className="absolute left-0 w-full h-3 bg-gradient-to-b from-transparent via-emerald-400 to-transparent"
                         animate={{ top: ["-12px", "32px"] }}
@@ -1262,8 +1611,12 @@ export default function OrgChart() {
                                   node={node}
                                   isActive={mergedActiveNodes.has(node.id)}
                                   isHighlighted={tourHighlight === "clusters" || tourHighlight === "nodes"}
+                                  isDemoActive={tourDemoActiveNodes.has(node.id) || scenarioRunningNodes.has(node.id)}
                                   onClick={() => handleNodeClick(node)}
                                   delay={12 + col.clusterId * 8 + si * 4 + ni}
+                                  inlineOutput={nodeOutputs[node.id]?.output}
+                                  isRunning={nodeOutputs[node.id]?.isStreaming}
+                                  onExpand={nodeOutputs[node.id]?.output ? () => handleExpandNode(node) : undefined}
                                 />
                               ))}
                             </div>
@@ -1290,7 +1643,7 @@ export default function OrgChart() {
               transition={{ delay: 0.5 }}
               className="mt-6 text-center text-[11px] text-foreground/25 font-medium"
             >
-              Click any node to open its agent · Hit Demo to watch the system activate · Source: AI-First CTV Commercial Operating Model (Mar 9, 2026)
+              Click any node to execute its agent · Hit Demo to run a full scenario · Source: AI-First CTV Commercial Operating Model (Mar 9, 2026)
             </motion.div>
           </TabsContent>
 
@@ -1318,20 +1671,36 @@ export default function OrgChart() {
                 onPrev={handleTourPrev}
                 onSkip={handleSkipTour}
                 onEnterEngine={handleEnterEngine}
-                demoRunning={demoRunning}
+                demoRunning={tourDemoRunning}
               />
             </>
           )}
         </AnimatePresence>
 
-        {/* Agent drawer */}
-        {selectedNode && (
-          <AgentDrawer
-            node={selectedNode}
-            onClose={() => setSelectedNode(null)}
-            onNavigate={handleDrawerNavigate}
-          />
-        )}
+        {/* Scenario picker modal */}
+        <AnimatePresence>
+          {showScenarioPicker && (
+            <ScenarioPickerModal
+              scenarios={scenarios}
+              onSelect={startScenarioDemo}
+              onClose={() => setShowScenarioPicker(false)}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* OutputInterstitial for expanded node view */}
+        <OutputInterstitial
+          open={!!interstitialNode}
+          onClose={() => setInterstitialNode(null)}
+          agentName={interstitialNode?.name || ""}
+          ownership={interstitialNode?.owner}
+          agentType={interstitialNode?.agentType}
+          output={interstitialDisplayOutput}
+          isStreaming={interstitialNode ? (nodeOutputs[interstitialNode.id]?.isStreaming || false) : false}
+          durationMs={interstitialNode ? nodeOutputs[interstitialNode.id]?.durationMs : undefined}
+          onRun={interstitialNode ? handleRerunFromInterstitial : undefined}
+          isRunning={interstitialNode ? (nodeOutputs[interstitialNode.id]?.isStreaming || false) : false}
+        />
       </div>
     </NeuralShell>
   );

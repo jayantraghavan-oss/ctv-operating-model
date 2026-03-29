@@ -76,7 +76,7 @@ export default function HelpButton() {
         }
       });
       toast.success("Onboarding reset", {
-        description: "Refresh the page to replay the guided tour from the Org Map.",
+        description: "Refresh the page to replay the guided tour from the Control Center.",
       });
       setOpen(false);
     } catch { /* ignore */ }

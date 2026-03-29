@@ -1,0 +1,13 @@
+Screenshot observations (Control Center after rewrite):
+1. Page title: "Control Center" - correctly renamed from "Org Map"
+2. Sidebar: "Control Center" is first nav item with active dot - correct
+3. Breadcrumb: "CTV AI Engine / Control Center" - correct
+4. Header: "200 agents · 4 modules · 5 clusters · Click any node to execute"
+5. Tabs: "Org Chart" and "Reference Guide" - working
+6. Tour overlay showing step 1/7 "Welcome to the CTV AI Engine" - working
+7. Demo button visible in top-right - blue with play icon
+8. Tree layout visible behind tour: C5 DRI at top, sub-module rows, 4 cluster headers at bottom
+9. Node badges visible: A+H (amber), H (green) - correct color coding
+10. Cluster headers: C1 blue, C2 teal, C3 amber, C4 orange - correct
+11. Guide button visible next to Demo button
+12. No TypeScript errors, no LSP errors

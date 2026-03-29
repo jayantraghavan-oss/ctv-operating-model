@@ -39,7 +39,7 @@ interface NavItem {
 
 /* ── Simplified seller-friendly nav ── */
 const mainNav: NavItem[] = [
-  { path: "/", label: "Org Map", shortLabel: "Org Map", icon: Network },
+  { path: "/", label: "Control Center", shortLabel: "Control", icon: Network },
   { path: "/dashboard", label: "Dashboard", shortLabel: "Dashboard", icon: Brain },
 ];
 
@@ -59,7 +59,7 @@ const analyzeNav: NavItem[] = [
 
 // Bottom nav items for mobile — most important screens
 const bottomNav: NavItem[] = [
-  { path: "/", label: "Org Map", icon: Network },
+  { path: "/", label: "Control Center", icon: Network },
   { path: "/dashboard", label: "Dashboard", icon: Brain },
   { path: "/swarm", label: "Assistants", icon: Zap },
   { path: "/simulation", label: "Roleplay", icon: MessageSquare },
@@ -99,9 +99,9 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
   // Friendly page name for breadcrumb
   const pageName = (() => {
     const map: Record<string, string> = {
-      "/": "Org Map",
+      "/": "Control Center",
       "/dashboard": "Dashboard",
-      "/org-chart": "Org Map",
+      "/org-chart": "Control Center",
       "/swarm": "AI Assistants",
       "/approvals": "Approvals",
       "/war-room": "Competitive Sims",

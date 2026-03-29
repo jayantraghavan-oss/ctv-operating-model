@@ -52,7 +52,7 @@ function Router() {
     <Suspense fallback={<PageLoader />}>
       <AnimatePresence mode="wait">
         <Switch>
-          {/* Org Map is the main screen */}
+          {/* Control Center is the main screen */}
           <Route path="/" component={OrgChart} />
           <Route path="/dashboard" component={NeuralCommand} />
           <Route path="/swarm" component={AgentSwarm} />
