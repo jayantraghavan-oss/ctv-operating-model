@@ -90,7 +90,7 @@ export default function AgentRegistry() {
 
   return (
     <NeuralShell>
-      <div className="p-6 lg:p-8 max-w-[1200px]">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-[1200px]">
         {/* Breadcrumb */}
         <Link href="/">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer mb-4">
@@ -101,16 +101,16 @@ export default function AgentRegistry() {
 
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-xl font-semibold tracking-tight text-foreground">Assistant Registry</h1>
+          <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-foreground">Assistant Registry</h1>
           <p className="text-sm text-muted-foreground mt-1">
             All {prompts.length} AI assistants. Click any one to run it with AI reasoning.
           </p>
         </div>
 
         {/* Filters bar */}
-        <div className="flex flex-wrap items-center gap-3 mb-6">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 mb-6">
           {/* Search */}
-          <div className="relative flex-1 min-w-[200px] max-w-md">
+          <div className="relative w-full sm:flex-1 sm:min-w-[200px] sm:max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
@@ -166,7 +166,7 @@ export default function AgentRegistry() {
         </div>
 
         {/* Summary chips */}
-        <div className="flex gap-3 mb-5">
+        <div className="flex flex-wrap gap-2 sm:gap-3 mb-5">
           {agentTypes.map((type) => {
             const count = filtered.filter((p) => p.agentType === type).length;
             return (
@@ -199,7 +199,7 @@ export default function AgentRegistry() {
 
               return (
                 <div key={prompt.id}>
-                  <div className="flex items-center gap-3 px-4 py-3 hover:bg-muted/20 transition-colors">
+                    <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 hover:bg-muted/20 transition-colors">
                     {/* Status dot */}
                     <div className={`w-2 h-2 rounded-full shrink-0 ${
                       isRunning ? "bg-amber-500 animate-pulse" :
@@ -209,7 +209,7 @@ export default function AgentRegistry() {
                     }`} />
 
                     {/* ID */}
-                    <span className="text-xs font-mono text-muted-foreground w-8 shrink-0">{prompt.id}</span>
+                    <span className="text-xs font-mono text-muted-foreground w-6 sm:w-8 shrink-0 hidden sm:inline">{prompt.id}</span>
 
                     {/* Prompt text — clickable to expand */}
                     <div
@@ -228,7 +228,7 @@ export default function AgentRegistry() {
                             </span>
                           </Link>
                         )}
-                        <span className="text-[10px] text-muted-foreground truncate max-w-[120px]">{meta.subModule}</span>
+                        <span className="text-[10px] text-muted-foreground truncate max-w-[80px] sm:max-w-[120px] hidden sm:inline">{meta.subModule}</span>
                         {run?.durationMs && (
                           <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
                             <Clock className="w-2.5 h-2.5" />{(run.durationMs / 1000).toFixed(1)}s
@@ -277,7 +277,7 @@ export default function AgentRegistry() {
                         transition={{ type: "spring", stiffness: 400, damping: 30 }}
                         className="overflow-hidden"
                       >
-                        <div className="px-4 pb-4 pt-1 ml-10 border-l-2 border-[#0091FF]/15">
+                        <div className="px-3 sm:px-4 pb-4 pt-1 ml-4 sm:ml-10 border-l-2 border-[#0091FF]/15">
                           {/* Full prompt */}
                           <div className="text-[13px] text-foreground/65 leading-relaxed mb-3">{prompt.text}</div>
 

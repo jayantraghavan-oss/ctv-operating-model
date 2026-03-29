@@ -366,3 +366,11 @@
 - [x] All 48 tests passing
 - [x] 0 TypeScript errors
 - [x] Production build succeeds
+
+## Phase 36: Toggle Fix + Mobile Polish + Scenario Summary
+- [x] Fix Org Chart / Reference Guide toggle — improved contrast with white active bg, shadow, border
+- [x] Mobile polish: AI Assistants page — stats grid 3-col on mobile, header text smaller
+- [x] Mobile polish: Insights page — tab switcher full-width + scrollable, header compact, pipeline rows compact
+- [x] Mobile polish: Agent Registry page — filters stack vertically, search full-width, chips wrap, rows compact, expanded output less indented
+- [x] Scenario output summary — ScenarioSummaryPanel shows after demo completes with per-node expandable outputs, copy all, re-run, total duration
+- [x] Persist agent runs to database — agent_runs table, tRPC save/update/list/get/stats, AgentContext auto-persists on start/complete/fail, 10 new tests passing (58 total)

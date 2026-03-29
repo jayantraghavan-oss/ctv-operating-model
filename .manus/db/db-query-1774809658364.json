@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `agent_runs` (\n\t`id` varchar(64) NOT NULL,\n\t`prompt_id` int NOT NULL,\n\t`prompt_text` text NOT NULL,\n\t`module_id` int NOT NULL,\n\t`sub_module_name` varchar(255) NOT NULL,\n\t`agent_type` varchar(50) DEFAULT 'persistent',\n\t`owner` varchar(50) DEFAULT 'agent',\n\t`status` enum('running','completed','failed') NOT NULL,\n\t`output` text,\n\t`duration_ms` int,\n\t`started_at` bigint NOT NULL,\n\t`completed_at` bigint,\n\t`user_id` varchar(255),\n\t`scenario_name` varchar(255),\n\t`created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n\tCONSTRAINT `agent_runs_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3pmUMCqAYdoymgd.604dbdf7168e --database Wr22fCMnjpJGgmtKZSL2hG --execute CREATE TABLE `agent_runs` (\n\t`id` varchar(64) NOT NULL,\n\t`prompt_id` int NOT NULL,\n\t`prompt_text` text NOT NULL,\n\t`module_id` int NOT NULL,\n\t`sub_module_name` varchar(255) NOT NULL,\n\t`agent_type` varchar(50) DEFAULT 'persistent',\n\t`owner` varchar(50) DEFAULT 'agent',\n\t`status` enum('running','completed','failed') NOT NULL,\n\t`output` text,\n\t`duration_ms` int,\n\t`started_at` bigint NOT NULL,\n\t`completed_at` bigint,\n\t`user_id` varchar(255),\n\t`scenario_name` varchar(255),\n\t`created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n\tCONSTRAINT `agent_runs_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 412
+}

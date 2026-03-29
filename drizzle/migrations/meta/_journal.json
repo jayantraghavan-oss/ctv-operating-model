@@ -8,6 +8,13 @@
       "when": 1774670930911,
       "tag": "0000_motionless_bastion",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1774809346112,
+      "tag": "0001_bumpy_goliath",
+      "breakpoints": true
     }
   ]
 }

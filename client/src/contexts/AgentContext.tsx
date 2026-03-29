@@ -7,6 +7,7 @@
  */
 import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from "react";
 import { executeAgentPromptStream, executeAgentPrompt } from "@/lib/llm";
+import { persistNewRun, persistRunUpdate } from "@/lib/persistRun";
 import { toast } from "sonner";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -305,6 +306,19 @@ export function AgentProvider({ children }: { children: ReactNode }) {
     }));
     setExecutionQueue((q) => q + 1);
 
+    // Persist to database (fire-and-forget)
+    persistNewRun({
+      id: runId,
+      promptId,
+      promptText,
+      moduleId,
+      subModuleName,
+      agentType,
+      owner,
+      status: "running",
+      startedAt: startTime,
+    });
+
     // Toast: agent started
     toast(`Assistant #${promptId} started`, {
       description: subModuleName,
@@ -364,6 +378,15 @@ export function AgentProvider({ children }: { children: ReactNode }) {
         });
         setExecutionQueue((q) => Math.max(0, q - 1));
 
+        // Persist completion to database
+        persistRunUpdate({
+          id: runId,
+          status: "completed",
+          output,
+          durationMs,
+          completedAt: Date.now(),
+        });
+
         // Toast: agent complete
         toast.success(`Assistant #${promptId} complete`, {
           description: `${subModuleName} — ${(durationMs / 1000).toFixed(1)}s`,
@@ -389,6 +412,15 @@ export function AgentProvider({ children }: { children: ReactNode }) {
               return { ...prev, agentRuns: updatedRuns };
             });
             setExecutionQueue((q) => Math.max(0, q - 1));
+            // Persist fallback completion to database
+            persistRunUpdate({
+              id: runId,
+              status: "completed",
+              output,
+              durationMs: totalDuration,
+              completedAt: Date.now(),
+            });
+
             toast.success(`Assistant #${promptId} complete (fallback)`, {
               description: subModuleName,
               duration: 3000,
@@ -404,6 +436,15 @@ export function AgentProvider({ children }: { children: ReactNode }) {
               return { ...prev, agentRuns: updatedRuns };
             });
             setExecutionQueue((q) => Math.max(0, q - 1));
+
+            // Persist failure to database
+            persistRunUpdate({
+              id: runId,
+              status: "failed",
+              output: `Error: ${fallbackErr.message || err.message || "Unknown error"}`,
+              durationMs,
+              completedAt: Date.now(),
+            });
 
             // Toast: agent failed
             toast.error(`Assistant #${promptId} failed`, {

@@ -47,9 +47,14 @@ import {
   Swords,
   RefreshCw,
   ChevronUp,
+  FileText,
+  Copy,
+  CheckCircle2,
+  Clock,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useIsMobile } from "@/hooks/useMobile";
+import { toast } from "sonner";
 
 // ── Constants ──
 const TOUR_KEY = "ctv-orgchart-tour-completed";
@@ -729,6 +734,173 @@ function DemoNarrationBar({
   );
 }
 
+// ── Scenario Summary Panel ──
+function ScenarioSummaryPanel({
+  scenario,
+  nodeOutputs,
+  nodeMap,
+  onClose,
+  onRerun,
+}: {
+  scenario: DemoScenario;
+  nodeOutputs: Record<string, { output: string; isStreaming: boolean; runId?: string; durationMs?: number }>;
+  nodeMap: Record<string, TreeNode>;
+  onClose: () => void;
+  onRerun: () => void;
+}) {
+  const [expandedNode, setExpandedNode] = useState<string | null>(null);
+  const completedNodes = scenario.nodeSequence.filter(id => {
+    const info = nodeOutputs[id];
+    return info && !info.isStreaming && info.output;
+  });
+  const totalDuration = completedNodes.reduce((sum, id) => sum + (nodeOutputs[id]?.durationMs || 0), 0);
+
+  const copyAll = () => {
+    const text = completedNodes.map(id => {
+      const node = nodeMap[id];
+      const info = nodeOutputs[id];
+      return `## ${node?.name || id}\n\n${info?.output || "No output"}`;
+    }).join("\n\n---\n\n");
+    navigator.clipboard.writeText(`# ${scenario.name} — Executive Summary\n\n${text}`);
+    toast.success("Full summary copied to clipboard");
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <motion.div
+        initial={{ scale: 0.95, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.95, y: 20 }}
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden"
+      >
+        {/* Header */}
+        <div className="px-5 sm:px-6 py-4 border-b border-black/[0.06] flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <CheckCircle2 className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-[16px] font-bold text-foreground">{scenario.name}</h2>
+              <p className="text-[12px] text-foreground/40">
+                {completedNodes.length} agents completed · {(totalDuration / 1000).toFixed(1)}s total
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={copyAll}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-foreground/50 hover:text-foreground hover:bg-black/[0.04] transition-all"
+            >
+              <Copy className="w-3.5 h-3.5" /> Copy All
+            </button>
+            <button
+              onClick={onRerun}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-primary/8 text-primary hover:bg-primary/12 transition-all"
+            >
+              <RefreshCw className="w-3.5 h-3.5" /> Re-run
+            </button>
+            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-black/[0.04] text-foreground/30 hover:text-foreground/60 transition-all">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3">
+          {scenario.nodeSequence.map((nodeId, i) => {
+            const node = nodeMap[nodeId];
+            const info = nodeOutputs[nodeId];
+            const hasOutput = info && !info.isStreaming && info.output;
+            const isExpanded = expandedNode === nodeId;
+
+            return (
+              <motion.div
+                key={nodeId}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className="border border-black/[0.06] rounded-xl overflow-hidden"
+              >
+                <button
+                  onClick={() => setExpandedNode(isExpanded ? null : nodeId)}
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-black/[0.015] transition-colors text-left"
+                >
+                  <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-[11px] font-bold shrink-0">
+                    {i + 1}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[13px] font-semibold text-foreground truncate">{node?.name || nodeId}</div>
+                    {hasOutput && (
+                      <div className="text-[11px] text-foreground/35 truncate mt-0.5">
+                        {info.output.slice(0, 120).replace(/[#*_]/g, "")}...
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {info?.durationMs && (
+                      <span className="text-[10px] text-foreground/25 flex items-center gap-0.5">
+                        <Clock className="w-2.5 h-2.5" />{(info.durationMs / 1000).toFixed(1)}s
+                      </span>
+                    )}
+                    {hasOutput ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    ) : (
+                      <div className="w-4 h-4 rounded-full border-2 border-foreground/10" />
+                    )}
+                    <ChevronDown className={`w-3.5 h-3.5 text-foreground/25 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                  </div>
+                </button>
+
+                <AnimatePresence>
+                  {isExpanded && hasOutput && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="px-4 pb-4 pt-1 border-t border-black/[0.04]">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[10px] font-bold text-primary/60 uppercase tracking-wider flex items-center gap-1">
+                            <Sparkles className="w-3 h-3" /> AI Output
+                          </span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(info.output); toast.success("Copied"); }}
+                            className="p-1 rounded hover:bg-black/[0.04] text-foreground/25 hover:text-foreground/50 transition-colors"
+                          >
+                            <Copy className="w-3 h-3" />
+                          </button>
+                        </div>
+                        <div className="text-[12px] text-foreground/70 leading-relaxed prose prose-xs max-w-none prose-headings:text-foreground/80 prose-headings:font-semibold max-h-64 overflow-y-auto">
+                          <Streamdown>{info.output}</Streamdown>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 sm:px-6 py-3 border-t border-black/[0.06] bg-black/[0.015] shrink-0">
+          <p className="text-[11px] text-foreground/30 text-center">
+            {completedNodes.length} of {scenario.nodeSequence.length} agents completed · Total execution: {(totalDuration / 1000).toFixed(1)}s
+          </p>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 // ── Tour Overlay ──
 function TourOverlay({
   step, totalSteps, onNext, onPrev, onSkip, onEnterEngine, demoRunning,
@@ -1199,6 +1371,7 @@ export default function OrgChart() {
   const [scenarioRunningNodes, setScenarioRunningNodes] = useState<Set<string>>(new Set());
   const [scenarioCompletedNodes, setScenarioCompletedNodes] = useState<Set<string>>(new Set());
   const scenarioTimerRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const [completedScenario, setCompletedScenario] = useState<DemoScenario | null>(null);
 
   // Node output tracking
   const [nodeOutputs, setNodeOutputs] = useState<Record<string, { output: string; isStreaming: boolean; runId?: string; durationMs?: number }>>({});
@@ -1469,10 +1642,11 @@ export default function OrgChart() {
 
     // Check if all done
     if (completed >= activeScenario.nodeSequence.length && activeScenario.nodeSequence.length > 0) {
-      // Scenario complete
+      // Scenario complete — show summary panel
       setTimeout(() => {
+        setCompletedScenario(activeScenario);
         setActiveScenario(null);
-      }, 2000);
+      }, 1500);
     }
   }, [nodeOutputs, activeScenario]);
 
@@ -1594,11 +1768,11 @@ export default function OrgChart() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-4 sm:mb-6">
-            <TabsTrigger value="chart" className="flex items-center gap-1.5">
+          <TabsList className="mb-4 sm:mb-6 bg-black/[0.06] border border-black/[0.08] p-1 h-10 rounded-xl">
+            <TabsTrigger value="chart" className="flex items-center gap-1.5 rounded-lg px-4 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-foreground data-[state=active]:shadow-md data-[state=active]:border-black/[0.06] data-[state=inactive]:text-muted-foreground">
               <Network className="w-3.5 h-3.5" /> Org Chart
             </TabsTrigger>
-            <TabsTrigger value="reference" className="flex items-center gap-1.5">
+            <TabsTrigger value="reference" className="flex items-center gap-1.5 rounded-lg px-4 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-foreground data-[state=active]:shadow-md data-[state=active]:border-black/[0.06] data-[state=inactive]:text-muted-foreground">
               <BookOpen className="w-3.5 h-3.5" /> Reference Guide
             </TabsTrigger>
           </TabsList>
@@ -1826,6 +2000,22 @@ export default function OrgChart() {
               scenarios={scenarios}
               onSelect={startScenarioDemo}
               onClose={() => setShowScenarioPicker(false)}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Scenario Summary Panel */}
+        <AnimatePresence>
+          {completedScenario && (
+            <ScenarioSummaryPanel
+              scenario={completedScenario}
+              nodeOutputs={nodeOutputs}
+              nodeMap={nodeMap}
+              onClose={() => setCompletedScenario(null)}
+              onRerun={() => {
+                setCompletedScenario(null);
+                startScenarioDemo(completedScenario);
+              }}
             />
           )}
         </AnimatePresence>

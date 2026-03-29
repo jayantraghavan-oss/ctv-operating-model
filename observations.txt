@@ -1,32 +1,8 @@
-COMPREHENSIVE PAGE AUDIT (Mar 29, 2026)
+Toggle fix observation (Mar 29):
+- The toggle now shows "Org Chart" with a white background, shadow, and clear text contrast
+- "Reference Guide" is muted/gray when inactive
+- The container has a subtle border and rounded-xl shape
+- Looks much crisper and more Apple-like than before
+- Toggle fix: DONE
 
-CRITICAL FIX APPLIED:
-- dev script was "vite --host" instead of "NODE_ENV=development tsx watch server/_core/index.ts"
-- tRPC routes were NOT mounted in dev mode — now fixed and verified
-
-ALL PAGES CHECKED:
-1. / (Control Center) - OK, tree renders, mobile accordion works
-2. /dashboard - OK, conviction cards, cluster control, live output
-3. /swarm (AI Assistants) - OK, 200 agents listed with search/filter
-4. /war-room (Competitive Sims) - OK, competitor landscape + scenarios
-5. /simulation (Buyer Roleplay) - OK, 4 persona cards
-6. /data-pulse (Insights) - OK, Gong/Pipeline/System tabs
-7. /approvals - OK, 19 pending items with approve/reject
-8. /model (Operating Model) - OK, full strategic doc renders beautifully
-9. /module/1 (Module detail) - OK, sections/sub-modules/prompts all render
-10. /cluster/1 (Cluster detail) - OK, cluster narrative + linked modules
-11. /agents (Agent Registry) - OK, 200 agents with search/filter/run
-12. /weekly-prep (Weekly Prep) - OK, XFN Leadership Weekly auto-generated
-13. /conviction (Conviction Tracker) - OK, 8 learning goals with scores
-14. /learning-loops (Learning Loops) - OK, 10 loops with status
-
-NO CONSOLE ERRORS
-NO NETWORK ERRORS (tRPC now properly mounted)
-ALL 14 PAGES LOAD CORRECTLY
-48 TESTS PASSING
-
-REMAINING ISSUES TO CHECK:
-- TypeScript strict mode errors (from earlier audit)
-- Build output (vite build was successful earlier)
-- Edge cases in demo mode
-- Mobile responsiveness on other pages (beyond Control Center)
+Next: Phase 2 - Persist agent runs to database

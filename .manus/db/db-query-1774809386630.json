@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `__drizzle_migrations` (\n  `id` bigint AUTO_INCREMENT PRIMARY KEY,\n  `hash` text NOT NULL,\n  `created_at` bigint\n);\nINSERT IGNORE INTO `__drizzle_migrations` (`hash`, `created_at`) VALUES ('0000_motionless_bastion', 1774670930911);\nINSERT IGNORE INTO `__drizzle_migrations` (`hash`, `created_at`) VALUES ('0001_bumpy_goliath', 1774809346112);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3pmUMCqAYdoymgd.604dbdf7168e --database Wr22fCMnjpJGgmtKZSL2hG --execute CREATE TABLE IF NOT EXISTS `__drizzle_migrations` (\n  `id` bigint AUTO_INCREMENT PRIMARY KEY,\n  `hash` text NOT NULL,\n  `created_at` bigint\n);\nINSERT IGNORE INTO `__drizzle_migrations` (`hash`, `created_at`) VALUES ('0000_motionless_bastion', 1774670930911);\nINSERT IGNORE INTO `__drizzle_migrations` (`hash`, `created_at`) VALUES ('0001_bumpy_goliath', 1774809346112);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 100
+}

@@ -136,7 +136,7 @@ export default function AgentSwarm() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-[28px] font-bold tracking-tight">AI Assistants</h1>
+            <h1 className="text-xl sm:text-[28px] font-bold tracking-tight">AI Assistants</h1>
             <p className="text-[14px] text-foreground/40 mt-1">
               {stats.completed > 0 ? `${stats.completed} completed · ${stats.running} running` : "Click any assistant to run it with AI reasoning"} · <span className="text-foreground/25">⌘K to search</span>
             </p>
@@ -167,7 +167,7 @@ export default function AgentSwarm() {
         </div>
 
         {/* Live Stats Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3">
           {[
             { label: "Total", value: stats.total, icon: Bot, color: "text-foreground/60" },
             { label: "Shown", value: stats.shown, icon: Filter, color: "text-blue-600" },

@@ -132,8 +132,8 @@ Provide:
 
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
-            <h1 className="text-[28px] font-bold tracking-tight">Insights</h1>
-            <p className="text-[15px] text-foreground/45 mt-1">Live intelligence from Gong calls, brand pipeline, and system health</p>
+            <h1 className="text-[22px] sm:text-[28px] font-bold tracking-tight">Insights</h1>
+            <p className="text-[13px] sm:text-[15px] text-foreground/45 mt-1">Live intelligence from Gong calls, brand pipeline, and system health</p>
           </div>
           <div className="flex items-center gap-2">
             <motion.button
@@ -154,12 +154,12 @@ Provide:
         </div>
 
         {/* Tab switcher */}
-        <div className="flex items-center gap-1 bg-black/[0.03] rounded-2xl p-1.5 w-fit">
+        <div className="flex items-center gap-1 bg-black/[0.03] rounded-2xl p-1.5 w-full sm:w-fit overflow-x-auto">
           {(["gong", "pipeline", "system"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-5 py-2 rounded-xl text-[13px] font-semibold transition-all duration-200 ${
+              className={`px-3 sm:px-5 py-2 rounded-xl text-[12px] sm:text-[13px] font-semibold transition-all duration-200 whitespace-nowrap flex-1 sm:flex-initial ${
                 activeTab === tab
                   ? "bg-white text-foreground shadow-sm"
                   : "text-foreground/40 hover:text-foreground/60"
