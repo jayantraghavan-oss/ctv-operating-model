@@ -291,7 +291,7 @@ export default function Toolkit() {
             WebkitBackdropFilter: "blur(20px) saturate(1.5)",
           }}
         >
-          <div className="flex gap-1 overflow-x-auto no-scrollbar">
+          <div className="flex gap-1 overflow-x-auto no-scrollbar" role="navigation" aria-label="Toolkit sections">
             {SECTIONS.map((sec) => {
               const Icon = sec.icon;
               const isActive = activeSection === sec.id;
@@ -299,6 +299,8 @@ export default function Toolkit() {
                 <button
                   key={sec.id}
                   onClick={() => scrollToSection(sec.id)}
+                  aria-label={`Jump to ${sec.label} section`}
+                  aria-current={isActive ? 'true' : undefined}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-semibold whitespace-nowrap transition-all shrink-0 ${
                     isActive
                       ? "bg-primary/10 text-primary"

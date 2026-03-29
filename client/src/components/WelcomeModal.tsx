@@ -28,7 +28,7 @@ const quickStartSteps = [
     description: "Click any assistant to generate real-time analysis, insights, and recommendations powered by AI. Look for the \"Run\" button on any card.",
     color: "text-primary",
     bg: "bg-primary/8",
-    hint: "Tip: Start from the Dashboard or AI Assistants page",
+    hint: "Tip: Start from the Toolkit — all assistants are in one place",
   },
   {
     icon: Brain,
@@ -52,7 +52,7 @@ const quickStartSteps = [
     description: "Get AI-powered analysis of Gong call signals, pipeline health, and market intelligence.",
     color: "text-amber-600",
     bg: "bg-amber-500/8",
-    hint: "Tip: Switch between Gong, Pipeline, and Market tabs",
+    hint: "Tip: Switch between Gong, Pipeline, and System tabs",
   },
   {
     icon: Command,

@@ -84,7 +84,7 @@ export default function ApprovalQueue() {
               <Shield className="w-6 h-6 text-foreground/20" />
             </div>
             <p className="text-[15px] font-medium text-foreground/40">No outputs to review yet</p>
-            <p className="text-[13px] text-foreground/25 mt-1.5">Run assistants from the AI Assistants page, Registry, or any Module to generate outputs.</p>
+            <p className="text-[13px] text-foreground/25 mt-1.5">Run assistants from the Toolkit or Control Center to generate outputs for review.</p>
           </div>
         ) : (
           <div className="glass rounded-2xl overflow-hidden">

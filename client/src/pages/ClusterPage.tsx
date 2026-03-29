@@ -38,7 +38,7 @@ export default function ClusterPage() {
         <Link href="/">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer mb-4">
             <ArrowLeft className="w-3 h-3" />
-            Dashboard
+            Control Center
           </div>
         </Link>
 

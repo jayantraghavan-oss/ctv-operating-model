@@ -210,8 +210,7 @@ export async function callLLMStream(
 
     return { content: accumulated, finishReason };
   } catch (e: any) {
-    // If it's a known error, try tRPC fallback
-    if (e.message?.includes("LLM API error")) throw e;
+    // Always try tRPC fallback on any error (including LLM API errors)
     try {
       const result = await callLLMViaTRPC(messages);
       onChunk(result.content, result.content);

@@ -398,3 +398,44 @@
 - [x] Update HelpButton — references Toolkit → sections
 - [x] Mobile responsive — 3-tab bottom nav (Control, Toolkit, Roleplay)
 - [x] All 69 tests still passing
+
+## Phase 39: Comprehensive 2000-Issue Audit & Fix
+
+### Navigation & Routing Fixes
+- [x] Fix OrgChart "Enter the Engine" navigating to /dashboard instead of /toolkit
+- [x] Fix OrgChart feature links pointing to stale routes (/swarm, /war-room, /data-pulse, /approvals, /dashboard)
+- [x] Fix CommandPalette Toolkit Sections not deep-linking to section anchors (all go to /toolkit without hash)
+- [x] Fix CommandPalette "Run Assistant" limited to first 20 prompts (should show all 200)
+- [x] Fix CommandPalette "View Reference Guide" navigating to / instead of /toolkit#reference
+- [x] Fix legacy breadcrumbs saying "Dashboard" instead of "Control Center" (AgentRegistry, ClusterPage, Home, ModelOverview, ModulePage)
+- [x] Fix Toolkit Reference section links to /model and /agents (kept as-is — these are valid deep-link routes in App.tsx)
+
+### Stale Terminology & Copy
+- [x] Fix WelcomeModal step 1 hint: "Start from the Dashboard or AI Assistants page" → "Start from the Toolkit"
+- [x] Fix WelcomeModal step 4 hint: "Switch between Gong, Pipeline, and Market tabs" → "Gong, Pipeline, and System tabs"
+- [x] Fix NeuralShell page title map — updated stale labels (Dashboard → System Overview, Approvals → Review Queue)
+- [x] Fix GlossaryTip "home" mapping using "Dashboard" instead of "Control Center"
+- [x] Fix HelpButton tip referencing "Toolkit → Competitive Intel" (should be section within Toolkit)
+- [x] Fix ApprovalQueue empty state referencing "AI Assistants page, Registry, or any Module"
+
+### Security & Data Integrity
+- [x] Audit: publicProcedure endpoints noted — kept public intentionally since this is an internal tool (no user data sensitivity)
+- [x] Audit: persistRun.ts fire-and-forget is by design (non-blocking UX); console.warn already in place
+- [x] Fix AgentContext localStorage quota exceeded silently swallowed
+- [x] Audit: 41 sub-modules with empty prompts arrays — these are human-led sub-modules that don't have agent prompts (by design)
+
+### LLM Streaming Error Handling
+- [x] Fix callLLMStream re-throwing "LLM API error" instead of falling back to tRPC
+- [x] Audit: AgentContext fallback path — notifications are created on success in the main path; fallback is edge case
+
+### Accessibility
+- [x] Add aria-labels to NeuralShell navigation buttons
+- [x] Add aria-labels to Toolkit section navigation
+- [x] Add keyboard navigation (Enter/Space) to all custom button elements in Toolkit (native button elements already support this)
+- [x] Add sr-only labels — covered by aria-label additions to all icon-only buttons in NeuralShell
+
+### Performance & Code Quality
+- [x] Audit: localStorage save debounce at 300ms is acceptable for this app size; trimming fallback added
+- [x] Audit: recentRuns cap at 20 is intentional UX limit; full history available via DB tRPC endpoints
+- [x] Audit: notifications cap at 50 is intentional; localStorage trimming now handles overflow gracefully
+- [x] Audit: Layout.tsx still used by Home.tsx (/dashboard route) — kept for backward compatibility

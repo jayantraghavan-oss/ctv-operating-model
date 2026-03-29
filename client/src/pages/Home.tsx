@@ -1,5 +1,5 @@
 /*
- * Home — Command Center Dashboard
+ * Home — System Overview Dashboard
  * The operational nerve center for the CTV business.
  * Shows: system health, module stats, cluster map, agent breakdown, key metrics.
  */
@@ -50,7 +50,7 @@ export default function Home() {
         {/* Welcome Tip */}
         <div className="mb-6">
           <TipBanner tipId="home-welcome" variant="welcome" sparkle>
-            Welcome to the CTV AI Operating Model. This dashboard shows how <strong>200 AI assistants</strong> are organized across 4 modules. Click any module card to explore its assistants, or use the sidebar to jump to specific tools.
+            Welcome to the CTV AI Operating Model. This overview shows how <strong>200 AI assistants</strong> are organized across 4 modules. Click any module card to explore its assistants, or use the Toolkit to access all tools in one place.
           </TipBanner>
         </div>
 

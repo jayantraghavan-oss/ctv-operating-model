@@ -38,7 +38,7 @@ export default function ModelOverview() {
         <Link href="/">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer mb-4">
             <ArrowLeft className="w-3 h-3" />
-            Dashboard
+            Control Center
           </div>
         </Link>
 
@@ -370,7 +370,7 @@ export default function ModelOverview() {
           <Link href="/">
             <span className="text-sm text-[#0091FF] hover:underline cursor-pointer flex items-center gap-1.5">
               <ArrowLeft className="w-3.5 h-3.5" />
-              Back to Dashboard
+              Back to Control Center
             </span>
           </Link>
           <Link href="/agents">

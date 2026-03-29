@@ -83,10 +83,10 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
       "/": "Control Center",
       "/toolkit": "Toolkit",
       "/simulation": "Buyer Roleplay",
-      "/dashboard": "Dashboard",
+      "/dashboard": "System Overview",
       "/org-chart": "Control Center",
       "/swarm": "AI Assistants",
-      "/approvals": "Approvals",
+      "/approvals": "Review Queue",
       "/war-room": "Competitive Sims",
       "/data-pulse": "Insights",
       "/model": "Operating Model",
@@ -222,6 +222,7 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
               onClick={() => window.location.reload()}
               className="p-2.5 rounded-xl hover:bg-black/[0.03] transition-colors active:bg-black/[0.06]"
               title="Refresh"
+              aria-label="Refresh page"
             >
               <RotateCcw className="w-4 h-4 text-foreground/40" />
             </button>
@@ -229,6 +230,7 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
               <button
                 onClick={() => setShowNotifs(!showNotifs)}
                 className="relative p-2.5 rounded-xl hover:bg-black/[0.03] transition-colors active:bg-black/[0.06]"
+                aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
               >
                 <Bell className="w-4.5 h-4.5 text-foreground/40" />
                 {unreadCount > 0 && (
@@ -385,6 +387,7 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
           <button
             onClick={() => setCollapsed(!collapsed)}
             className="w-full flex items-center justify-center py-1.5 rounded-xl text-foreground/25 hover:text-foreground/50 hover:bg-black/[0.03] transition-all"
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
@@ -413,6 +416,7 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
               onClick={() => window.location.reload()}
               className="p-1.5 rounded-lg hover:bg-black/[0.03] transition-colors group"
               title="Refresh"
+              aria-label="Refresh page"
             >
               <RotateCcw className="w-4 h-4 text-foreground/35 group-hover:text-foreground/60 transition-colors" />
             </button>
@@ -420,6 +424,7 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
               <button
                 onClick={() => setShowNotifs(!showNotifs)}
                 className="relative p-1.5 rounded-lg hover:bg-black/[0.03] transition-colors"
+                aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
               >
                 <Bell className="w-4 h-4 text-foreground/35" />
                 {unreadCount > 0 && (

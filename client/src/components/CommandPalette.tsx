@@ -114,24 +114,24 @@ export default function CommandPalette({ open: controlledOpen, onOpenChange }: C
 
         {/* Quick jump to Toolkit sections */}
         <CommandGroup heading="Toolkit Sections">
-          <CommandItem onSelect={() => navigateTo("/toolkit")} value="toolkit dashboard system status">
+          <CommandItem onSelect={() => { navigateTo("/toolkit"); setTimeout(() => document.getElementById("section-status")?.scrollIntoView({ behavior: "smooth" }), 100); }} value="toolkit dashboard system status">
             <Brain className="w-4 h-4 text-primary" />
             <span>System Status</span>
           </CommandItem>
-          <CommandItem onSelect={() => navigateTo("/toolkit")} value="toolkit ai assistants agents">
+          <CommandItem onSelect={() => { navigateTo("/toolkit"); setTimeout(() => document.getElementById("section-assistants")?.scrollIntoView({ behavior: "smooth" }), 100); }} value="toolkit ai assistants agents">
             <Zap className="w-4 h-4 text-amber-500" />
             <span>AI Assistants</span>
             <span className="ml-auto text-xs text-foreground/25">200 agents</span>
           </CommandItem>
-          <CommandItem onSelect={() => navigateTo("/toolkit")} value="toolkit competitive intel war room">
+          <CommandItem onSelect={() => { navigateTo("/toolkit"); setTimeout(() => document.getElementById("section-competitive")?.scrollIntoView({ behavior: "smooth" }), 100); }} value="toolkit competitive intel war room">
             <Crosshair className="w-4 h-4 text-rose-500" />
             <span>Competitive Intel</span>
           </CommandItem>
-          <CommandItem onSelect={() => navigateTo("/toolkit")} value="toolkit insights analytics gong pipeline">
+          <CommandItem onSelect={() => { navigateTo("/toolkit"); setTimeout(() => document.getElementById("section-insights")?.scrollIntoView({ behavior: "smooth" }), 100); }} value="toolkit insights analytics gong pipeline">
             <Radio className="w-4 h-4 text-emerald-500" />
             <span>Insights</span>
           </CommandItem>
-          <CommandItem onSelect={() => navigateTo("/toolkit")} value="toolkit approvals review queue">
+          <CommandItem onSelect={() => { navigateTo("/toolkit"); setTimeout(() => document.getElementById("section-approvals")?.scrollIntoView({ behavior: "smooth" }), 100); }} value="toolkit approvals review queue">
             <Shield className="w-4 h-4 text-violet-500" />
             <span>Review Queue</span>
           </CommandItem>
@@ -166,7 +166,7 @@ export default function CommandPalette({ open: controlledOpen, onOpenChange }: C
             <Sparkles className="w-4 h-4 text-primary" />
             <span>Run Top 5 Assistants</span>
           </CommandItem>
-          <CommandItem onSelect={() => navigateTo("/")}>
+          <CommandItem onSelect={() => { navigateTo("/toolkit"); setTimeout(() => document.getElementById("section-reference")?.scrollIntoView({ behavior: "smooth" }), 100); }}>
             <BookOpen className="w-4 h-4 text-foreground/40" />
             <span>View Reference Guide</span>
           </CommandItem>
@@ -174,9 +174,9 @@ export default function CommandPalette({ open: controlledOpen, onOpenChange }: C
 
         <CommandSeparator />
 
-        {/* Agent Search — show first 20 matching */}
+        {/* Agent Search — all 200 agents, filtered by command search */}
         <CommandGroup heading="Run Assistant">
-          {prompts.slice(0, 20).map((prompt) => (
+          {prompts.map((prompt) => (
             <CommandItem
               key={prompt.id}
               onSelect={() => executeAgent(prompt)}

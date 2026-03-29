@@ -59,7 +59,8 @@ export const TERMINOLOGY = {
   },
   // Page names
   pages: {
-    home: { friendly: "Dashboard", technical: "Command Center" },
+    home: { friendly: "Control Center", technical: "Command Center" },
+    toolkit: { friendly: "Toolkit", technical: "Consolidated Dashboard" },
     swarm: { friendly: "AI Assistants", technical: "Agent Swarm" },
     approvals: { friendly: "Approvals", technical: "Approval Queue" },
     dataPulse: { friendly: "Insights", technical: "Data Pulse" },

@@ -1324,12 +1324,12 @@ function ReferenceGuide() {
         <div className="border border-border rounded-xl bg-white/60 p-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[
-              { name: "Run Any Agent", desc: "Click any node on the Control Center or go to AI Assistants to fire a real LLM call", path: "/swarm" },
+              { name: "Run Any Agent", desc: "Click any node on the Control Center or go to the Toolkit to fire a real LLM call", path: "/toolkit" },
               { name: "Buyer Roleplay", desc: "Practice CTV pitches against AI-simulated buyers with deep technical knowledge", path: "/simulation" },
-              { name: "Competitive Sims", desc: "Head-to-head simulations against TTD, tvScientific, Roku, Amazon", path: "/war-room" },
-              { name: "AI Insights", desc: "Market intelligence, deal analysis, and pipeline insights on demand", path: "/data-pulse" },
-              { name: "Approval Queue", desc: "Review and approve AI-generated content before it goes to market", path: "/approvals" },
-              { name: "Dashboard", desc: "Full command center — run clusters, track outputs, monitor system health", path: "/dashboard" },
+              { name: "Competitive Sims", desc: "Head-to-head simulations against TTD, tvScientific, Roku, Amazon", path: "/toolkit" },
+              { name: "AI Insights", desc: "Market intelligence, deal analysis, and pipeline insights on demand", path: "/toolkit" },
+              { name: "Review Queue", desc: "Review and approve AI-generated content before it goes to market", path: "/toolkit" },
+              { name: "Toolkit", desc: "Full command center — run agents, track outputs, monitor system health", path: "/toolkit" },
               { name: "Control Center", desc: "This page — visualize the entire system and run scenarios", path: "/" },
             ].map((f, i) => (
               <button
@@ -1873,7 +1873,7 @@ Return format: { "name": "<workflow name>", "nodeIds": ["id1", "id2", ...], "nar
   const handleEnterEngine = useCallback(() => {
     completeTour();
     stopTourDemo();
-    navigate("/dashboard");
+    navigate("/toolkit");
   }, [completeTour, stopTourDemo, navigate]);
 
   const handleSkipTour = useCallback(() => {

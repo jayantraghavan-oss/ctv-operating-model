@@ -184,7 +184,19 @@ function loadState(): AgentState | null {
 function saveState(state: AgentState) {
   try {
     localStorage.setItem("ctv-ops-state-v2", JSON.stringify(state));
-  } catch { /* quota exceeded — silent */ }
+  } catch (e) {
+    // Quota exceeded — trim old runs and retry
+    try {
+      const trimmed = {
+        ...state,
+        agentRuns: state.agentRuns.slice(0, 10),
+        notifications: state.notifications.slice(0, 20),
+      };
+      localStorage.setItem("ctv-ops-state-v2", JSON.stringify(trimmed));
+    } catch {
+      console.warn("[AgentContext] localStorage quota exceeded, state not saved");
+    }
+  }
 }
 
 // ── Module → sub-module key mapping helper ─────────────────────────────
