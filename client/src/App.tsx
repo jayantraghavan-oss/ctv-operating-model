@@ -114,6 +114,9 @@ function App() {
           <TooltipProvider>
             <Toaster
               position="bottom-right"
+              gap={8}
+              visibleToasts={4}
+              offset={16}
               toastOptions={{
                 style: {
                   background: "oklch(1 0 0 / 0.92)",

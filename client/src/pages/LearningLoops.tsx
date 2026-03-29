@@ -3,7 +3,7 @@
  * The "connective tissue" from the doc — how signals flow across modules,
  * where learning compounds, and where loops break down.
  */
-import Layout from "@/components/Layout";
+import NeuralShell from "@/components/NeuralShell";
 import { motion } from "framer-motion";
 import { Link } from "wouter";
 import { useAgent } from "@/contexts/AgentContext";
@@ -184,7 +184,7 @@ export default function LearningLoops() {
   const filtered = filterStatus === "all" ? learningLoops : learningLoops.filter((l) => l.status === filterStatus);
 
   return (
-    <Layout>
+    <NeuralShell>
       <div className="p-4 sm:p-6 lg:p-8 max-w-[1000px]">
         {/* Header */}
         <div className="mb-6">
@@ -360,6 +360,6 @@ export default function LearningLoops() {
           </p>
         </motion.div>
       </div>
-    </Layout>
+    </NeuralShell>
   );
 }

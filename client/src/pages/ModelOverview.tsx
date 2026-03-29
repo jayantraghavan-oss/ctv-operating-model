@@ -4,7 +4,7 @@
  * two-FTE design, CTV-to-App vs CTV-to-Web modes, EOQ2 decision framework.
  * This is the "why" page — the investor-grade context.
  */
-import Layout from "@/components/Layout";
+import NeuralShell from "@/components/NeuralShell";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import {
@@ -32,7 +32,7 @@ const fade = {
 
 export default function ModelOverview() {
   return (
-    <Layout>
+    <NeuralShell>
       <div className="p-6 lg:p-8 max-w-[1000px]">
         {/* Breadcrumb */}
         <Link href="/">
@@ -381,7 +381,7 @@ export default function ModelOverview() {
           </Link>
         </div>
       </div>
-    </Layout>
+    </NeuralShell>
   );
 }
 

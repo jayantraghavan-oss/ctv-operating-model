@@ -2,7 +2,7 @@
  * AgentRegistry — Full searchable/filterable registry of all 200 agent prompts
  * EVERY PROMPT IS CLICKABLE → fires real LLM execution with streaming output.
  */
-import Layout from "@/components/Layout";
+import NeuralShell from "@/components/NeuralShell";
 import { useAgent } from "@/contexts/AgentContext";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
@@ -89,7 +89,7 @@ export default function AgentRegistry() {
   };
 
   return (
-    <Layout>
+    <NeuralShell>
       <div className="p-6 lg:p-8 max-w-[1200px]">
         {/* Breadcrumb */}
         <Link href="/">
@@ -340,6 +340,6 @@ export default function AgentRegistry() {
           )}
         </div>
       </div>
-    </Layout>
+    </NeuralShell>
   );
 }

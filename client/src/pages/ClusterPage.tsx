@@ -2,7 +2,7 @@
  * ClusterPage — Deep-dive into a Human Orchestrator Cluster
  * Shows the cluster rationale, human role, linked modules, two modes of operation, etc.
  */
-import Layout from "@/components/Layout";
+import NeuralShell from "@/components/NeuralShell";
 import { useParams, Link } from "wouter";
 import { motion } from "framer-motion";
 import { clusters, modules, getModuleStats } from "@/lib/data";
@@ -23,16 +23,16 @@ export default function ClusterPage() {
 
   if (!cluster) {
     return (
-      <Layout>
+      <NeuralShell>
         <div className="p-8 text-center text-muted-foreground">Cluster not found.</div>
-      </Layout>
+      </NeuralShell>
     );
   }
 
   const linkedModules = modules.filter((m) => cluster.moduleIds.includes(m.id));
 
   return (
-    <Layout>
+    <NeuralShell>
       <div className="p-6 lg:p-8 max-w-[1000px]">
         {/* Breadcrumb */}
         <Link href="/">
@@ -184,6 +184,6 @@ export default function ClusterPage() {
           )}
         </div>
       </div>
-    </Layout>
+    </NeuralShell>
   );
 }

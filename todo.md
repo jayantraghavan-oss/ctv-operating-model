@@ -250,3 +250,26 @@
 - [x] Ensure no horizontal scroll on any page (overflow-x: hidden on body)
 - [x] Test complete mobile user journey: first visit → org chart tour → dashboard → run agent
 - [x] All 48 vitest tests passing after mobile fixes
+
+## Phase 29: Rebuild Org Chart as Exact Tree Layout (Source Image Match)
+- [x] Rebuild Org Chart visual to match source image tree structure exactly
+- [x] C5 (DRI/XFN) dark box at top center with Module 4 subtitle
+- [x] Vertical connector line from C5 down to C5's sub-module nodes
+- [x] C5 sub-modules displayed in centered rows (4-4-3 layout matching image)
+- [x] Vertical connector from C5 sub-modules down to horizontal divider
+- [x] 4 Cluster headers (C1-C4) in a row with color-coded borders matching image
+- [x] Each cluster shows module label (e.g. "MODULE 1", "MODULE 2 — DEMAND")
+- [x] Sub-modules listed vertically under each cluster with ownership badges (A, A+H, H)
+- [x] Every node clickable → opens interstitial drawer with agent details + Run button
+- [x] Preserve existing: tour overlay, demo mode, reference guide tab, legend
+- [x] Preserve existing: agent execution wiring, active node indicators
+- [x] Ensure correct backend mapping of each node to its agent/prompt
+- [x] Mobile responsive: horizontal scroll on small screens
+- [x] All existing tests still passing (48/48)
+- [x] Build interstitial/drawer for agent output — slide-up panel on click
+- [x] Drawer shows: agent name, ownership badge, streaming LLM output (markdown)
+- [x] Drawer is scrollable, collapsible/dismissible (X button + backdrop click)
+- [x] Drawer has Run button to execute the agent from within the drawer
+- [x] Glassy Apple-style design with spring animations
+- [x] Fix broken reference links — migrated all legacy pages (ModulePage, ClusterPage, etc.) from Layout to NeuralShell
+- [x] Fix notifications stacking — added gap={8} and visibleToasts={4} to Toaster

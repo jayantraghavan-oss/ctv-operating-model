@@ -4,7 +4,7 @@
  * showing inputs, outputs, workflow, data sources, handoff points, and linked prompts.
  * EVERY PROMPT IS CLICKABLE → fires real LLM execution with streaming output.
  */
-import Layout from "@/components/Layout";
+import NeuralShell from "@/components/NeuralShell";
 import { useAgent } from "@/contexts/AgentContext";
 import { useParams, Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
@@ -63,9 +63,9 @@ export default function ModulePage() {
 
   if (!mod) {
     return (
-      <Layout>
+      <NeuralShell>
         <div className="p-8 text-center text-muted-foreground">Module not found.</div>
-      </Layout>
+      </NeuralShell>
     );
   }
 
@@ -92,7 +92,7 @@ export default function ModulePage() {
   );
 
   return (
-    <Layout>
+    <NeuralShell>
       <div className="p-6 lg:p-8 max-w-[1200px]">
         {/* Breadcrumb */}
         <Link href="/">
@@ -286,7 +286,7 @@ export default function ModulePage() {
           })}
         </div>
       </div>
-    </Layout>
+    </NeuralShell>
   );
 }
 

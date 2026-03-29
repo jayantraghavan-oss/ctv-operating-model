@@ -3,7 +3,7 @@
  * Pulls from all 4 modules to generate a pre-read for the weekly standup.
  * The operator reviews and edits before the meeting. This is the "second brain" in action.
  */
-import Layout from "@/components/Layout";
+import NeuralShell from "@/components/NeuralShell";
 import { motion } from "framer-motion";
 import { useAgent } from "@/contexts/AgentContext";
 import { modules, getTotalStats } from "@/lib/data";
@@ -181,7 +181,7 @@ export default function WeeklyPrep() {
   };
 
   return (
-    <Layout>
+    <NeuralShell>
       <div className="p-4 sm:p-6 lg:p-8 max-w-[1000px]">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
@@ -387,6 +387,6 @@ export default function WeeklyPrep() {
           </motion.div>
         )}
       </div>
-    </Layout>
+    </NeuralShell>
   );
 }

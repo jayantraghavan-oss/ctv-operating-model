@@ -3,7 +3,7 @@
  * Tracks learning goals, conviction strength, and generates go/no-go recommendation.
  * This is the strategic decision layer that feeds the investment decision.
  */
-import Layout from "@/components/Layout";
+import NeuralShell from "@/components/NeuralShell";
 import { motion } from "framer-motion";
 import { useAgent } from "@/contexts/AgentContext";
 import {
@@ -131,7 +131,7 @@ export default function ConvictionDashboard() {
   const insufficient = convictionScore.goals.filter((g) => g.status === "insufficient");
 
   return (
-    <Layout>
+    <NeuralShell>
       <div className="p-4 sm:p-6 lg:p-8 max-w-[1000px]">
         {/* Header */}
         <div className="mb-6">
@@ -292,6 +292,6 @@ export default function ConvictionDashboard() {
           </div>
         </motion.div>
       </div>
-    </Layout>
+    </NeuralShell>
   );
 }
