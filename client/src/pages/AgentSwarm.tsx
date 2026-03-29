@@ -54,7 +54,7 @@ type OwnerFilter = "all" | "agent" | "agent-human" | "human-led";
 type ViewMode = "list" | "grid";
 
 export default function AgentSwarm() {
-  const { recentRuns, runAgent, resetAgentRuns, isExecuting, executionQueue, getStreamingOutput } = useAgent();
+  const { recentRuns, runAgent, resetAgentRuns, isExecuting, executionQueue, getStreamingOutput, editRunOutput, rePromptAgent, approveRun, rejectRun } = useAgent();
   const [search, setSearch] = useState("");
   const [moduleFilter, setModuleFilter] = useState<number | "all">("all");
   const [typeFilter, setTypeFilter] = useState<FilterType>("all");
@@ -568,6 +568,14 @@ export default function AgentSwarm() {
             durationMs={run?.durationMs}
             onRun={() => executeAgent(prompt)}
             isRunning={runningIds.has(prompt.id)}
+            runId={run?.id}
+            humanEditedOutput={run?.humanEditedOutput}
+            approvalStatus={run?.approvalStatus}
+            revisions={run?.revisions}
+            onEditOutput={editRunOutput}
+            onRePrompt={rePromptAgent}
+            onApprove={approveRun}
+            onReject={rejectRun}
           />
         );
       })()}

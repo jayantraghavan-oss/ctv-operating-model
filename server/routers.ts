@@ -91,6 +91,9 @@ export const appRouter = router({
           output: z.string().optional(),
           durationMs: z.number().optional(),
           completedAt: z.number().optional(),
+          humanEditedOutput: z.string().optional(),
+          humanPrompt: z.string().optional(),
+          approvalStatus: z.enum(["pending", "approved", "rejected"]).optional(),
         })
       )
       .mutation(async ({ input }) => {

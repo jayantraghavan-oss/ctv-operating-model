@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE `agent_runs` ADD COLUMN `human_edited_output` text; ALTER TABLE `agent_runs` ADD COLUMN `human_prompt` text; ALTER TABLE `agent_runs` ADD COLUMN `approval_status` enum('pending','approved','rejected') DEFAULT 'pending';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3pmUMCqAYdoymgd.604dbdf7168e --database Wr22fCMnjpJGgmtKZSL2hG --execute ALTER TABLE `agent_runs` ADD COLUMN `human_edited_output` text; ALTER TABLE `agent_runs` ADD COLUMN `human_prompt` text; ALTER TABLE `agent_runs` ADD COLUMN `approval_status` enum('pending','approved','rejected') DEFAULT 'pending';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 771
+}

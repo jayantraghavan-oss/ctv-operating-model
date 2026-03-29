@@ -439,3 +439,29 @@
 - [x] Audit: recentRuns cap at 20 is intentional UX limit; full history available via DB tRPC endpoints
 - [x] Audit: notifications cap at 50 is intentional; localStorage trimming now handles overflow gracefully
 - [x] Audit: Layout.tsx still used by Home.tsx (/dashboard route) — kept for backward compatibility
+
+## Phase 40: A+H (Agent+Human) Full Functionality
+
+### Core A+H Flow
+- [x] Agent runs first via LLM, generates output
+- [x] Human can edit the agent output inline after generation
+- [x] Human can re-prompt the agent with additional instructions
+- [x] Human approves/rejects the final output
+- [x] A+H badge clearly indicates the collaborative workflow
+
+### UI Components
+- [x] OutputInterstitial: Add inline edit mode for agent output
+- [x] OutputInterstitial: Add re-prompt input field to refine agent output
+- [x] OutputInterstitial: Add approve/reject buttons for A+H outputs
+- [x] Toolkit: Ensure A+H agents show edit/re-prompt UI after run
+- [x] OrgChart: Ensure A+H nodes trigger the full A+H flow
+- [x] ApprovalQueue: Show edit/re-prompt options for pending A+H items
+- [x] NeuralCommand: Wire A+H props into OutputInterstitial
+- [x] AgentSwarm: Wire A+H props into OutputInterstitial
+
+### State Management
+- [x] AgentContext: Track edit history for A+H runs (revisions array with type/content/timestamp)
+- [x] AgentContext: Support re-prompt with conversation context (combines original prompt + human feedback + previous output)
+- [x] AgentContext: Track approval status (pending, approved, rejected)
+- [x] Persist A+H edits and re-prompts to DB via tRPC (humanEditedOutput, humanPrompt, approvalStatus columns)
+- [x] Add 5 new vitest tests for A+H database operations (74 total passing)

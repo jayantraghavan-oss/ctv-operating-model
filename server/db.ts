@@ -73,6 +73,9 @@ export async function updateAgentRun(
     output?: string;
     durationMs?: number;
     completedAt?: number;
+    humanEditedOutput?: string;
+    humanPrompt?: string;
+    approvalStatus?: "pending" | "approved" | "rejected";
   }
 ) {
   const db = getDb();

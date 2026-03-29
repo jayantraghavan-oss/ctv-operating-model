@@ -31,6 +31,10 @@ export const agentRuns = mysqlTable("agent_runs", {
   durationMs: int("duration_ms"),
   startedAt: bigint("started_at", { mode: "number" }).notNull(),
   completedAt: bigint("completed_at", { mode: "number" }),
+  // A+H (Agent+Human) collaboration fields
+  humanEditedOutput: text("human_edited_output"),
+  humanPrompt: text("human_prompt"),
+  approvalStatus: mysqlEnum("approval_status", ["pending", "approved", "rejected"]).default("pending"),
   // Optional: link to user who triggered it
   userId: varchar("user_id", { length: 255 }),
   // Scenario context (if run as part of a demo scenario)

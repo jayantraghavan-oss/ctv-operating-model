@@ -1480,7 +1480,7 @@ function MobileClusterStack({
 // ── Main OrgChart page ──
 export default function OrgChart() {
   const [, navigate] = useLocation();
-  const { runAgent, agentRuns, recentRuns, getStreamingOutput } = useAgent();
+  const { runAgent, agentRuns, recentRuns, getStreamingOutput, editRunOutput, rePromptAgent, approveRun, rejectRun } = useAgent();
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("chart");
   const [tourActive, setTourActive] = useState(false);
@@ -1915,8 +1915,9 @@ Return format: { "name": "<workflow name>", "nodeIds": ["id1", "id2", ...], "nar
 
   // Interstitial data
   const interstitialOutput = interstitialNode ? nodeOutputs[interstitialNode.id] : null;
+  const interstitialMatchedRun = interstitialNode ? agentRuns.find(r => interstitialNode.promptIds.includes(r.promptId)) : null;
   const interstitialDisplayOutput = interstitialOutput?.output ||
-    (interstitialNode ? (agentRuns.find(r => interstitialNode.promptIds.includes(r.promptId))?.output || "") : "");
+    (interstitialMatchedRun?.output || "");
 
   return (
     <NeuralShell>
@@ -2232,6 +2233,14 @@ Return format: { "name": "<workflow name>", "nodeIds": ["id1", "id2", ...], "nar
           durationMs={interstitialNode ? nodeOutputs[interstitialNode.id]?.durationMs : undefined}
           onRun={interstitialNode ? handleRerunFromInterstitial : undefined}
           isRunning={interstitialNode ? (nodeOutputs[interstitialNode.id]?.isStreaming || false) : false}
+          runId={interstitialMatchedRun?.id}
+          humanEditedOutput={interstitialMatchedRun?.humanEditedOutput}
+          approvalStatus={interstitialMatchedRun?.approvalStatus}
+          revisions={interstitialMatchedRun?.revisions}
+          onEditOutput={editRunOutput}
+          onRePrompt={rePromptAgent}
+          onApprove={approveRun}
+          onReject={rejectRun}
         />
       </div>
     </NeuralShell>

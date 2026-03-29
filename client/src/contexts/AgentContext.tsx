@@ -28,6 +28,11 @@ export interface AgentRun {
   agentType?: string;
   owner?: string;
   streamingOutput?: string; // Progressive output during streaming
+  // A+H collaboration fields
+  humanEditedOutput?: string;
+  humanPrompt?: string;
+  approvalStatus?: "pending" | "approved" | "rejected";
+  revisions?: Array<{ type: "edit" | "reprompt"; content: string; timestamp: string }>;
 }
 
 export interface ClusterNote {
@@ -84,6 +89,11 @@ interface AgentContextType extends AgentState {
   getClusterHealth: (clusterId: number) => { active: number; total: number; percent: number };
   getStreamingOutput: (runId: string) => string | undefined;
   resetAgentRuns: () => void;
+  // A+H collaboration functions
+  editRunOutput: (runId: string, editedOutput: string) => void;
+  rePromptAgent: (runId: string, humanPrompt: string) => void;
+  approveRun: (runId: string) => void;
+  rejectRun: (runId: string) => void;
   unreadCount: number;
   recentRuns: AgentRun[];
   isExecuting: boolean;
@@ -564,6 +574,107 @@ export function AgentProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  // ── A+H Collaboration Functions ──────────────────────────────────────
+
+  const editRunOutput = useCallback((runId: string, editedOutput: string) => {
+    setState((prev) => {
+      const updatedRuns = prev.agentRuns.map((r) => {
+        if (r.id !== runId) return r;
+        const revision = { type: "edit" as const, content: editedOutput, timestamp: new Date().toISOString() };
+        return {
+          ...r,
+          humanEditedOutput: editedOutput,
+          revisions: [...(r.revisions || []), revision],
+        };
+      });
+      return { ...prev, agentRuns: updatedRuns };
+    });
+    // Persist to DB
+    persistRunUpdate({ id: runId, humanEditedOutput: editedOutput });
+    toast.success("Output edited", { description: "Human edits saved", duration: 2000 });
+  }, []);
+
+  const rePromptAgent = useCallback((runId: string, humanPrompt: string) => {
+    // Find the original run
+    const originalRun = state.agentRuns.find((r) => r.id === runId);
+    if (!originalRun) return;
+
+    // Save the human prompt on the original run
+    setState((prev) => {
+      const updatedRuns = prev.agentRuns.map((r) => {
+        if (r.id !== runId) return r;
+        const revision = { type: "reprompt" as const, content: humanPrompt, timestamp: new Date().toISOString() };
+        return {
+          ...r,
+          humanPrompt,
+          revisions: [...(r.revisions || []), revision],
+        };
+      });
+      return { ...prev, agentRuns: updatedRuns };
+    });
+
+    // Persist the human prompt
+    persistRunUpdate({ id: runId, humanPrompt });
+
+    // Fire a new agent run with the human prompt as additional context
+    const combinedPrompt = `${originalRun.promptText}\n\n---\nHuman feedback / additional instructions:\n${humanPrompt}\n\nPrevious agent output:\n${(originalRun.humanEditedOutput || originalRun.output || "").slice(0, 2000)}\n\nPlease revise and improve the output based on the human feedback above.`;
+    runAgent(
+      originalRun.promptId,
+      combinedPrompt,
+      originalRun.moduleId,
+      originalRun.subModuleName,
+      originalRun.agentType || "triggered",
+      originalRun.owner || "agent-human",
+    );
+    toast("Re-prompting agent", { description: "Running with your feedback...", duration: 3000 });
+  }, [state.agentRuns, runAgent]);
+
+  const approveRun = useCallback((runId: string) => {
+    setState((prev) => {
+      const updatedRuns = prev.agentRuns.map((r) =>
+        r.id === runId ? { ...r, approvalStatus: "approved" as const } : r
+      );
+      const notif: Notification = {
+        id: genId(),
+        type: "agent-complete",
+        title: "Output Approved",
+        description: `Run ${runId.slice(0, 8)} approved by human operator`,
+        timestamp: new Date().toISOString(),
+        read: false,
+      };
+      return {
+        ...prev,
+        agentRuns: updatedRuns,
+        notifications: [notif, ...prev.notifications].slice(0, 50),
+      };
+    });
+    persistRunUpdate({ id: runId, approvalStatus: "approved" });
+    toast.success("Output approved", { duration: 2000 });
+  }, []);
+
+  const rejectRun = useCallback((runId: string) => {
+    setState((prev) => {
+      const updatedRuns = prev.agentRuns.map((r) =>
+        r.id === runId ? { ...r, approvalStatus: "rejected" as const } : r
+      );
+      const notif: Notification = {
+        id: genId(),
+        type: "agent-complete",
+        title: "Output Rejected",
+        description: `Run ${runId.slice(0, 8)} rejected — marked for revision`,
+        timestamp: new Date().toISOString(),
+        read: false,
+      };
+      return {
+        ...prev,
+        agentRuns: updatedRuns,
+        notifications: [notif, ...prev.notifications].slice(0, 50),
+      };
+    });
+    persistRunUpdate({ id: runId, approvalStatus: "rejected" });
+    toast("Output rejected", { description: "Marked for revision", duration: 2000 });
+  }, []);
+
   const getClusterHealth = useCallback((clusterId: number) => {
     const keys = getAllSubModuleKeysForCluster(clusterId);
     const total = keys.length;
@@ -593,6 +704,10 @@ export function AgentProvider({ children }: { children: ReactNode }) {
         getModuleHealth,
         getClusterHealth,
         getStreamingOutput,
+        editRunOutput,
+        rePromptAgent,
+        approveRun,
+        rejectRun,
         unreadCount,
         recentRuns,
         isExecuting,

@@ -121,6 +121,66 @@ describe("agentRuns database helpers", () => {
   });
 });
 
+describe("agentRuns A+H collaboration", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("updateAgentRun supports humanEditedOutput field", async () => {
+    const result = await updateAgentRun("test-run-1", {
+      humanEditedOutput: "Human-revised market analysis with additional context...",
+    });
+    expect(result).toEqual({ id: "test-run-1" });
+    expect(updateAgentRun).toHaveBeenCalledWith("test-run-1", {
+      humanEditedOutput: "Human-revised market analysis with additional context...",
+    });
+  });
+
+  it("updateAgentRun supports humanPrompt field", async () => {
+    const result = await updateAgentRun("test-run-1", {
+      humanPrompt: "Add more detail on competitive positioning",
+    });
+    expect(result).toEqual({ id: "test-run-1" });
+    expect(updateAgentRun).toHaveBeenCalledWith("test-run-1", {
+      humanPrompt: "Add more detail on competitive positioning",
+    });
+  });
+
+  it("updateAgentRun supports approvalStatus approved", async () => {
+    const result = await updateAgentRun("test-run-1", {
+      approvalStatus: "approved",
+    });
+    expect(result).toEqual({ id: "test-run-1" });
+    expect(updateAgentRun).toHaveBeenCalledWith("test-run-1", {
+      approvalStatus: "approved",
+    });
+  });
+
+  it("updateAgentRun supports approvalStatus rejected", async () => {
+    const result = await updateAgentRun("test-run-1", {
+      approvalStatus: "rejected",
+    });
+    expect(result).toEqual({ id: "test-run-1" });
+    expect(updateAgentRun).toHaveBeenCalledWith("test-run-1", {
+      approvalStatus: "rejected",
+    });
+  });
+
+  it("updateAgentRun supports combined A+H update", async () => {
+    const result = await updateAgentRun("test-run-1", {
+      humanEditedOutput: "Revised output",
+      humanPrompt: "Make it more concise",
+      approvalStatus: "pending",
+    });
+    expect(result).toEqual({ id: "test-run-1" });
+    expect(updateAgentRun).toHaveBeenCalledWith("test-run-1", {
+      humanEditedOutput: "Revised output",
+      humanPrompt: "Make it more concise",
+      approvalStatus: "pending",
+    });
+  });
+});
+
 describe("agentRuns data integrity", () => {
   it("run has all required fields", async () => {
     const run = await getAgentRun("test-run-1");

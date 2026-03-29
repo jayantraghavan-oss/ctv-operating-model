@@ -122,6 +122,7 @@ export default function Toolkit() {
     recentRuns, runAgent, convictionScore, isExecuting, executionQueue,
     notifications, unreadCount, getModuleHealth, getClusterHealth,
     getStreamingOutput, updateConviction,
+    editRunOutput, rePromptAgent, approveRun, rejectRun,
   } = useAgent();
 
   const [activeSection, setActiveSection] = useState<string | null>(null);
@@ -899,6 +900,14 @@ export default function Toolkit() {
               }
             }}
             isRunning={run.status === "running"}
+            runId={run.id}
+            humanEditedOutput={run.humanEditedOutput}
+            approvalStatus={run.approvalStatus}
+            revisions={run.revisions}
+            onEditOutput={editRunOutput}
+            onRePrompt={rePromptAgent}
+            onApprove={approveRun}
+            onReject={rejectRun}
           />
         );
       })()}

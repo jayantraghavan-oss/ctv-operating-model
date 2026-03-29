@@ -35,6 +35,7 @@ export default function NeuralCommand() {
     recentRuns, runAgent, convictionScore, isExecuting, executionQueue,
     notifications, unreadCount, getModuleHealth, getClusterHealth,
     getStreamingOutput,
+    editRunOutput, rePromptAgent, approveRun, rejectRun,
   } = useAgent();
   const [autopilot, setAutopilot] = useState(false);
   const [deployingCluster, setDeployingCluster] = useState<number | null>(null);
@@ -920,6 +921,14 @@ Be specific, data-driven, and actionable. Reference CTV market dynamics, Moloco'
               }
             }}
             isRunning={run.status === "running"}
+            runId={run.id}
+            humanEditedOutput={run.humanEditedOutput}
+            approvalStatus={run.approvalStatus}
+            revisions={run.revisions}
+            onEditOutput={editRunOutput}
+            onRePrompt={rePromptAgent}
+            onApprove={approveRun}
+            onReject={rejectRun}
           />
         );
       })()}

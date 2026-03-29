@@ -1,0 +1,4 @@
+Screenshot observation: App renders correctly. Control Center page with Org Chart tab showing.
+Welcome modal visible. A+H badges visible on nodes (Test Fund Burn Tracking, OKR & Action Item Tracking, etc.).
+Sidebar: Control Center, Toolkit, Buyer Roleplay. Sign In at bottom.
+Clusters visible at bottom. No console errors. Build clean.
