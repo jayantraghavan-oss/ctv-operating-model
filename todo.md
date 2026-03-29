@@ -385,3 +385,16 @@
 - [x] Session history: tRPC list/get/stats endpoints for workflow sessions
 - [x] ScenarioSummaryPanel: Save Session button with green Saved badge after persist
 - [x] All 69 tests passing (11 new workflow session tests)
+
+## Phase 38: Merge Sidebar Pages into Unified Toolkit Tab
+
+- [x] Audit all current sidebar pages and routes
+- [x] Build unified Toolkit page with 9 collapsible sections + sticky section nav
+- [x] Sections: System Status, AI Assistants, Competitive Intel, Insights, Review Queue, Conviction Tracker, Weekly Prep, Learning Loops, Reference
+- [x] Each section is collapsible/expandable with key content from original page
+- [x] Update sidebar to 3 items: Control Center, Toolkit, Buyer Roleplay
+- [x] Update App.tsx routes — /toolkit added, legacy routes preserved for deep links
+- [x] Update CommandPalette — 3-tab nav + Toolkit Sections search group
+- [x] Update HelpButton — references Toolkit → sections
+- [x] Mobile responsive — 3-tab bottom nav (Control, Toolkit, Roleplay)
+- [x] All 69 tests still passing

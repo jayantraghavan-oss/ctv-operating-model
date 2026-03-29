@@ -17,7 +17,7 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 import {
-  Brain, Zap, Shield, Radio, Crosshair, MessageSquare, Network,
+  Brain, Zap, Shield, Radio, Crosshair, MessageSquare, Network, Wrench,
   Play, Search, ArrowRight, Sparkles, BarChart3, BookOpen,
   Target, Radar, Megaphone, Users,
 } from "lucide-react";
@@ -92,37 +92,48 @@ export default function CommandPalette({ open: controlledOpen, onOpenChange }: C
           </div>
         </CommandEmpty>
 
-        {/* Navigation */}
+        {/* Navigation — 3 primary tabs */}
         <CommandGroup heading="Navigate">
           <CommandItem onSelect={() => navigateTo("/")}>
             <Network className="w-4 h-4 text-primary" />
             <span>Control Center</span>
             <span className="ml-auto text-xs text-foreground/25">Home</span>
           </CommandItem>
-          <CommandItem onSelect={() => navigateTo("/dashboard")}>
-            <Brain className="w-4 h-4 text-primary" />
-            <span>Dashboard</span>
-          </CommandItem>
-          <CommandItem onSelect={() => navigateTo("/swarm")}>
-            <Zap className="w-4 h-4 text-amber-500" />
-            <span>AI Assistants</span>
-            <span className="ml-auto text-xs text-foreground/25">200 assistants</span>
-          </CommandItem>
-          <CommandItem onSelect={() => navigateTo("/approvals")}>
-            <Shield className="w-4 h-4 text-violet-500" />
-            <span>Approval Queue</span>
-          </CommandItem>
-          <CommandItem onSelect={() => navigateTo("/data-pulse")}>
-            <Radio className="w-4 h-4 text-emerald-500" />
-            <span>Insights</span>
-          </CommandItem>
-          <CommandItem onSelect={() => navigateTo("/war-room")}>
-            <Crosshair className="w-4 h-4 text-rose-500" />
-            <span>Competitive Sims</span>
+          <CommandItem onSelect={() => navigateTo("/toolkit")}>
+            <Wrench className="w-4 h-4 text-amber-500" />
+            <span>Toolkit</span>
+            <span className="ml-auto text-xs text-foreground/25">All tools</span>
           </CommandItem>
           <CommandItem onSelect={() => navigateTo("/simulation")}>
             <MessageSquare className="w-4 h-4 text-violet-500" />
             <span>Buyer Roleplay</span>
+          </CommandItem>
+        </CommandGroup>
+
+        <CommandSeparator />
+
+        {/* Quick jump to Toolkit sections */}
+        <CommandGroup heading="Toolkit Sections">
+          <CommandItem onSelect={() => navigateTo("/toolkit")} value="toolkit dashboard system status">
+            <Brain className="w-4 h-4 text-primary" />
+            <span>System Status</span>
+          </CommandItem>
+          <CommandItem onSelect={() => navigateTo("/toolkit")} value="toolkit ai assistants agents">
+            <Zap className="w-4 h-4 text-amber-500" />
+            <span>AI Assistants</span>
+            <span className="ml-auto text-xs text-foreground/25">200 agents</span>
+          </CommandItem>
+          <CommandItem onSelect={() => navigateTo("/toolkit")} value="toolkit competitive intel war room">
+            <Crosshair className="w-4 h-4 text-rose-500" />
+            <span>Competitive Intel</span>
+          </CommandItem>
+          <CommandItem onSelect={() => navigateTo("/toolkit")} value="toolkit insights analytics gong pipeline">
+            <Radio className="w-4 h-4 text-emerald-500" />
+            <span>Insights</span>
+          </CommandItem>
+          <CommandItem onSelect={() => navigateTo("/toolkit")} value="toolkit approvals review queue">
+            <Shield className="w-4 h-4 text-violet-500" />
+            <span>Review Queue</span>
           </CommandItem>
         </CommandGroup>
 

@@ -1,18 +1,15 @@
 /**
  * NeuralShell — CTV AI Commercial Engine chrome.
  * Mobile-first: bottom nav on mobile, frosted sidebar on desktop.
- * Simplified seller-friendly navigation.
+ * Simplified 3-tab navigation: Control Center, Toolkit, Buyer Roleplay.
  */
 import { Link, useLocation } from "wouter";
 import { useAgent } from "@/contexts/AgentContext";
 import { useIsMobile } from "@/hooks/useMobile";
 import { useAuth } from "@/hooks/useAuth";
 import {
-  Brain,
-  Zap,
-  Shield,
-  Radio,
-  Crosshair,
+  Network,
+  Wrench,
   MessageSquare,
   ChevronLeft,
   ChevronRight,
@@ -20,7 +17,6 @@ import {
   X,
   Bell,
   LogIn,
-  Network,
   RotateCcw,
 } from "lucide-react";
 import { useState, useEffect, useRef, type ReactNode } from "react";
@@ -34,36 +30,21 @@ interface NavItem {
   path: string;
   label: string;
   shortLabel?: string;
-  icon: typeof Brain;
+  icon: typeof Network;
 }
 
-/* ── Simplified seller-friendly nav ── */
-const mainNav: NavItem[] = [
+/* ── 3-tab seller-friendly nav ── */
+const primaryNav: NavItem[] = [
   { path: "/", label: "Control Center", shortLabel: "Control", icon: Network },
-  { path: "/dashboard", label: "Dashboard", shortLabel: "Dashboard", icon: Brain },
-];
-
-const runNav: NavItem[] = [
-  { path: "/swarm", label: "AI Assistants", shortLabel: "Assistants", icon: Zap },
-  { path: "/approvals", label: "Approvals", shortLabel: "Approve", icon: Shield },
-];
-
-const simulateNav: NavItem[] = [
-  { path: "/war-room", label: "Competitive Sims", shortLabel: "Compete", icon: Crosshair },
+  { path: "/toolkit", label: "Toolkit", shortLabel: "Toolkit", icon: Wrench },
   { path: "/simulation", label: "Buyer Roleplay", shortLabel: "Roleplay", icon: MessageSquare },
 ];
 
-const analyzeNav: NavItem[] = [
-  { path: "/data-pulse", label: "Insights", shortLabel: "Insights", icon: Radio },
-];
-
-// Bottom nav items for mobile — most important screens
+// Bottom nav items for mobile — same 3 tabs
 const bottomNav: NavItem[] = [
-  { path: "/", label: "Control Center", icon: Network },
-  { path: "/dashboard", label: "Dashboard", icon: Brain },
-  { path: "/swarm", label: "Assistants", icon: Zap },
+  { path: "/", label: "Control", icon: Network },
+  { path: "/toolkit", label: "Toolkit", icon: Wrench },
   { path: "/simulation", label: "Roleplay", icon: MessageSquare },
-  { path: "/data-pulse", label: "Insights", icon: Radio },
 ];
 
 export default function NeuralShell({ children }: { children: ReactNode }) {
@@ -100,12 +81,13 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
   const pageName = (() => {
     const map: Record<string, string> = {
       "/": "Control Center",
+      "/toolkit": "Toolkit",
+      "/simulation": "Buyer Roleplay",
       "/dashboard": "Dashboard",
       "/org-chart": "Control Center",
       "/swarm": "AI Assistants",
       "/approvals": "Approvals",
       "/war-room": "Competitive Sims",
-      "/simulation": "Buyer Roleplay",
       "/data-pulse": "Insights",
       "/model": "Operating Model",
       "/agents": "Assistant Registry",
@@ -119,8 +101,18 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
     return location.slice(1).split(/[-/]/).map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
   })();
 
+  // Check if current location is one of the 3 primary tabs
+  const isActiveTab = (path: string) => {
+    if (path === "/") return location === "/" || location === "/org-chart";
+    if (path === "/toolkit") {
+      return location === "/toolkit" || ["/dashboard", "/swarm", "/approvals", "/data-pulse", "/war-room", "/model", "/agents", "/weekly-prep", "/conviction", "/learning-loops"].includes(location);
+    }
+    if (path === "/simulation") return location === "/simulation";
+    return location === path;
+  };
+
   function NavLink({ item, compact }: { item: NavItem; compact?: boolean }) {
-    const active = location === item.path;
+    const active = isActiveTab(item.path);
     const Icon = item.icon;
     return (
       <Link href={item.path}>
@@ -145,23 +137,6 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
           )}
         </motion.div>
       </Link>
-    );
-  }
-
-  function NavGroup({ label, items, compact }: { label: string; items: NavItem[]; compact?: boolean }) {
-    return (
-      <div className="mb-4">
-        {!compact && (
-          <div className="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/25">
-            {label}
-          </div>
-        )}
-        <div className="space-y-0.5">
-          {items.map((item) => (
-            <NavLink key={item.path} item={item} compact={compact} />
-          ))}
-        </div>
-      </div>
     );
   }
 
@@ -266,79 +241,15 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
                 {showNotifs && <NotificationPanel mobile />}
               </AnimatePresence>
             </div>
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-xl hover:bg-black/[0.03] transition-colors"
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5 text-foreground/50" /> : <Menu className="w-5 h-5 text-foreground/50" />}
-            </button>
           </div>
         </header>
-
-        {/* Mobile Slide-Over Menu */}
-        <AnimatePresence>
-          {mobileMenuOpen && (
-            <>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-40 bg-black/20"
-                onClick={() => setMobileMenuOpen(false)}
-              />
-              <motion.div
-                initial={{ x: "100%" }}
-                animate={{ x: 0 }}
-                exit={{ x: "100%" }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="fixed right-0 top-0 bottom-0 z-50 w-72 bg-background border-l border-black/[0.06] overflow-y-auto"
-                style={{
-                  backdropFilter: "blur(40px) saturate(2)",
-                  WebkitBackdropFilter: "blur(40px) saturate(2)",
-                }}
-              >
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-6">
-                    <span className="text-[15px] font-bold text-foreground">Navigation</span>
-                    <button onClick={() => setMobileMenuOpen(false)} className="p-1.5 rounded-lg hover:bg-black/[0.04]">
-                      <X className="w-5 h-5 text-foreground/40" />
-                    </button>
-                  </div>
-                  <NavGroup label="Command" items={mainNav} />
-                  <NavGroup label="Run" items={runNav} />
-                  <NavGroup label="Simulate" items={simulateNav} />
-                  <NavGroup label="Analyze" items={analyzeNav} />
-                  {/* User */}
-                  <div className="mt-6 pt-4 border-t border-black/[0.06]">
-                    {isAuthenticated ? (
-                      <div className="flex items-center gap-2.5 px-2">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-violet-signal/20 flex items-center justify-center text-[11px] font-bold text-primary">
-                          {userInitials}
-                        </div>
-                        <div>
-                          <div className="text-[13px] font-semibold text-foreground">{userName}</div>
-                          <div className="text-[11px] text-foreground/35">Operator</div>
-                        </div>
-                      </div>
-                    ) : (
-                      <a href={getLoginUrl()} className="flex items-center gap-2.5 px-2 text-primary hover:underline">
-                        <LogIn className="w-4 h-4" />
-                        <span className="text-[13px] font-medium">Sign In</span>
-                      </a>
-                    )}
-                  </div>
-                </div>
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
 
         {/* Main content */}
         <main className="flex-1 overflow-y-auto">
           <div className="p-4 pb-24 max-w-[1440px] mx-auto">{children}</div>
         </main>
 
-        {/* Mobile Bottom Nav */}
+        {/* Mobile Bottom Nav — 3 tabs */}
         <nav
           className="fixed bottom-0 left-0 right-0 z-30 border-t border-black/[0.06] px-2 pb-[env(safe-area-inset-bottom)]"
           style={{
@@ -349,7 +260,7 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
         >
           <div className="flex items-center justify-around py-1.5">
             {bottomNav.map((item) => {
-              const active = location === item.path;
+              const active = isActiveTab(item.path);
               const Icon = item.icon;
               return (
                 <Link key={item.path} href={item.path}>
@@ -440,12 +351,13 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
           </motion.div>
         )}
 
-        {/* Navigation — simplified for sellers */}
+        {/* Navigation — 3 tabs */}
         <nav className="flex-1 overflow-y-auto py-1 px-3">
-          <NavGroup label="Command" items={mainNav} compact={collapsed} />
-          <NavGroup label="Run" items={runNav} compact={collapsed} />
-          <NavGroup label="Simulate" items={simulateNav} compact={collapsed} />
-          <NavGroup label="Analyze" items={analyzeNav} compact={collapsed} />
+          <div className="space-y-0.5">
+            {primaryNav.map((item) => (
+              <NavLink key={item.path} item={item} compact={collapsed} />
+            ))}
+          </div>
         </nav>
 
         {/* Footer */}
@@ -524,26 +436,18 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
                 {showNotifs && <NotificationPanel />}
               </AnimatePresence>
             </div>
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full transition-colors ${activeRuns > 0 ? "bg-primary animate-pulse-neon" : "bg-emerald-signal"}`} />
-              <span className={`font-semibold ${activeRuns > 0 ? "text-primary" : "text-emerald-signal"}`}>
-                {activeRuns > 0 ? "Working..." : "Ready"}
-              </span>
+            <div className="flex items-center gap-2 text-[12px] text-foreground/35">
+              <div className={`w-2 h-2 rounded-full ${activeRuns > 0 ? "bg-primary animate-pulse" : "bg-emerald-signal"}`} />
+              <span className="font-semibold">{activeRuns > 0 ? `${activeRuns} Running` : "Ready"}</span>
             </div>
-            <span className="text-foreground/20 font-medium">
-              {new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })}
-            </span>
+            <div className="text-[12px] font-mono text-foreground/25">
+              {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </div>
           </div>
         </header>
 
-        {/* Page content */}
-        <div className="p-6 lg:p-8 xl:p-10 max-w-[1440px]">{children}</div>
+        <div className="max-w-[1440px] mx-auto">{children}</div>
       </main>
-
-      {/* Click-away for notifications */}
-      {showNotifs && (
-        <div className="fixed inset-0 z-40" onClick={() => setShowNotifs(false)} />
-      )}
     </div>
   );
 }

@@ -30,7 +30,7 @@ const quickTips = [
   },
   {
     icon: Brain,
-    text: "The Competitive Sims page lets you simulate matchups against TTD, Roku, etc.",
+    text: "Toolkit → Competitive Intel lets you simulate matchups against TTD, Roku, etc.",
     color: "text-violet-500",
   },
   {
@@ -40,7 +40,7 @@ const quickTips = [
   },
   {
     icon: BarChart3,
-    text: "The Insights page pulls AI analysis from Gong, pipeline, and market data.",
+    text: "Toolkit → Insights pulls AI analysis from Gong, pipeline, and market data.",
     color: "text-amber-500",
   },
 ];

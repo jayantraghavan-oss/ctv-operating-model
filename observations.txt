@@ -1,8 +1,11 @@
-Toggle fix observation (Mar 29):
-- The toggle now shows "Org Chart" with a white background, shadow, and clear text contrast
-- "Reference Guide" is muted/gray when inactive
-- The container has a subtle border and rounded-xl shape
-- Looks much crisper and more Apple-like than before
-- Toggle fix: DONE
-
-Next: Phase 2 - Persist agent runs to database
+Phase 38 - Sidebar Merge Observations:
+1. Sidebar: 3 items only - Control Center (active, with dot), Toolkit, Buyer Roleplay
+2. Clean minimal sidebar with Moloco logo, system pulse (200 Agents, 0 Runs, 0 Live)
+3. Welcome tour modal showing (1/7) - working correctly
+4. "Execute Workflow" button in header - correct
+5. Org Chart / Reference Guide toggle visible with improved styling
+6. Cluster cards visible at bottom (C1-C4)
+7. Sign In link at bottom of sidebar
+8. Breadcrumb: CTV AI Engine / Control Center
+9. Top bar: refresh, notifications (1 unread), Ready status, time
+10. Zero TypeScript errors, zero LSP errors

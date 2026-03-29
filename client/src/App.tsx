@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, Redirect } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AgentProvider } from "./contexts/AgentContext";
@@ -10,16 +10,17 @@ import HelpButton from "./components/HelpButton";
 import { lazy, Suspense, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
-// Primary pages
+// Primary pages — the 3-tab structure
 import OrgChart from "./pages/OrgChart";
+const Toolkit = lazy(() => import("./pages/Toolkit"));
+const BuyerSim = lazy(() => import("./pages/BuyerSim"));
+
+// Legacy pages (still accessible via direct URL for deep links)
 const NeuralCommand = lazy(() => import("./pages/NeuralCommand"));
 const AgentSwarm = lazy(() => import("./pages/AgentSwarm"));
 const ApprovalQueue = lazy(() => import("./pages/ApprovalQueue"));
 const DataPulse = lazy(() => import("./pages/DataPulse"));
 const WarRoom = lazy(() => import("./pages/WarRoom"));
-const BuyerSim = lazy(() => import("./pages/BuyerSim"));
-
-// Legacy pages (still accessible)
 const ModulePage = lazy(() => import("./pages/ModulePage"));
 const ClusterPage = lazy(() => import("./pages/ClusterPage"));
 const AgentRegistry = lazy(() => import("./pages/AgentRegistry"));
@@ -52,25 +53,26 @@ function Router() {
     <Suspense fallback={<PageLoader />}>
       <AnimatePresence mode="wait">
         <Switch>
-          {/* Control Center is the main screen */}
+          {/* ── 3-Tab Structure ── */}
           <Route path="/" component={OrgChart} />
+          <Route path="/toolkit" component={Toolkit} />
+          <Route path="/simulation" component={BuyerSim} />
+
+          {/* ── Legacy deep-link routes (still accessible) ── */}
+          <Route path="/module/:id" component={ModulePage} />
+          <Route path="/cluster/:id" component={ClusterPage} />
           <Route path="/dashboard" component={NeuralCommand} />
           <Route path="/swarm" component={AgentSwarm} />
           <Route path="/approvals" component={ApprovalQueue} />
           <Route path="/data-pulse" component={DataPulse} />
           <Route path="/war-room" component={WarRoom} />
-          <Route path="/simulation" component={BuyerSim} />
-
-          {/* Legacy module views */}
           <Route path="/model" component={ModelOverview} />
-          <Route path="/module/:id" component={ModulePage} />
-          <Route path="/cluster/:id" component={ClusterPage} />
           <Route path="/agents" component={AgentRegistry} />
           <Route path="/weekly-prep" component={WeeklyPrep} />
           <Route path="/conviction" component={ConvictionDashboard} />
           <Route path="/learning-loops" component={LearningLoops} />
 
-          {/* Keep /org-chart as alias for / */}
+          {/* Aliases */}
           <Route path="/org-chart" component={OrgChart} />
 
           <Route path="/404" component={NotFound} />
