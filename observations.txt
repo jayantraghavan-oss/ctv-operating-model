@@ -1,14 +1,32 @@
-Desktop view (1280px): Tree layout renders correctly with 4-column grid. All nodes visible.
-TypeScript: No errors, LSP: No errors.
-Tour overlay renders correctly.
+COMPREHENSIVE PAGE AUDIT (Mar 29, 2026)
 
-Mobile changes made:
-1. C5 nodes: 2 per row on mobile (flex-1 min-w-0) vs 4 per row desktop (w-[185px])
-2. Cluster columns: MobileClusterStack accordion on mobile vs grid-cols-4 on desktop
-3. MobileClusterStack: vertical accordion with expand/collapse per cluster, colored borders, active count indicators
-4. Removed min-w-[900px] and overflow-x-auto on mobile
-5. Smaller padding/spacing on mobile elements
-6. Legend: flex-wrap on mobile
-7. ScenarioPickerModal: max-h-[90vh] overflow-y-auto for scrolling on small screens
-8. DemoNarrationBar: more compact padding/gaps on mobile
-9. Footer: smaller text and margins on mobile
+CRITICAL FIX APPLIED:
+- dev script was "vite --host" instead of "NODE_ENV=development tsx watch server/_core/index.ts"
+- tRPC routes were NOT mounted in dev mode — now fixed and verified
+
+ALL PAGES CHECKED:
+1. / (Control Center) - OK, tree renders, mobile accordion works
+2. /dashboard - OK, conviction cards, cluster control, live output
+3. /swarm (AI Assistants) - OK, 200 agents listed with search/filter
+4. /war-room (Competitive Sims) - OK, competitor landscape + scenarios
+5. /simulation (Buyer Roleplay) - OK, 4 persona cards
+6. /data-pulse (Insights) - OK, Gong/Pipeline/System tabs
+7. /approvals - OK, 19 pending items with approve/reject
+8. /model (Operating Model) - OK, full strategic doc renders beautifully
+9. /module/1 (Module detail) - OK, sections/sub-modules/prompts all render
+10. /cluster/1 (Cluster detail) - OK, cluster narrative + linked modules
+11. /agents (Agent Registry) - OK, 200 agents with search/filter/run
+12. /weekly-prep (Weekly Prep) - OK, XFN Leadership Weekly auto-generated
+13. /conviction (Conviction Tracker) - OK, 8 learning goals with scores
+14. /learning-loops (Learning Loops) - OK, 10 loops with status
+
+NO CONSOLE ERRORS
+NO NETWORK ERRORS (tRPC now properly mounted)
+ALL 14 PAGES LOAD CORRECTLY
+48 TESTS PASSING
+
+REMAINING ISSUES TO CHECK:
+- TypeScript strict mode errors (from earlier audit)
+- Build output (vite build was successful earlier)
+- Edge cases in demo mode
+- Mobile responsiveness on other pages (beyond Control Center)
