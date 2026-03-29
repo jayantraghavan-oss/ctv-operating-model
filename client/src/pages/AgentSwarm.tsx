@@ -6,6 +6,7 @@
 import NeuralShell from "@/components/NeuralShell";
 import TipBanner from "@/components/TipBanner";
 import GlossaryTip from "@/components/GlossaryTip";
+import OutputInterstitial from "@/components/OutputInterstitial";
 import { useAgent } from "@/contexts/AgentContext";
 import { getAgentTypeLabel, getOwnerLabel } from "@/lib/data";
 import { modules, prompts, type Prompt } from "@/lib/data";
@@ -15,7 +16,7 @@ import {
   Play, Zap, Search, ChevronDown, ChevronUp, RotateCcw,
   Bot, UserCheck, Users, Cpu, Radio, Sparkles, CheckCircle2,
   XCircle, Clock, Filter, LayoutGrid, List, ArrowRight,
-  Copy, ExternalLink,
+  Copy, ExternalLink, Eye,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -62,6 +63,7 @@ export default function AgentSwarm() {
   const [runningIds, setRunningIds] = useState<Set<number>>(new Set());
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [showFilters, setShowFilters] = useState(false);
+  const [interstitialPromptId, setInterstitialPromptId] = useState<number | null>(null);
 
   const filtered = useMemo(() => prompts.filter((p) => {
     if (moduleFilter !== "all" && p.moduleId !== moduleFilter) return false;
@@ -404,9 +406,17 @@ export default function AgentSwarm() {
                                     )}
                                   </div>
                                 </div>
-                                <div className="text-[13px] text-foreground/70 leading-relaxed prose prose-sm max-w-none prose-headings:text-foreground/80 prose-headings:font-semibold prose-strong:text-foreground/75 prose-li:text-foreground/65 prose-p:text-foreground/65">
+                                <div className="text-[13px] text-foreground/70 leading-relaxed prose prose-sm max-w-none prose-headings:text-foreground/80 prose-headings:font-semibold prose-strong:text-foreground/75 prose-li:text-foreground/65 prose-p:text-foreground/65 max-h-48 overflow-hidden relative">
                                   <Streamdown>{displayOutput}</Streamdown>
+                                  <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white to-transparent" />
                                 </div>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setInterstitialPromptId(prompt.id); }}
+                                  className="flex items-center gap-1.5 mt-3 text-[11px] font-semibold text-primary/70 hover:text-primary transition-colors"
+                                >
+                                  <Eye className="w-3 h-3" />
+                                  View Full Output
+                                </button>
                               </div>
                             ) : isRunning ? (
                               <div className="bg-amber-50/50 rounded-2xl p-5 border border-amber-200/30">
@@ -536,6 +546,31 @@ export default function AgentSwarm() {
           </div>
         )}
       </div>
+
+      {/* Output Interstitial */}
+      {(() => {
+        if (!interstitialPromptId) return null;
+        const prompt = prompts.find(p => p.id === interstitialPromptId);
+        if (!prompt) return null;
+        const meta = getPromptMeta(prompt);
+        const run = recentRuns.find(r => r.promptId === prompt.id);
+        const streamingContent = run?.id ? getStreamingOutput(run.id) : undefined;
+        const displayContent = run?.output || streamingContent || "";
+        return (
+          <OutputInterstitial
+            open={true}
+            onClose={() => setInterstitialPromptId(null)}
+            agentName={meta?.subModule || prompt.sectionKey}
+            ownership={meta?.owner || "agent-human"}
+            agentType={prompt.agentType}
+            output={displayContent}
+            isStreaming={run?.status === "running"}
+            durationMs={run?.durationMs}
+            onRun={() => executeAgent(prompt)}
+            isRunning={runningIds.has(prompt.id)}
+          />
+        );
+      })()}
     </NeuralShell>
   );
 }

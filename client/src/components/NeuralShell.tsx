@@ -1,7 +1,7 @@
 /**
  * NeuralShell — CTV AI Commercial Engine chrome.
  * Mobile-first: bottom nav on mobile, frosted sidebar on desktop.
- * Moloco branding with cloud+M logo throughout.
+ * Simplified seller-friendly navigation.
  */
 import { Link, useLocation } from "wouter";
 import { useAgent } from "@/contexts/AgentContext";
@@ -14,30 +14,21 @@ import {
   Radio,
   Crosshair,
   MessageSquare,
-  BarChart3,
-  BookOpen,
   ChevronLeft,
   ChevronRight,
-  Radar,
-  Megaphone,
-  Users,
-  Target,
   Menu,
   X,
   Bell,
-  Activity,
   LogIn,
   Network,
   RotateCcw,
 } from "lucide-react";
 import { useState, useEffect, useRef, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { modules, getTotalStats } from "@/lib/data";
+import { getTotalStats } from "@/lib/data";
 import { getLoginUrl } from "@/const";
 
 const MOLOCO_LOGO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663459898851/Wr22fCMnjpJGgmtKZSL2hG/moloco-logo-blue_486481be.png";
-
-const moduleIcons = [Radar, Megaphone, Users, BarChart3];
 
 interface NavItem {
   path: string;
@@ -46,31 +37,33 @@ interface NavItem {
   icon: typeof Brain;
 }
 
-const commandNav: NavItem[] = [
+/* ── Simplified seller-friendly nav ── */
+const mainNav: NavItem[] = [
   { path: "/", label: "Dashboard", shortLabel: "Home", icon: Brain },
+  { path: "/org-chart", label: "Org Map", shortLabel: "Org Map", icon: Network },
+];
+
+const runNav: NavItem[] = [
   { path: "/swarm", label: "AI Assistants", shortLabel: "Assistants", icon: Zap },
   { path: "/approvals", label: "Approvals", shortLabel: "Approve", icon: Shield },
 ];
 
-const intelligenceNav: NavItem[] = [
-  { path: "/data-pulse", label: "Insights", shortLabel: "Insights", icon: Radio },
+const simulateNav: NavItem[] = [
   { path: "/war-room", label: "Competitive Sims", shortLabel: "Compete", icon: Crosshair },
   { path: "/simulation", label: "Buyer Roleplay", shortLabel: "Roleplay", icon: MessageSquare },
 ];
 
-const legacyNav: NavItem[] = [
-  { path: "/org-chart", label: "Org Map", icon: Network },
-  { path: "/model", label: "Operating Model", icon: BookOpen },
-  { path: "/agents", label: "Assistant Registry", icon: Target },
+const analyzeNav: NavItem[] = [
+  { path: "/data-pulse", label: "Insights", shortLabel: "Insights", icon: Radio },
 ];
 
 // Bottom nav items for mobile — most important screens
 const bottomNav: NavItem[] = [
   { path: "/", label: "Home", icon: Brain },
+  { path: "/org-chart", label: "Org Map", icon: Network },
   { path: "/swarm", label: "Assistants", icon: Zap },
   { path: "/simulation", label: "Roleplay", icon: MessageSquare },
   { path: "/data-pulse", label: "Insights", icon: Radio },
-  { path: "/war-room", label: "Compete", icon: Crosshair },
 ];
 
 export default function NeuralShell({ children }: { children: ReactNode }) {
@@ -85,19 +78,16 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
 
   const activeRuns = recentRuns.filter((r) => r.status === "running").length;
 
-  // Get user initials for avatar
   const userInitials = user?.name
     ? user.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
     : "?";
   const userName = user?.name || "Guest";
 
-  // Close mobile menu and notifications on navigation
   useEffect(() => {
     setMobileMenuOpen(false);
     setShowNotifs(false);
   }, [location]);
 
-  // Close notifications on Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") setShowNotifs(false);
@@ -105,6 +95,28 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, []);
+
+  // Friendly page name for breadcrumb
+  const pageName = (() => {
+    const map: Record<string, string> = {
+      "/": "Dashboard",
+      "/org-chart": "Org Map",
+      "/swarm": "AI Assistants",
+      "/approvals": "Approvals",
+      "/war-room": "Competitive Sims",
+      "/simulation": "Buyer Roleplay",
+      "/data-pulse": "Insights",
+      "/model": "Operating Model",
+      "/agents": "Assistant Registry",
+      "/weekly-prep": "Weekly Prep",
+      "/conviction": "Conviction Tracker",
+      "/learning-loops": "Learning Loops",
+    };
+    if (map[location]) return map[location];
+    if (location.startsWith("/module/")) return `Module ${location.split("/")[2]}`;
+    if (location.startsWith("/cluster/")) return `Cluster ${location.split("/")[2]}`;
+    return location.slice(1).split(/[-/]/).map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  })();
 
   function NavLink({ item, compact }: { item: NavItem; compact?: boolean }) {
     const active = location === item.path;
@@ -152,6 +164,58 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
     );
   }
 
+  /* ── Notification Panel (shared between mobile and desktop) ── */
+  function NotificationPanel({ mobile }: { mobile?: boolean }) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: -8, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: -8, scale: 0.95 }}
+        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+        className={mobile
+          ? "fixed left-3 right-3 top-16 max-h-[70vh] bg-white border border-black/[0.08] rounded-2xl shadow-xl z-50 overflow-hidden"
+          : "absolute right-0 top-10 w-80 max-h-96 bg-white border border-black/[0.08] rounded-2xl shadow-xl z-50 overflow-hidden"
+        }
+        style={{ backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}
+      >
+        <div className="flex items-center justify-between px-4 py-3 border-b border-black/[0.06]">
+          <span className={`${mobile ? "text-[14px]" : "text-[13px]"} font-bold text-foreground`}>Notifications</span>
+          <button onClick={clearNotifications} className={`${mobile ? "text-[12px] py-1 px-2" : "text-[11px]"} text-primary hover:underline font-medium`}>Mark all read</button>
+        </div>
+        <div className={`overflow-y-auto ${mobile ? "max-h-[60vh]" : "max-h-72"}`}>
+          {notifications.length === 0 ? (
+            <div className={`${mobile ? "p-8" : "p-6"} text-center`}>
+              <Bell className={`${mobile ? "w-10 h-10" : "w-8 h-8"} text-foreground/15 mx-auto mb-2`} />
+              <div className={`${mobile ? "text-[14px]" : "text-[13px]"} text-foreground/40`}>No notifications yet</div>
+              <div className={`${mobile ? "text-[12px]" : "text-[11px]"} text-foreground/25 mt-1`}>Run an AI assistant to see updates here</div>
+            </div>
+          ) : (
+            notifications.slice(0, 10).map((n) => (
+              <div
+                key={n.id}
+                onClick={() => markNotificationRead(n.id)}
+                className={`px-4 ${mobile ? "py-3.5" : "py-3"} border-b border-black/[0.04] cursor-pointer ${mobile ? "active:bg-black/[0.04]" : "hover:bg-black/[0.02]"} transition-colors ${
+                  !n.read ? "bg-primary/5" : ""
+                }`}
+              >
+                <div className="flex items-start gap-2.5">
+                  {!n.read && <div className={`${mobile ? "w-2.5 h-2.5" : "w-2 h-2"} rounded-full bg-primary mt-1.5 shrink-0`} />}
+                  <div className={!n.read ? "" : "ml-[18px]"}>
+                    <div className={`${mobile ? "text-[13px]" : "text-[12px]"} font-semibold text-foreground`}>{n.title}</div>
+                    <div className={`${mobile ? "text-[12px]" : "text-[11px]"} text-foreground/50 mt-0.5 line-clamp-2`}>{n.description}</div>
+                    <div className={`${mobile ? "text-[11px]" : "text-[10px]"} text-foreground/25 mt-1 font-mono`}>
+                      {new Date(n.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </motion.div>
+    );
+  }
+
   // ── Mobile Layout ──
   if (isMobile) {
     return (
@@ -178,7 +242,6 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
             </div>
           </div>
           <div className="flex items-center gap-1.5">
-            {/* Refresh */}
             <button
               onClick={() => window.location.reload()}
               className="p-2.5 rounded-xl hover:bg-black/[0.03] transition-colors active:bg-black/[0.06]"
@@ -186,7 +249,6 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
             >
               <RotateCcw className="w-4 h-4 text-foreground/40" />
             </button>
-            {/* Notifications */}
             <div className="relative" ref={isMobile ? notifRef : undefined}>
               <button
                 onClick={() => setShowNotifs(!showNotifs)}
@@ -200,54 +262,9 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
                 )}
               </button>
               <AnimatePresence>
-                {showNotifs && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                    className="fixed left-3 right-3 top-16 max-h-[70vh] bg-white border border-black/[0.08] rounded-2xl shadow-xl z-50 overflow-hidden"
-                    style={{ backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}
-                  >
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-black/[0.06]">
-                      <span className="text-[14px] font-bold text-foreground">Notifications</span>
-                      <button onClick={clearNotifications} className="text-[12px] text-primary hover:underline font-medium py-1 px-2">Mark all read</button>
-                    </div>
-                    <div className="overflow-y-auto max-h-[60vh]">
-                      {notifications.length === 0 ? (
-                        <div className="p-8 text-center">
-                          <Bell className="w-10 h-10 text-foreground/15 mx-auto mb-3" />
-                          <div className="text-[14px] text-foreground/40">No notifications yet</div>
-                          <div className="text-[12px] text-foreground/25 mt-1">Run an AI assistant to see updates here</div>
-                        </div>
-                      ) : (
-                        notifications.slice(0, 10).map((n) => (
-                          <div
-                            key={n.id}
-                            onClick={() => markNotificationRead(n.id)}
-                            className={`px-4 py-3.5 border-b border-black/[0.04] cursor-pointer active:bg-black/[0.04] transition-colors ${
-                              !n.read ? "bg-primary/5" : ""
-                            }`}
-                          >
-                            <div className="flex items-start gap-2.5">
-                              {!n.read && <div className="w-2.5 h-2.5 rounded-full bg-primary mt-1.5 shrink-0" />}
-                              <div className={!n.read ? "" : "ml-[18px]"}>
-                                <div className="text-[13px] font-semibold text-foreground">{n.title}</div>
-                                <div className="text-[12px] text-foreground/50 mt-0.5 line-clamp-2">{n.description}</div>
-                                <div className="text-[11px] text-foreground/25 mt-1 font-mono">
-                                  {new Date(n.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </motion.div>
-                )}
+                {showNotifs && <NotificationPanel mobile />}
               </AnimatePresence>
             </div>
-            {/* Hamburger */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-xl hover:bg-black/[0.03] transition-colors"
@@ -286,32 +303,10 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
                       <X className="w-5 h-5 text-foreground/40" />
                     </button>
                   </div>
-                  <NavGroup label="Home" items={commandNav} />
-                  <NavGroup label="Tools" items={intelligenceNav} />
-                  {/* Module links */}
-                  <div className="mb-4">
-                    <div className="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/25">
-                      Modules
-                    </div>
-                    <div className="space-y-0.5">
-                      {modules.map((mod, i) => {
-                        const Icon = moduleIcons[i];
-                        const active = location === `/module/${mod.id}`;
-                        return (
-                          <Link key={mod.id} href={`/module/${mod.id}`}>
-                            <div className={`flex items-center gap-3 px-3 py-2.5 rounded-2xl text-[13px] transition-all ${
-                              active ? "bg-primary/10 text-primary font-semibold" : "text-foreground/50"
-                            }`}>
-                              <Icon className={`w-[18px] h-[18px] ${active ? "text-primary" : "text-foreground/35"}`} />
-                              <span className="truncate">{mod.shortName}</span>
-                              <span className="ml-auto text-[10px] text-foreground/20 font-medium">M{mod.id}</span>
-                            </div>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                  <NavGroup label="Reference" items={legacyNav} />
+                  <NavGroup label="Command" items={mainNav} />
+                  <NavGroup label="Run" items={runNav} />
+                  <NavGroup label="Simulate" items={simulateNav} />
+                  <NavGroup label="Analyze" items={analyzeNav} />
                   {/* User */}
                   <div className="mt-6 pt-4 border-t border-black/[0.06]">
                     {isAuthenticated ? (
@@ -390,7 +385,7 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
       {/* Sidebar */}
       <motion.aside
         className="flex flex-col shrink-0 border-r border-black/[0.06] overflow-hidden"
-        animate={{ width: collapsed ? 68 : 248 }}
+        animate={{ width: collapsed ? 68 : 220 }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
         style={{
           background: "oklch(1 0 0 / 0.55)",
@@ -429,7 +424,7 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
           >
             <div className="text-center">
               <div className="text-[15px] font-bold text-foreground">{getTotalStats().totalPrompts}</div>
-              <div className="text-[9px] font-bold text-foreground/25 uppercase tracking-wider">Assistants</div>
+              <div className="text-[9px] font-bold text-foreground/25 uppercase tracking-wider">Agents</div>
             </div>
             <div className="w-px h-6 bg-black/[0.06]" />
             <div className="text-center">
@@ -444,48 +439,15 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
           </motion.div>
         )}
 
-        {/* Navigation */}
+        {/* Navigation — simplified for sellers */}
         <nav className="flex-1 overflow-y-auto py-1 px-3">
-          <NavGroup label="Home" items={commandNav} compact={collapsed} />
-          <NavGroup label="Tools" items={intelligenceNav} compact={collapsed} />
-
-          {/* Module links */}
-          {!collapsed && (
-            <div className="mb-4">
-              <div className="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/25">
-                Modules
-              </div>
-              <div className="space-y-0.5">
-                {modules.map((mod, i) => {
-                  const Icon = moduleIcons[i];
-                  const active = location === `/module/${mod.id}`;
-                  return (
-                    <Link key={mod.id} href={`/module/${mod.id}`}>
-                      <motion.div
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-2xl text-[13px] transition-all duration-200 ${
-                          active
-                            ? "bg-primary/10 text-primary font-semibold"
-                            : "text-foreground/50 hover:text-foreground hover:bg-black/[0.03]"
-                        }`}
-                        whileHover={{ x: 2 }}
-                        whileTap={{ scale: 0.97 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                      >
-                        <Icon className={`w-[18px] h-[18px] ${active ? "text-primary" : "text-foreground/35"}`} />
-                        <span className="truncate">{mod.shortName}</span>
-                        <span className="ml-auto text-[10px] font-medium text-foreground/20">M{mod.id}</span>
-                      </motion.div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          <NavGroup label="Reference" items={legacyNav} compact={collapsed} />
+          <NavGroup label="Command" items={mainNav} compact={collapsed} />
+          <NavGroup label="Run" items={runNav} compact={collapsed} />
+          <NavGroup label="Simulate" items={simulateNav} compact={collapsed} />
+          <NavGroup label="Analyze" items={analyzeNav} compact={collapsed} />
         </nav>
 
-        {/* Footer — dynamic user */}
+        {/* Footer */}
         <div className="px-3 py-4 border-t border-black/[0.06]">
           {!collapsed && (
             <div className="flex items-center gap-2.5 mb-3 px-2">
@@ -531,18 +493,9 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
             <img src={MOLOCO_LOGO} alt="Moloco" className="w-5 h-5 object-contain" />
             <span className="font-bold text-foreground">CTV AI Engine</span>
             <span className="text-foreground/15">/</span>
-            <span className="font-medium">
-              {location === "/"
-                ? "Dashboard"
-                : location
-                    .slice(1)
-                    .split(/[-/]/)
-                    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                    .join(" ")}
-            </span>
+            <span className="font-medium">{pageName}</span>
           </div>
           <div className="flex items-center gap-4 text-[13px]">
-            {/* Refresh */}
             <button
               onClick={() => window.location.reload()}
               className="p-1.5 rounded-lg hover:bg-black/[0.03] transition-colors group"
@@ -550,7 +503,6 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
             >
               <RotateCcw className="w-4 h-4 text-foreground/35 group-hover:text-foreground/60 transition-colors" />
             </button>
-            {/* Notifications */}
             <div className="relative" ref={!isMobile ? notifRef : undefined}>
               <button
                 onClick={() => setShowNotifs(!showNotifs)}
@@ -568,54 +520,9 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
                 )}
               </button>
               <AnimatePresence>
-                {showNotifs && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                    className="absolute right-0 top-10 w-80 max-h-96 bg-white border border-black/[0.08] rounded-2xl shadow-xl z-50 overflow-hidden"
-                    style={{ backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}
-                  >
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-black/[0.06]">
-                      <span className="text-[13px] font-bold text-foreground">Notifications</span>
-                      <button onClick={clearNotifications} className="text-[11px] text-primary hover:underline font-medium">Mark all read</button>
-                    </div>
-                    <div className="overflow-y-auto max-h-72">
-                      {notifications.length === 0 ? (
-                        <div className="p-6 text-center">
-                          <Bell className="w-8 h-8 text-foreground/15 mx-auto mb-2" />
-                          <div className="text-[13px] text-foreground/40">No notifications yet</div>
-                          <div className="text-[11px] text-foreground/25 mt-1">Run an AI assistant to see updates here</div>
-                        </div>
-                      ) : (
-                        notifications.slice(0, 10).map((n) => (
-                          <div
-                            key={n.id}
-                            onClick={() => markNotificationRead(n.id)}
-                            className={`px-4 py-3 border-b border-black/[0.04] cursor-pointer hover:bg-black/[0.02] transition-colors ${
-                              !n.read ? "bg-primary/5" : ""
-                            }`}
-                          >
-                            <div className="flex items-start gap-2.5">
-                              {!n.read && <div className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />}
-                              <div className={!n.read ? "" : "ml-[18px]"}>
-                                <div className="text-[12px] font-semibold text-foreground">{n.title}</div>
-                                <div className="text-[11px] text-foreground/50 mt-0.5 line-clamp-2">{n.description}</div>
-                                <div className="text-[10px] text-foreground/25 mt-1 font-mono">
-                                  {new Date(n.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </motion.div>
-                )}
+                {showNotifs && <NotificationPanel />}
               </AnimatePresence>
             </div>
-            {/* Status */}
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full transition-colors ${activeRuns > 0 ? "bg-primary animate-pulse-neon" : "bg-emerald-signal"}`} />
               <span className={`font-semibold ${activeRuns > 0 ? "text-primary" : "text-emerald-signal"}`}>

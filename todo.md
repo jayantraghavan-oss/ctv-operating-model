@@ -273,3 +273,18 @@
 - [x] Glassy Apple-style design with spring animations
 - [x] Fix broken reference links — migrated all legacy pages (ModulePage, ClusterPage, etc.) from Layout to NeuralShell
 - [x] Fix notifications stacking — added gap={8} and visibleToasts={4} to Toaster
+
+## Phase 30: Simplify Sidebar Nav + Fix All Broken Links
+- [x] Audit current sidebar sections and labels for seller-friendliness
+- [x] Simplify/consolidate sidebar nav — COMMAND/RUN/SIMULATE/ANALYZE (7 links from 14)
+- [x] Remove redundant links (Operating Model, Assistant Registry, individual Module links from sidebar)
+- [x] Ensure every sidebar link navigates to a working page
+- [x] Fix broken reference page links — removed broken routes, kept only valid ones
+- [x] Test all sidebar links on desktop and mobile
+- [x] Test all Reference Guide tab links
+- [x] All 48 tests still passing
+- [x] Fix Auto Mode button on Dashboard — green pulsing button + toast feedback on activate/pause
+- [x] Build OutputInterstitial component — full-screen scrollable modal for viewing agent output
+- [x] Wire OutputInterstitial into Dashboard and AI Assistants — "View Full Output" button on each run
+- [x] Simplify sidebar: consolidated into clear seller-friendly sections, removed jargon
+- [x] Reference Guide tab: embedded exact tree layout from source image with C5 box, connectors, 4 cluster columns

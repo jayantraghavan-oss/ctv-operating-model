@@ -718,12 +718,14 @@ function TourOverlay({
 function ReferenceGuide() {
   const [, navigate] = useLocation();
   const stats = getTotalStats();
+  const c5Nodes = useMemo(() => buildC5Nodes(), []);
+  const clusterCols = useMemo(() => buildClusterColumns(), []);
 
   const principleRows = [
     { principle: "Agents generate, humans approve", implementation: "Every 'A+H' node requires human sign-off before output goes to market. The Approval Queue page tracks pending reviews.", appPage: "/approvals" },
     { principle: "2 FTEs, 200 agents", implementation: "5 clusters map to 2 human operators (1 DRI + 1 commercial). Each cluster's agents handle the cognitive load that would normally require 10-15 people.", appPage: "/" },
     { principle: "Conviction-based investment", implementation: "Module 4's Strength of Conviction Tracker aggregates learnings into a go/no-go recommendation for EOQ2.", appPage: "/conviction" },
-    { principle: "Learning loops across modules", implementation: "Insights from Module 1 feed Module 2 messaging. Module 3 customer feedback loops back to Module 1 positioning. The Learning Loops page visualizes these connections.", appPage: "/learning-loops" },
+    { principle: "Learning loops across modules", implementation: "Insights from Module 1 feed Module 2 messaging. Module 3 customer feedback loops back to Module 1 positioning.", appPage: "/learning-loops" },
     { principle: "Two modes of operation", implementation: "Cluster 3 operates differently for CTV-to-App (dotted-line to MA Sales) vs CTV-to-Web (owns the full motion). Both modes share the same agent infrastructure.", appPage: "/cluster/3" },
   ];
 
@@ -734,30 +736,119 @@ function ReferenceGuide() {
     return { mod, sectionCount, subModCount, promptCount };
   });
 
+  // Mini tree node for reference guide
+  const MiniNode = ({ name, owner }: { name: string; owner: OwnerType }) => {
+    const s = ownerStyle[owner];
+    return (
+      <div className={`px-2.5 py-1.5 rounded-md border-l-[3px] border border-black/[0.05] text-[10px] font-semibold leading-tight flex items-center justify-between gap-2 ${s.border} ${s.bg}`}>
+        <span className={s.text}>{name}</span>
+        <span className={`text-[8px] font-bold px-1 py-0.5 rounded text-white ${s.badgeBg}`}>{s.short}</span>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-8">
+      {/* ── Mini Tree Layout (matching source image) ── */}
       <div className="border border-border rounded-xl bg-white/60 p-5">
-        <h3 className="text-[15px] font-bold text-foreground mb-2">Source Document → App Mapping</h3>
-        <p className="text-[12px] text-foreground/50 leading-relaxed mb-4">
-          Every feature in this tool traces back to the AI-First CTV Commercial Operating Model (Mar 9, 2026).
-          Below is a complete cross-reference showing how the source document maps to the app.
-        </p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[
-            { label: "Modules", value: stats.modules, sub: "Work modules" },
-            { label: "Agents", value: stats.totalPrompts, sub: "AI assistants" },
-            { label: "Clusters", value: stats.clusters, sub: "Human orchestrators" },
-            { label: "Sub-modules", value: stats.totalSubModules, sub: "Discrete work units" },
-          ].map((s, i) => (
-            <div key={i} className="text-center p-3 rounded-xl bg-black/[0.02] border border-black/[0.04]">
-              <div className="text-[20px] font-bold text-foreground">{s.value}</div>
-              <div className="text-[10px] text-foreground/40 font-semibold uppercase tracking-wider">{s.label}</div>
-              <div className="text-[10px] text-foreground/25">{s.sub}</div>
+        <h3 className="text-[15px] font-bold text-foreground mb-1">System Architecture — Full Tree</h3>
+        <p className="text-[11px] text-foreground/40 mb-5">The complete org map from the source document. Every box maps to a real AI assistant in this tool.</p>
+
+        {/* Legend */}
+        <div className="flex items-center gap-4 mb-5 px-3 py-2 rounded-lg bg-black/[0.02] border border-black/[0.04] text-[10px] justify-center">
+          <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm bg-blue-500" /><span className="text-foreground/50 font-medium">Agent</span></div>
+          <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm bg-emerald-600" /><span className="text-foreground/50 font-medium">Human-led</span></div>
+          <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm bg-amber-500" /><span className="text-foreground/50 font-medium">Agent + Human</span></div>
+          <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm bg-red-400" /><span className="text-foreground/50 font-medium">DRI Cluster</span></div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <div className="min-w-[800px]">
+            {/* C5 DRI Box */}
+            <div className="flex justify-center mb-3">
+              <div className="bg-foreground text-white px-6 py-3 rounded-xl text-center">
+                <div className="text-[10px] font-bold text-white/60 uppercase tracking-wider">Cluster 5</div>
+                <div className="text-[13px] font-bold">DRI // XFN Management</div>
+                <div className="text-[10px] text-white/50">Module 4: Executive Governance & BI</div>
+              </div>
             </div>
-          ))}
+
+            {/* Connector */}
+            <div className="flex justify-center mb-2">
+              <div className="w-px h-4 bg-foreground/20" />
+            </div>
+
+            {/* C5 sub-module nodes in rows */}
+            <div className="max-w-[700px] mx-auto mb-3">
+              {[c5Nodes.slice(0, 4), c5Nodes.slice(4, 8), c5Nodes.slice(8)].map((row, ri) => (
+                <div key={ri} className="flex justify-center gap-2 mb-2">
+                  {row.map(n => (
+                    <div key={n.id} className="w-[160px]">
+                      <MiniNode name={n.name} owner={n.owner} />
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+
+            {/* Connector + divider */}
+            <div className="flex justify-center mb-2">
+              <div className="w-px h-5 bg-foreground/20" />
+            </div>
+            <div className="border-t border-dashed border-foreground/15 mb-4" />
+
+            {/* 4 Cluster columns */}
+            <div className="grid grid-cols-4 gap-3">
+              {clusterCols.map(col => {
+                const colors = clusterHeaderColors[col.clusterId] || clusterHeaderColors[1];
+                return (
+                  <div key={col.clusterId}>
+                    {/* Cluster header */}
+                    <div className={`border-2 ${colors.border} rounded-xl p-3 text-center mb-3 bg-white`}>
+                      <div className={`text-[9px] font-bold uppercase tracking-wider ${colors.labelColor}`}>Cluster {col.clusterId}</div>
+                      <div className="text-[12px] font-bold text-foreground leading-tight whitespace-pre-line">{col.clusterName}</div>
+                    </div>
+
+                    {/* Sections + nodes */}
+                    {col.sections.map((sec, si) => (
+                      <div key={si} className="mb-3">
+                        <div className="text-[9px] font-bold text-foreground/30 uppercase tracking-wider mb-1.5 px-1">{sec.label}</div>
+                        <div className="space-y-1.5">
+                          {sec.nodes.map(n => (
+                            <MiniNode key={n.id} name={n.name} owner={n.owner} />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+
+                    {col.note && (
+                      <div className="text-[9px] text-foreground/30 italic text-center mt-2 whitespace-pre-line leading-relaxed">{col.note}</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: "Modules", value: stats.modules, sub: "Work modules" },
+          { label: "Agents", value: stats.totalPrompts, sub: "AI assistants" },
+          { label: "Clusters", value: stats.clusters, sub: "Human orchestrators" },
+          { label: "Sub-modules", value: stats.totalSubModules, sub: "Discrete work units" },
+        ].map((s, i) => (
+          <div key={i} className="text-center p-3 rounded-xl bg-black/[0.02] border border-black/[0.04]">
+            <div className="text-[20px] font-bold text-foreground">{s.value}</div>
+            <div className="text-[10px] text-foreground/40 font-semibold uppercase tracking-wider">{s.label}</div>
+            <div className="text-[10px] text-foreground/25">{s.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Module cards */}
       <div>
         <h3 className="text-[14px] font-bold text-foreground mb-3">Module → Feature Mapping</h3>
         <div className="space-y-3">
@@ -785,6 +876,7 @@ function ReferenceGuide() {
         </div>
       </div>
 
+      {/* Design principles */}
       <div>
         <h3 className="text-[14px] font-bold text-foreground mb-3">Design Principles → Implementation</h3>
         <div className="border border-border rounded-xl bg-white/60 overflow-hidden">
@@ -813,21 +905,19 @@ function ReferenceGuide() {
         </div>
       </div>
 
+      {/* Features */}
       <div>
-        <h3 className="text-[14px] font-bold text-foreground mb-3">Interactive Features Beyond Source Document</h3>
+        <h3 className="text-[14px] font-bold text-foreground mb-3">What You Can Do in This Tool</h3>
         <div className="border border-border rounded-xl bg-white/60 p-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[
-              { name: "Live Agent Execution", desc: "Click 'Run' on any agent to fire a real LLM call with full context", path: "/swarm" },
+              { name: "Run Any Agent", desc: "Click any node on the Org Chart or go to AI Assistants to fire a real LLM call", path: "/swarm" },
               { name: "Buyer Roleplay", desc: "Practice CTV pitches against AI-simulated buyers with deep technical knowledge", path: "/simulation" },
-              { name: "Competitive Scenarios", desc: "Head-to-head simulations against TTD, tvScientific, Roku, Amazon", path: "/war-room" },
-              { name: "AI-Generated Insights", desc: "Market intelligence, deal analysis, and pipeline insights on demand", path: "/data-pulse" },
+              { name: "Competitive Sims", desc: "Head-to-head simulations against TTD, tvScientific, Roku, Amazon", path: "/war-room" },
+              { name: "AI Insights", desc: "Market intelligence, deal analysis, and pipeline insights on demand", path: "/data-pulse" },
               { name: "Approval Queue", desc: "Review and approve AI-generated content before it goes to market", path: "/approvals" },
-              { name: "Conviction Dashboard", desc: "Track learning goals and conviction strength toward EOQ2 decision", path: "/conviction" },
-              { name: "Learning Loops", desc: "Visualize cross-module feedback loops and system connectivity", path: "/learning-loops" },
-              { name: "Weekly Prep", desc: "Auto-generated XFN leadership pre-reads from all modules", path: "/weekly-prep" },
-              { name: "Command Palette", desc: "Cmd+K to search agents, navigate pages, and trigger actions", path: "" },
-              { name: "Org Chart + Demo Mode", desc: "This page — visualize the entire system and watch it activate", path: "/org-chart" },
+              { name: "Dashboard", desc: "Full command center — run clusters, track outputs, monitor system health", path: "/" },
+              { name: "Org Chart + Demo", desc: "This page — visualize the entire system and watch it activate", path: "/org-chart" },
             ].map((f, i) => (
               <button
                 key={i}
