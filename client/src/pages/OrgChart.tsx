@@ -46,8 +46,10 @@ import {
   TrendingUp,
   Swords,
   RefreshCw,
+  ChevronUp,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useIsMobile } from "@/hooks/useMobile";
 
 // ── Constants ──
 const TOUR_KEY = "ctv-orgchart-tour-completed";
@@ -585,7 +587,7 @@ function ScenarioPickerModal({
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 30, scale: 0.95 }}
         transition={{ type: "spring", stiffness: 300, damping: 28 }}
-        className="relative w-full max-w-2xl rounded-2xl overflow-hidden"
+        className="relative w-full max-w-2xl rounded-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
         style={{
           background: "oklch(1 0 0 / 0.97)",
           backdropFilter: "blur(24px) saturate(1.5)",
@@ -683,9 +685,9 @@ function DemoNarrationBar({
         />
       </div>
 
-      <div className="flex items-center justify-between px-4 py-3">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3">
+        <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
             {isRunning ? (
               <motion.div
                 animate={{ rotate: 360 }}
@@ -711,13 +713,13 @@ function DemoNarrationBar({
             </motion.div>
           </div>
         </div>
-        <div className="flex items-center gap-3 shrink-0 ml-3">
-          <span className="text-[11px] font-mono text-foreground/30 tabular-nums">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-2 sm:ml-3">
+          <span className="text-[10px] sm:text-[11px] font-mono text-foreground/30 tabular-nums">
             {completedCount}/{totalSteps}
           </span>
           <button
             onClick={onStop}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-red-500 text-white hover:bg-red-600 transition-all"
+            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-[10px] sm:text-[11px] font-semibold bg-red-500 text-white hover:bg-red-600 transition-all"
           >
             <Pause className="w-3 h-3" /> Stop
           </button>
@@ -1051,10 +1053,137 @@ function ReferenceGuide() {
   );
 }
 
+// ── Mobile Cluster Stack (vertical accordion layout) ──
+function MobileClusterStack({
+  clusterColumns,
+  mergedActiveNodes,
+  tourHighlight,
+  tourDemoActiveNodes,
+  scenarioRunningNodes,
+  nodeOutputs,
+  handleNodeClick,
+  handleExpandNode,
+}: {
+  clusterColumns: ClusterColumn[];
+  mergedActiveNodes: Set<string>;
+  tourHighlight: string;
+  tourDemoActiveNodes: Set<string>;
+  scenarioRunningNodes: Set<string>;
+  nodeOutputs: Record<string, { output: string; isStreaming: boolean; runId?: string; durationMs?: number }>;
+  handleNodeClick: (node: TreeNode) => void;
+  handleExpandNode: (node: TreeNode) => void;
+}) {
+  const [expandedClusters, setExpandedClusters] = useState<Set<number>>(() => new Set([1]));
+
+  const toggleCluster = (id: number) => {
+    setExpandedClusters(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  return (
+    <div className="space-y-3">
+      {clusterColumns.map((col) => {
+        const hc = clusterHeaderColors[col.clusterId];
+        const isExpanded = expandedClusters.has(col.clusterId);
+        const nodeCount = col.sections.reduce((acc, s) => acc + s.nodes.length, 0);
+        const activeCount = col.sections.reduce((acc, s) => acc + s.nodes.filter(n => mergedActiveNodes.has(n.id)).length, 0);
+
+        return (
+          <motion.div
+            key={col.clusterId}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: col.clusterId * 0.05 }}
+            className={`rounded-xl border-2 ${hc.border} overflow-hidden bg-white ${tourHighlight === "clusters" ? "ring-2 ring-primary/30 shadow-md" : ""}`}
+          >
+            {/* Cluster header — tap to expand/collapse */}
+            <button
+              onClick={() => toggleCluster(col.clusterId)}
+              className="w-full flex items-center justify-between px-4 py-3 active:bg-black/[0.02] transition-colors"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${hc.border.replace('border-', 'bg-').replace('-400', '-100')}`}>
+                  <span className={`text-[12px] font-bold ${hc.labelColor}`}>C{col.clusterId}</span>
+                </div>
+                <div className="text-left min-w-0">
+                  <div className="text-[13px] font-bold text-foreground leading-tight truncate">
+                    {col.clusterName.replace('\n', ' ')}
+                  </div>
+                  <div className="text-[11px] text-foreground/35 mt-0.5">
+                    {nodeCount} agents{activeCount > 0 ? ` · ${activeCount} active` : ""}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {activeCount > 0 && (
+                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                )}
+                <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                  <ChevronDown className="w-4 h-4 text-foreground/30" />
+                </motion.div>
+              </div>
+            </button>
+
+            {/* Expandable node list */}
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 28 }}
+                  className="overflow-hidden"
+                >
+                  <div className="px-3 pb-3 space-y-3">
+                    {col.sections.map((sec, si) => (
+                      <div key={si}>
+                        <div className="text-[9px] font-bold uppercase tracking-wider text-foreground/25 mb-1.5 px-1">
+                          {sec.label}
+                        </div>
+                        <div className="space-y-1.5">
+                          {sec.nodes.map((node, ni) => (
+                            <TreeNodeBox
+                              key={node.id}
+                              node={node}
+                              isActive={mergedActiveNodes.has(node.id)}
+                              isHighlighted={tourHighlight === "clusters" || tourHighlight === "nodes"}
+                              isDemoActive={tourDemoActiveNodes.has(node.id) || scenarioRunningNodes.has(node.id)}
+                              onClick={() => handleNodeClick(node)}
+                              delay={si * 4 + ni}
+                              inlineOutput={nodeOutputs[node.id]?.output}
+                              isRunning={nodeOutputs[node.id]?.isStreaming}
+                              onExpand={nodeOutputs[node.id]?.output ? () => handleExpandNode(node) : undefined}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+
+                    {col.note && (
+                      <div className="px-2 py-1.5 text-[10px] text-foreground/30 italic leading-relaxed">
+                        {col.note}
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ── Main OrgChart page ──
 export default function OrgChart() {
   const [, navigate] = useLocation();
   const { runAgent, agentRuns, recentRuns, getStreamingOutput } = useAgent();
+  const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("chart");
   const [tourActive, setTourActive] = useState(false);
   const [tourStep, setTourStep] = useState(0);
@@ -1401,15 +1530,15 @@ export default function OrgChart() {
 
   const tourHighlight = tourActive ? tourSteps[tourStep]?.highlight : "none";
 
-  // C5 sub-modules arranged in rows (4-4-3 matching source image)
+  // C5 sub-modules arranged in rows (4-4-3 on desktop, 2 per row on mobile)
   const c5Rows = useMemo(() => {
     const rows: TreeNode[][] = [];
-    const perRow = 4;
+    const perRow = isMobile ? 2 : 4;
     for (let i = 0; i < c5Nodes.length; i += perRow) {
       rows.push(c5Nodes.slice(i, i + perRow));
     }
     return rows;
-  }, [c5Nodes]);
+  }, [c5Nodes, isMobile]);
 
   // Interstitial data
   const interstitialOutput = interstitialNode ? nodeOutputs[interstitialNode.id] : null;
@@ -1465,7 +1594,7 @@ export default function OrgChart() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6">
+          <TabsList className="mb-4 sm:mb-6">
             <TabsTrigger value="chart" className="flex items-center gap-1.5">
               <Network className="w-3.5 h-3.5" /> Org Chart
             </TabsTrigger>
@@ -1479,7 +1608,7 @@ export default function OrgChart() {
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-3 sm:gap-5 mb-6 px-4 py-3 rounded-xl bg-black/[0.02] border border-black/[0.04] overflow-x-auto scrollbar-hide justify-center"
+              className={`flex items-center gap-3 sm:gap-5 mb-4 sm:mb-6 px-3 sm:px-4 py-2 sm:py-3 rounded-xl bg-black/[0.02] border border-black/[0.04] ${isMobile ? "flex-wrap justify-center" : "overflow-x-auto scrollbar-hide justify-center"}`}
             >
               <div className="flex items-center gap-1.5 shrink-0">
                 <div className="w-3 h-3 rounded-sm bg-blue-500" />
@@ -1506,8 +1635,8 @@ export default function OrgChart() {
             </motion.div>
 
             {/* ═══ TREE LAYOUT ═══ */}
-            <div className="overflow-x-auto pb-4">
-              <div className="min-w-[900px]">
+            <div className={isMobile ? "pb-4" : "overflow-x-auto pb-4"}>
+              <div className={isMobile ? "" : "min-w-[900px]"}>
 
                 {/* ── C5 DRI Box (centered, dark) ── */}
                 <motion.div
@@ -1515,15 +1644,15 @@ export default function OrgChart() {
                   animate={{ opacity: 1, y: 0 }}
                   className={`flex justify-center mb-0 transition-all duration-500 ${tourHighlight === "clusters" || tourHighlight === "nodes" ? "opacity-40" : ""}`}
                 >
-                  <div className={`px-8 py-4 rounded-2xl bg-slate-800 text-center shadow-lg ${tourHighlight === "cluster-5" ? "ring-2 ring-primary/40 shadow-xl" : ""}`}>
-                    <div className="text-[14px] font-bold text-white">Cluster 5 — DRI // XFN Management</div>
+                  <div className={`${isMobile ? "px-5 py-3" : "px-8 py-4"} rounded-2xl bg-slate-800 text-center shadow-lg ${tourHighlight === "cluster-5" ? "ring-2 ring-primary/40 shadow-xl" : ""}`}>
+                    <div className={`${isMobile ? "text-[13px]" : "text-[14px]"} font-bold text-white`}>Cluster 5 — DRI // XFN Management</div>
                     <div className="text-[11px] text-slate-300 mt-0.5">Module 4: Executive Governance & BI</div>
                   </div>
                 </motion.div>
 
                 {/* Vertical connector */}
                 <div className="flex justify-center">
-                  <div className="w-px h-8 bg-slate-300 relative overflow-hidden">
+                  <div className={`w-px ${isMobile ? "h-5" : "h-8"} bg-slate-300 relative overflow-hidden`}>
                     {(tourDemoRunning || activeScenario) && (
                       <motion.div
                         className="absolute left-0 w-full h-3 bg-gradient-to-b from-transparent via-emerald-400 to-transparent"
@@ -1542,9 +1671,9 @@ export default function OrgChart() {
                   className={`space-y-2 mb-0 transition-all duration-500 ${tourHighlight === "clusters" || tourHighlight === "nodes" ? "opacity-40" : ""}`}
                 >
                   {c5Rows.map((row, ri) => (
-                    <div key={ri} className="flex justify-center gap-2 flex-wrap max-w-[800px] mx-auto">
+                    <div key={ri} className={`flex justify-center gap-2 flex-wrap ${isMobile ? "max-w-full px-1" : "max-w-[800px]"} mx-auto`}>
                       {row.map((node, ni) => (
-                        <div key={node.id} className="w-[185px]">
+                        <div key={node.id} className={isMobile ? "flex-1 min-w-0" : "w-[185px]"}>
                           <TreeNodeBox
                             node={node}
                             isActive={mergedActiveNodes.has(node.id)}
@@ -1564,7 +1693,7 @@ export default function OrgChart() {
 
                 {/* Vertical connector + horizontal divider */}
                 <div className="flex justify-center">
-                  <div className="w-px h-8 bg-slate-300 relative overflow-hidden">
+                  <div className={`w-px ${isMobile ? "h-5" : "h-8"} bg-slate-300 relative overflow-hidden`}>
                     {(tourDemoRunning || activeScenario) && (
                       <motion.div
                         className="absolute left-0 w-full h-3 bg-gradient-to-b from-transparent via-emerald-400 to-transparent"
@@ -1574,65 +1703,78 @@ export default function OrgChart() {
                     )}
                   </div>
                 </div>
-                <div className="border-t border-slate-200 mb-6 mx-8" />
+                <div className={`border-t border-slate-200 ${isMobile ? "mb-4 mx-2" : "mb-6 mx-8"}`} />
 
-                {/* ── Four Cluster Columns ── */}
-                <div className={`grid grid-cols-4 gap-4 transition-all duration-500 ${tourHighlight === "cluster-5" ? "opacity-40" : ""}`}>
-                  {clusterColumns.map((col) => {
-                    const hc = clusterHeaderColors[col.clusterId];
-                    return (
-                      <motion.div
-                        key={col.clusterId}
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.15 + col.clusterId * 0.05 }}
-                        className="flex flex-col"
-                      >
-                        {/* Cluster header */}
-                        <div className={`border-2 ${hc.border} rounded-xl px-4 py-3 text-center mb-4 ${hc.bg} ${tourHighlight === "clusters" ? "ring-2 ring-primary/30 shadow-md" : ""}`}>
-                          <div className={`text-[10px] font-bold uppercase tracking-wider ${hc.labelColor}`}>
-                            Cluster {col.clusterId}
-                          </div>
-                          <div className="text-[13px] font-bold text-foreground leading-tight mt-0.5 whitespace-pre-line">
-                            {col.clusterName}
-                          </div>
-                        </div>
-
-                        {/* Sections + nodes */}
-                        {col.sections.map((sec, si) => (
-                          <div key={si} className="mb-3">
-                            <div className="text-[9px] font-bold uppercase tracking-wider text-foreground/25 mb-2 px-1">
-                              {sec.label}
+                {/* ── Cluster Columns: 4-col grid on desktop, vertical stack on mobile ── */}
+                {isMobile ? (
+                  <MobileClusterStack
+                    clusterColumns={clusterColumns}
+                    mergedActiveNodes={mergedActiveNodes}
+                    tourHighlight={tourHighlight}
+                    tourDemoActiveNodes={tourDemoActiveNodes}
+                    scenarioRunningNodes={scenarioRunningNodes}
+                    nodeOutputs={nodeOutputs}
+                    handleNodeClick={handleNodeClick}
+                    handleExpandNode={handleExpandNode}
+                  />
+                ) : (
+                  <div className={`grid grid-cols-4 gap-4 transition-all duration-500 ${tourHighlight === "cluster-5" ? "opacity-40" : ""}`}>
+                    {clusterColumns.map((col) => {
+                      const hc = clusterHeaderColors[col.clusterId];
+                      return (
+                        <motion.div
+                          key={col.clusterId}
+                          initial={{ opacity: 0, y: 12 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.15 + col.clusterId * 0.05 }}
+                          className="flex flex-col"
+                        >
+                          {/* Cluster header */}
+                          <div className={`border-2 ${hc.border} rounded-xl px-4 py-3 text-center mb-4 ${hc.bg} ${tourHighlight === "clusters" ? "ring-2 ring-primary/30 shadow-md" : ""}`}>
+                            <div className={`text-[10px] font-bold uppercase tracking-wider ${hc.labelColor}`}>
+                              Cluster {col.clusterId}
                             </div>
-                            <div className="space-y-1.5">
-                              {sec.nodes.map((node, ni) => (
-                                <TreeNodeBox
-                                  key={node.id}
-                                  node={node}
-                                  isActive={mergedActiveNodes.has(node.id)}
-                                  isHighlighted={tourHighlight === "clusters" || tourHighlight === "nodes"}
-                                  isDemoActive={tourDemoActiveNodes.has(node.id) || scenarioRunningNodes.has(node.id)}
-                                  onClick={() => handleNodeClick(node)}
-                                  delay={12 + col.clusterId * 8 + si * 4 + ni}
-                                  inlineOutput={nodeOutputs[node.id]?.output}
-                                  isRunning={nodeOutputs[node.id]?.isStreaming}
-                                  onExpand={nodeOutputs[node.id]?.output ? () => handleExpandNode(node) : undefined}
-                                />
-                              ))}
+                            <div className="text-[13px] font-bold text-foreground leading-tight mt-0.5 whitespace-pre-line">
+                              {col.clusterName}
                             </div>
                           </div>
-                        ))}
 
-                        {/* Note (for Cluster 3) */}
-                        {col.note && (
-                          <div className="mt-1 px-2 py-2 text-[10px] text-foreground/30 italic leading-relaxed whitespace-pre-line text-center">
-                            {col.note}
-                          </div>
-                        )}
-                      </motion.div>
-                    );
-                  })}
-                </div>
+                          {/* Sections + nodes */}
+                          {col.sections.map((sec, si) => (
+                            <div key={si} className="mb-3">
+                              <div className="text-[9px] font-bold uppercase tracking-wider text-foreground/25 mb-2 px-1">
+                                {sec.label}
+                              </div>
+                              <div className="space-y-1.5">
+                                {sec.nodes.map((node, ni) => (
+                                  <TreeNodeBox
+                                    key={node.id}
+                                    node={node}
+                                    isActive={mergedActiveNodes.has(node.id)}
+                                    isHighlighted={tourHighlight === "clusters" || tourHighlight === "nodes"}
+                                    isDemoActive={tourDemoActiveNodes.has(node.id) || scenarioRunningNodes.has(node.id)}
+                                    onClick={() => handleNodeClick(node)}
+                                    delay={12 + col.clusterId * 8 + si * 4 + ni}
+                                    inlineOutput={nodeOutputs[node.id]?.output}
+                                    isRunning={nodeOutputs[node.id]?.isStreaming}
+                                    onExpand={nodeOutputs[node.id]?.output ? () => handleExpandNode(node) : undefined}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+
+                          {/* Note (for Cluster 3) */}
+                          {col.note && (
+                            <div className="mt-1 px-2 py-2 text-[10px] text-foreground/30 italic leading-relaxed whitespace-pre-line text-center">
+                              {col.note}
+                            </div>
+                          )}
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1641,7 +1783,7 @@ export default function OrgChart() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
-              className="mt-6 text-center text-[11px] text-foreground/25 font-medium"
+              className={`${isMobile ? "mt-4" : "mt-6"} text-center text-[10px] sm:text-[11px] text-foreground/25 font-medium`}
             >
               Click any node to execute its agent · Hit Demo to run a full scenario · Source: AI-First CTV Commercial Operating Model (Mar 9, 2026)
             </motion.div>

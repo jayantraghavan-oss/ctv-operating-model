@@ -321,3 +321,40 @@
 - [x] Node shows completion state with output snippet after agent finishes
 - [x] Expand button on each node with output → opens OutputInterstitial for full scrollable view
 - [x] Elegant output lacing: spring animation on inline output appearance, Streamdown markdown rendering
+
+## Phase 33: Comprehensive Bug Hunt & Fix
+- [ ] TypeScript strict-mode errors and type warnings
+- [ ] Production build errors (vite build + esbuild)
+- [ ] Runtime console errors on every page
+- [ ] Network/API errors (LLM proxy, tRPC)
+- [ ] Data integrity: prompt→module→section→subModule mapping correctness
+- [ ] Data integrity: duplicate/missing prompts, orphaned references
+- [ ] OrgChart node→prompt mapping correctness (every node fires the right agent)
+- [ ] OrgChart scenario demo: all 4 scenarios fire correct nodes
+- [ ] OrgChart inline output tracking: streaming→completed state transitions
+- [ ] OrgChart interstitial: output display, re-run, close behavior
+- [ ] OrgChart tour: all 7 steps, demo animation, skip/complete
+- [ ] Sidebar navigation: all links work, no broken routes
+- [ ] CommandPalette: all actions work, no stale references
+- [ ] Mobile responsiveness: all pages render correctly on 375px
+- [ ] Agent execution: run from every page (Swarm, Module, Dashboard, OrgChart)
+- [ ] Notification system: bell icon, dropdown, mark-read
+- [ ] BuyerSim: conversation flow, persona switching, agent traces
+- [ ] Competitive Sims: scenario execution, output display
+- [ ] Insights page: all tabs, AI analysis buttons
+- [ ] Approval Queue: empty state, output display
+- [ ] Learning Loops / Conviction pages: data display, navigation
+- [ ] Edge cases: empty state handling, error boundaries, loading states
+- [ ] Performance: no infinite re-render loops, no memory leaks
+- [ ] Accessibility: focus management, keyboard navigation
+
+## Phase 34: Control Center Mobile Layout Fix
+- [x] Fix 4-column cluster grid — MobileClusterStack accordion on mobile
+- [x] Fix C5 sub-module rows — 2 per row on mobile (flex-1 min-w-0)
+- [x] Fix header/buttons — already responsive (flex-col sm:flex-row)
+- [x] Fix scenario picker modal — max-h-[90vh] overflow-y-auto for scrolling
+- [x] Fix narration bar — compact padding/gaps on mobile
+- [x] Fix legend — flex-wrap on mobile
+- [x] Fix tour overlay — already responsive (96vw on mobile, max-w-xl)
+- [x] Keep tree structure feel on mobile — C5 box → connector → C5 nodes → divider → accordion clusters
+- [x] All 48 tests passing, TypeScript no errors
