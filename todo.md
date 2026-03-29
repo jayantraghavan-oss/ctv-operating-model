@@ -465,3 +465,15 @@
 - [x] AgentContext: Track approval status (pending, approved, rejected)
 - [x] Persist A+H edits and re-prompts to DB via tRPC (humanEditedOutput, humanPrompt, approvalStatus columns)
 - [x] Add 5 new vitest tests for A+H database operations (74 total passing)
+
+## Phase 41: Workflow Roleplay Chat Window
+- [x] Build WorkflowChat component — inline chat panel with buyer persona
+- [x] Wire chat to open after workflow completion on OrgChart (Control Center)
+- [x] Pre-load chat with workflow agent outputs as briefing context
+- [x] AI buyer persona adapts to workflow scenario (gaming VP, DTC CMO, agency director, RMN VP)
+- [x] Each chat message shows agent trace (which modules/agents activate)
+- [x] User can type free-form messages as the Moloco seller
+- [x] Conversation history maintained throughout the chat session
+- [x] Mobile-friendly chat UI with floating input bar
+- [x] Reset/close chat and return to summary
+- [x] Save chat session to DB alongside workflow session (onSaveSession prop wired)

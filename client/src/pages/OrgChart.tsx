@@ -7,6 +7,7 @@
  */
 import NeuralShell from "@/components/NeuralShell";
 import OutputInterstitial from "@/components/OutputInterstitial";
+import WorkflowChat from "@/components/WorkflowChat";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAgent } from "@/contexts/AgentContext";
 import { useLocation } from "wouter";
@@ -795,12 +796,14 @@ function ScenarioSummaryPanel({
   nodeMap,
   onClose,
   onRerun,
+  onStartRoleplay,
 }: {
   scenario: DemoScenario;
   nodeOutputs: Record<string, { output: string; isStreaming: boolean; runId?: string; durationMs?: number }>;
   nodeMap: Record<string, TreeNode>;
   onClose: () => void;
   onRerun: () => void;
+  onStartRoleplay?: () => void;
 }) {
   const [expandedNode, setExpandedNode] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -925,6 +928,14 @@ function ScenarioSummaryPanel({
                 <><Save className="w-3.5 h-3.5" /> Save Session</>
               )}
             </button>
+            {onStartRoleplay && (
+              <button
+                onClick={onStartRoleplay}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-gradient-to-r from-violet-500 to-purple-600 text-white hover:from-violet-600 hover:to-purple-700 transition-all shadow-sm"
+              >
+                <MessageSquare className="w-3.5 h-3.5" /> Roleplay with Buyer
+              </button>
+            )}
             <button
               onClick={onRerun}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-primary/8 text-primary hover:bg-primary/12 transition-all"
@@ -1016,11 +1027,25 @@ function ScenarioSummaryPanel({
           })}
         </div>
 
-        {/* Footer */}
+        {/* Footer with prominent Roleplay CTA */}
         <div className="px-5 sm:px-6 py-3 border-t border-black/[0.06] bg-black/[0.015] shrink-0">
-          <p className="text-[11px] text-foreground/30 text-center">
-            {completedNodes.length} of {scenario.nodeSequence.length} agents completed · Total execution: {(totalDuration / 1000).toFixed(1)}s
-          </p>
+          {onStartRoleplay ? (
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] text-foreground/30">
+                {completedNodes.length} of {scenario.nodeSequence.length} agents completed · {(totalDuration / 1000).toFixed(1)}s
+              </p>
+              <button
+                onClick={onStartRoleplay}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-semibold bg-gradient-to-r from-violet-500 to-purple-600 text-white hover:from-violet-600 hover:to-purple-700 transition-all shadow-sm"
+              >
+                <MessageSquare className="w-4 h-4" /> Practice the Pitch
+              </button>
+            </div>
+          ) : (
+            <p className="text-[11px] text-foreground/30 text-center">
+              {completedNodes.length} of {scenario.nodeSequence.length} agents completed · Total execution: {(totalDuration / 1000).toFixed(1)}s
+            </p>
+          )}
         </div>
       </motion.div>
     </motion.div>
@@ -1504,6 +1529,10 @@ export default function OrgChart() {
 
   // Interstitial state
   const [interstitialNode, setInterstitialNode] = useState<TreeNode | null>(null);
+
+  // Roleplay chat state
+  const [showRoleplayChat, setShowRoleplayChat] = useState(false);
+  const [roleplayScenario, setRoleplayScenario] = useState<DemoScenario | null>(null);
 
   const stats = getTotalStats();
 
@@ -2217,6 +2246,10 @@ Return format: { "name": "<workflow name>", "nodeIds": ["id1", "id2", ...], "nar
                 setCompletedScenario(null);
                 startScenarioDemo(completedScenario);
               }}
+              onStartRoleplay={() => {
+                setRoleplayScenario(completedScenario);
+                setShowRoleplayChat(true);
+              }}
             />
           )}
         </AnimatePresence>
@@ -2241,6 +2274,25 @@ Return format: { "name": "<workflow name>", "nodeIds": ["id1", "id2", ...], "nar
           onRePrompt={rePromptAgent}
           onApprove={approveRun}
           onReject={rejectRun}
+        />
+
+        {/* Workflow Roleplay Chat */}
+        <WorkflowChat
+          open={showRoleplayChat}
+          onClose={() => setShowRoleplayChat(false)}
+          scenarioName={roleplayScenario?.name || ""}
+          scenarioDescription={roleplayScenario?.description || ""}
+          agentOutputs={
+            roleplayScenario
+              ? roleplayScenario.nodeSequence
+                  .filter((id) => nodeOutputs[id]?.output && !nodeOutputs[id]?.isStreaming)
+                  .map((id) => ({
+                    nodeName: nodeMap[id]?.name || id,
+                    output: nodeOutputs[id]?.output || "",
+                    moduleId: nodeMap[id]?.moduleId,
+                  }))
+              : []
+          }
         />
       </div>
     </NeuralShell>

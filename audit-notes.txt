@@ -2,3 +2,5 @@ Screenshot observation: App renders correctly. Control Center page with Org Char
 Welcome modal visible. A+H badges visible on nodes (Test Fund Burn Tracking, OKR & Action Item Tracking, etc.).
 Sidebar: Control Center, Toolkit, Buyer Roleplay. Sign In at bottom.
 Clusters visible at bottom. No console errors. Build clean.
+WorkflowChat component added, wired to ScenarioSummaryPanel via onStartRoleplay prop.
+TypeScript: 0 errors. Build: clean. Tests: 74/74 passing.
