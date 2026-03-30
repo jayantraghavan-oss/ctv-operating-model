@@ -310,6 +310,12 @@ export function AgentProvider({ children }: { children: ReactNode }) {
   ) => {
     const runId = genId();
     const startTime = Date.now();
+
+    // Fetch live context from server (non-blocking — enriches prompt if available)
+    const liveContextPromise = fetch(`/api/trpc/liveData.enrichContext?batch=1&input=${encodeURIComponent(JSON.stringify({ "0": { json: { moduleId, subModuleName } } }))}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => data?.[0]?.result?.data?.json?.formatted || null)
+      .catch(() => null);
     const run: AgentRun = {
       id: runId,
       promptId,
@@ -360,18 +366,20 @@ export function AgentProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    // Fire real LLM call with streaming
-    executeAgentPromptStream(
-      promptText,
-      moduleId,
-      subModuleName,
-      agentType,
-      owner,
-      (_chunk, accumulated) => {
-        streamingOutputs.current[runId] = accumulated;
-        throttledTick();
-      },
-    )
+    // Fire real LLM call with streaming — inject live context if available
+    liveContextPromise.then((liveCtx) => {
+      executeAgentPromptStream(
+        promptText,
+        moduleId,
+        subModuleName,
+        agentType,
+        owner,
+        (_chunk, accumulated) => {
+          streamingOutputs.current[runId] = accumulated;
+          throttledTick();
+        },
+        liveCtx || undefined,
+      )
       .then((output) => {
         const durationMs = Date.now() - startTime;
         // Clean up streaming output
@@ -422,7 +430,7 @@ export function AgentProvider({ children }: { children: ReactNode }) {
         setStreamingTick((t) => t + 1);
 
         // Fallback: try non-streaming
-        executeAgentPrompt(promptText, moduleId, subModuleName, agentType, owner)
+        executeAgentPrompt(promptText, moduleId, subModuleName, agentType, owner, liveCtx || undefined)
           .then((output) => {
             const totalDuration = Date.now() - startTime;
             setState((prev) => {
@@ -475,6 +483,7 @@ export function AgentProvider({ children }: { children: ReactNode }) {
             });
           });
       });
+    }); // close liveContextPromise.then
   }, []);
 
   const addClusterNote = useCallback((clusterId: number, text: string) => {

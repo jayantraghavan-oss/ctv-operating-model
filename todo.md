@@ -484,3 +484,28 @@
 - [x] Standalone markdown doc for sharing
 - [x] Rewrite 1-pager in Sushant's terse writing style from original doc
 - [x] Update Reference Guide embed to match terse rewrite
+
+## Phase 43: Live Data Integration — Gong, Salesforce, Sensor Tower, Speedboat MCP
+### Server-side Connector- [x] Build Gong connector (Python subprocess calling gong_connector.py from server)- [x] Build Salesforce connector (Python subprocess calling sf_connector.py from server)
+- [x] Build Sensor Tower connector (Python subprocess calling sensor_tower_api.py from server)
+- [x] Build Speedboat MCP connector (manus-mcp-cli calls from server)
+- [x] Create unified data context builder that aggregates all sources
+### tRPC API Layer
+- [x] Add liveData.gong procedure (calls, transcripts, stats)
+- [x] Add liveData.salesforce procedure (accounts, opportunities, pipeline)
+- [x] Add liveData.sensorTower procedure (app performance, rankings, SDK intel)
+- [x] Add liveData.speedboat procedure (advertiser performance, campaigns, geo)
+- [x] Add liveData.status procedure (health check all connectors)
+- [x] Add liveData.enrichContext procedure (aggregate context for agent prompts)
+### Agent Prompt Enrichment
+- [x] Update buildAgentSystemPrompt to accept and inject live context
+- [x] Map each module to its relevant data sources (M1→ST+Speedboat, M2→Gong+SF+Speedboat, M3→Gong+SF+Speedboat, M4→SF+Speedboat+ST)
+- [x] Inject live context as structured data blocks in system prompt
+- [x] Fall back gracefully to synthetic context if live sources are unavailable
+### UI Indicators
+- [x] Add LiveDataStatus component to NeuralShell header (desktop + mobile)
+- [x] Show "Live Data" badge on OutputInterstitial when context was enriched
+- [x] Add refresh button in LiveDataStatus popover
+### Testing
+- [x] Write vitest tests for live data connector logic (9 new tests)
+- [x] Test graceful fallback when connectors are unavailable (83 total tests passing)

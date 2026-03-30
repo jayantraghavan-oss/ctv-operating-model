@@ -23,6 +23,7 @@ import { useState, useEffect, useRef, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { getTotalStats } from "@/lib/data";
 import { getLoginUrl } from "@/const";
+import LiveDataStatus from "@/components/LiveDataStatus";
 
 const MOLOCO_LOGO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663459898851/Wr22fCMnjpJGgmtKZSL2hG/moloco-logo-blue_486481be.png";
 
@@ -218,6 +219,7 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
             </div>
           </div>
           <div className="flex items-center gap-1.5">
+            <LiveDataStatus />
             <button
               onClick={() => window.location.reload()}
               className="p-2.5 rounded-xl hover:bg-black/[0.03] transition-colors active:bg-black/[0.06]"
@@ -412,6 +414,7 @@ export default function NeuralShell({ children }: { children: ReactNode }) {
             <span className="font-medium">{pageName}</span>
           </div>
           <div className="flex items-center gap-4 text-[13px]">
+            <LiveDataStatus />
             <button
               onClick={() => window.location.reload()}
               className="p-1.5 rounded-lg hover:bg-black/[0.03] transition-colors group"

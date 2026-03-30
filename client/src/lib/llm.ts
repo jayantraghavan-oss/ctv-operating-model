@@ -231,6 +231,7 @@ export function buildAgentSystemPrompt(
   subModuleName: string,
   agentType: string,
   owner: string,
+  liveContext?: string,
 ): string {
   const moduleNames: Record<number, string> = {
     1: "Market Intelligence & Positioning",
@@ -295,6 +296,7 @@ Moloco is entering the CTV (Connected TV) advertising market with an ML-first DS
 - **Retail Media integration** — Moloco Commerce Media (MCM) for 1P data activation on CTV
 
 ${moduleDeepContext[moduleId] || ""}
+${liveContext ? `\n${liveContext}` : ""}
 
 ## Your Task
 ${promptText}
@@ -322,8 +324,9 @@ export async function executeAgentPrompt(
   subModuleName: string,
   agentType: string = "persistent",
   owner: string = "agent",
+  liveContext?: string,
 ): Promise<string> {
-  const systemPrompt = buildAgentSystemPrompt(promptText, moduleId, subModuleName, agentType, owner);
+  const systemPrompt = buildAgentSystemPrompt(promptText, moduleId, subModuleName, agentType, owner, liveContext);
 
   const response = await callLLM([
     { role: "system", content: systemPrompt },
@@ -345,8 +348,9 @@ export async function executeAgentPromptStream(
   agentType: string = "persistent",
   owner: string = "agent",
   onChunk: (chunk: string, accumulated: string) => void,
+  liveContext?: string,
 ): Promise<string> {
-  const systemPrompt = buildAgentSystemPrompt(promptText, moduleId, subModuleName, agentType, owner);
+  const systemPrompt = buildAgentSystemPrompt(promptText, moduleId, subModuleName, agentType, owner, liveContext);
 
   const response = await callLLMStream(
     [

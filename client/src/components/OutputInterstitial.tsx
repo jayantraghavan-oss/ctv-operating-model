@@ -218,6 +218,12 @@ export default function OutputInterstitial({
                         {approvalBadge.label}
                       </span>
                     )}
+                    {output && output.includes("## Live Data Context") && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border border-cyan-200 bg-cyan-50 text-cyan-600">
+                        <Sparkles className="w-3 h-3" />
+                        Live Data
+                      </span>
+                    )}
                     {humanEditedOutput && (
                       <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border text-violet-600 bg-violet-50 border-violet-200">
                         <Pencil className="w-3 h-3" />

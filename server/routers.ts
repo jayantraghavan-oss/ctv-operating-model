@@ -12,6 +12,17 @@ import {
   getWorkflowSession,
   getWorkflowSessionStats,
 } from "./db";
+import {
+  checkConnectorStatus,
+  getLastStatus,
+  getGongContext,
+  getSalesforceContext,
+  getSensorTowerContext,
+  getSpeedboatContext,
+  enrichContext,
+  formatContextForPrompt,
+  clearCache,
+} from "./liveData";
 
 export const appRouter = router({
   llm: router({
@@ -132,6 +143,106 @@ export const appRouter = router({
      */
     stats: publicProcedure.query(async () => {
       return getAgentRunStats();
+    }),
+  }),
+
+  liveData: router({
+    /**
+     * Check health/connectivity of all live data sources.
+     */
+    status: publicProcedure.query(async () => {
+      const status = await checkConnectorStatus();
+      return status;
+    }),
+
+    /**
+     * Get cached status without re-checking (fast).
+     */
+    cachedStatus: publicProcedure.query(async () => {
+      return getLastStatus();
+    }),
+
+    /**
+     * Pull Gong call intelligence.
+     */
+    gong: publicProcedure
+      .input(
+        z.object({
+          accountName: z.string().optional(),
+          days: z.number().optional().default(30),
+        }).optional()
+      )
+      .query(async ({ input }) => {
+        return getGongContext(input?.accountName, input?.days);
+      }),
+
+    /**
+     * Pull Salesforce pipeline and account data.
+     */
+    salesforce: publicProcedure
+      .input(
+        z.object({
+          accountName: z.string().optional(),
+        }).optional()
+      )
+      .query(async ({ input }) => {
+        return getSalesforceContext(input?.accountName);
+      }),
+
+    /**
+     * Pull Sensor Tower app intelligence.
+     */
+    sensorTower: publicProcedure
+      .input(
+        z.object({
+          appIds: z.array(z.string()).optional(),
+          category: z.string().optional(),
+        }).optional()
+      )
+      .query(async ({ input }) => {
+        return getSensorTowerContext(input?.appIds, input?.category);
+      }),
+
+    /**
+     * Pull Speedboat advertiser performance.
+     */
+    speedboat: publicProcedure
+      .input(
+        z.object({
+          advertiserName: z.string().optional(),
+        }).optional()
+      )
+      .query(async ({ input }) => {
+        return getSpeedboatContext(input?.advertiserName);
+      }),
+
+    /**
+     * Enrich context for a specific module — aggregates all relevant sources.
+     * Returns formatted context string ready for agent prompt injection.
+     */
+    enrichContext: publicProcedure
+      .input(
+        z.object({
+          moduleId: z.number(),
+          subModuleName: z.string().optional(),
+          accountName: z.string().optional(),
+        })
+      )
+      .query(async ({ input }) => {
+        const context = await enrichContext(input.moduleId, input.subModuleName, input.accountName);
+        const formatted = formatContextForPrompt(context);
+        return {
+          ...context,
+          formatted,
+        };
+      }),
+
+    /**
+     * Clear all cached data (force refresh).
+     */
+    clearCache: publicProcedure.mutation(async () => {
+      clearCache();
+      return { cleared: true };
     }),
   }),
 
