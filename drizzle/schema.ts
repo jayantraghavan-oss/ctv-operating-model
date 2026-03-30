@@ -47,6 +47,23 @@ export const agentRuns = mysqlTable("agent_runs", {
  * Each session stores the scenario/query, all agent outputs compiled into a single doc,
  * and metadata about the run.
  */
+/**
+ * Agent Output Feedback — thumbs up/down + comments on agent outputs.
+ * Tracks whether live data context improved output quality.
+ */
+export const agentFeedback = mysqlTable("agent_feedback", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  runId: varchar("run_id", { length: 64 }).notNull(),
+  promptId: int("prompt_id").notNull(),
+  moduleId: int("module_id").notNull(),
+  rating: mysqlEnum("rating", ["up", "down"]).notNull(),
+  comment: text("comment"),
+  hadLiveContext: int("had_live_context").default(0), // 1 = grounded in live data, 0 = synthetic
+  liveDataSources: text("live_data_sources"), // JSON array of source names
+  userId: varchar("user_id", { length: 255 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const workflowSessions = mysqlTable("workflow_sessions", {
   id: varchar("id", { length: 64 }).primaryKey(),
   name: varchar("name", { length: 500 }).notNull(),

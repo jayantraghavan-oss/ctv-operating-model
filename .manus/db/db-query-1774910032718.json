@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `agent_feedback` (\n\t`id` varchar(64) NOT NULL,\n\t`run_id` varchar(64) NOT NULL,\n\t`prompt_id` int NOT NULL,\n\t`module_id` int NOT NULL,\n\t`rating` enum('up','down') NOT NULL,\n\t`comment` text,\n\t`had_live_context` int DEFAULT 0,\n\t`live_data_sources` text,\n\t`user_id` varchar(255),\n\t`created_at` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `agent_feedback_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3pmUMCqAYdoymgd.604dbdf7168e --database Wr22fCMnjpJGgmtKZSL2hG --execute CREATE TABLE IF NOT EXISTS `agent_feedback` (\n\t`id` varchar(64) NOT NULL,\n\t`run_id` varchar(64) NOT NULL,\n\t`prompt_id` int NOT NULL,\n\t`module_id` int NOT NULL,\n\t`rating` enum('up','down') NOT NULL,\n\t`comment` text,\n\t`had_live_context` int DEFAULT 0,\n\t`live_data_sources` text,\n\t`user_id` varchar(255),\n\t`created_at` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `agent_feedback_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 316
+}

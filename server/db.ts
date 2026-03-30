@@ -4,7 +4,7 @@
  */
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import { agentRuns, workflowSessions } from "../drizzle/schema";
+import { agentRuns, workflowSessions, agentFeedback } from "../drizzle/schema";
 import { eq, desc, and, sql } from "drizzle-orm";
 
 // Lazy singleton connection
@@ -197,6 +197,67 @@ export async function getWorkflowSessionStats() {
       customCount: sql<number>`SUM(CASE WHEN query_type = 'custom' THEN 1 ELSE 0 END)`,
     })
     .from(workflowSessions);
+  return result;
+}
+
+// ── Feedback Helpers ─────────────────────────────────────────────────
+
+export interface SaveFeedbackInput {
+  id: string;
+  runId: string;
+  promptId: number;
+  moduleId: number;
+  rating: "up" | "down";
+  comment?: string;
+  hadLiveContext?: boolean;
+  liveDataSources?: string[];
+  userId?: string;
+}
+
+export async function saveFeedback(input: SaveFeedbackInput) {
+  const db = getDb();
+  await db.insert(agentFeedback).values({
+    id: input.id,
+    runId: input.runId,
+    promptId: input.promptId,
+    moduleId: input.moduleId,
+    rating: input.rating,
+    comment: input.comment || null,
+    hadLiveContext: input.hadLiveContext ? 1 : 0,
+    liveDataSources: input.liveDataSources ? JSON.stringify(input.liveDataSources) : null,
+    userId: input.userId || null,
+  });
+  return { id: input.id };
+}
+
+export async function listFeedback(opts?: { runId?: string; moduleId?: number; limit?: number }) {
+  const db = getDb();
+  const conditions = [];
+  if (opts?.runId) conditions.push(eq(agentFeedback.runId, opts.runId));
+  if (opts?.moduleId) conditions.push(eq(agentFeedback.moduleId, opts.moduleId));
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
+  const rows = await db
+    .select()
+    .from(agentFeedback)
+    .where(where)
+    .orderBy(desc(agentFeedback.createdAt))
+    .limit(opts?.limit || 100);
+  return rows;
+}
+
+export async function getFeedbackStats() {
+  const db = getDb();
+  const [result] = await db
+    .select({
+      total: sql<number>`COUNT(*)`,
+      thumbsUp: sql<number>`SUM(CASE WHEN rating = 'up' THEN 1 ELSE 0 END)`,
+      thumbsDown: sql<number>`SUM(CASE WHEN rating = 'down' THEN 1 ELSE 0 END)`,
+      withLiveContext: sql<number>`SUM(CASE WHEN had_live_context = 1 THEN 1 ELSE 0 END)`,
+      withoutLiveContext: sql<number>`SUM(CASE WHEN had_live_context = 0 THEN 1 ELSE 0 END)`,
+      liveContextUpRate: sql<number>`ROUND(SUM(CASE WHEN had_live_context = 1 AND rating = 'up' THEN 1 ELSE 0 END) / GREATEST(SUM(CASE WHEN had_live_context = 1 THEN 1 ELSE 0 END), 1) * 100, 1)`,
+      syntheticUpRate: sql<number>`ROUND(SUM(CASE WHEN had_live_context = 0 AND rating = 'up' THEN 1 ELSE 0 END) / GREATEST(SUM(CASE WHEN had_live_context = 0 THEN 1 ELSE 0 END), 1) * 100, 1)`,
+    })
+    .from(agentFeedback);
   return result;
 }
 

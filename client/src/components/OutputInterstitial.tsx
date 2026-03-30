@@ -9,7 +9,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   X, Bot, UserCheck, Users2, Play, Clock, FileText, ChevronDown,
   Pencil, CheckCircle2, XCircle, Send, RotateCcw, History,
-  MessageSquare, Save, Undo2, Sparkles, Copy,
+  MessageSquare, Save, Undo2, Sparkles, Copy, ThumbsUp, ThumbsDown,
 } from "lucide-react";
 import { Streamdown } from "streamdown";
 import { toast } from "sonner";
@@ -34,6 +34,11 @@ interface OutputInterstitialProps {
   onRePrompt?: (runId: string, humanPrompt: string) => void;
   onApprove?: (runId: string) => void;
   onReject?: (runId: string) => void;
+  // Feedback props
+  promptId?: number;
+  moduleId?: number;
+  hadLiveContext?: boolean;
+  liveDataSources?: string[];
 }
 
 const ownershipConfig: Record<string, { label: string; color: string; icon: typeof Bot }> = {
@@ -64,12 +69,21 @@ export default function OutputInterstitial({
   onRePrompt,
   onApprove,
   onReject,
+  // Feedback props
+  promptId,
+  moduleId,
+  hadLiveContext,
+  liveDataSources,
 }: OutputInterstitialProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState("");
   const [showRePrompt, setShowRePrompt] = useState(false);
   const [rePromptText, setRePromptText] = useState("");
   const [showHistory, setShowHistory] = useState(false);
+  const [feedbackRating, setFeedbackRating] = useState<"up" | "down" | null>(null);
+  const [feedbackComment, setFeedbackComment] = useState("");
+  const [showFeedbackComment, setShowFeedbackComment] = useState(false);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const rePromptRef = useRef<HTMLTextAreaElement>(null);
 
@@ -104,6 +118,10 @@ export default function OutputInterstitial({
       setShowRePrompt(false);
       setShowHistory(false);
       setRePromptText("");
+      setFeedbackRating(null);
+      setFeedbackComment("");
+      setShowFeedbackComment(false);
+      setFeedbackSubmitted(false);
     }
   }, [open]);
 
@@ -151,6 +169,47 @@ export default function OutputInterstitial({
   const copyOutput = () => {
     navigator.clipboard.writeText(displayOutput);
     toast.success("Copied to clipboard");
+  };
+
+  const submitFeedback = async (rating: "up" | "down") => {
+    if (!runId) return;
+    setFeedbackRating(rating);
+    if (rating === "down") {
+      setShowFeedbackComment(true);
+      return;
+    }
+    // Submit immediately for thumbs up
+    await persistFeedback(rating, "");
+  };
+
+  const persistFeedback = async (rating: "up" | "down", comment: string) => {
+    if (!runId) return;
+    try {
+      const fbId = `fb-${runId}-${Date.now()}`;
+      await fetch("/api/trpc/feedback.submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          "0": {
+            json: {
+              id: fbId,
+              runId,
+              promptId: promptId || 0,
+              moduleId: moduleId || 0,
+              rating,
+              comment: comment || undefined,
+              hadLiveContext: hadLiveContext || false,
+              liveDataSources: liveDataSources || [],
+            },
+          },
+        }),
+      });
+      setFeedbackSubmitted(true);
+      setShowFeedbackComment(false);
+      toast.success(rating === "up" ? "Thanks for the positive feedback!" : "Feedback recorded — we'll improve.");
+    } catch {
+      toast.error("Failed to submit feedback");
+    }
   };
 
   const ownerInfo = ownershipConfig[ownership] || ownershipConfig["agent-human"];
@@ -358,15 +417,17 @@ export default function OutputInterstitial({
                   </div>
                 )}
 
-                {/* Non-A+H: just collapse */}
+                {/* Non-A+H: just collapse + feedback */}
                 {!isAH && (
-                  <button
-                    onClick={onClose}
-                    className="ml-auto flex items-center gap-1 text-[11px] text-foreground/30 hover:text-foreground/50 transition-colors"
-                  >
-                    <ChevronDown className="w-3.5 h-3.5" />
-                    <span className="font-medium">Collapse</span>
-                  </button>
+                  <div className="ml-auto flex items-center gap-1.5">
+                    <button
+                      onClick={onClose}
+                      className="flex items-center gap-1 text-[11px] text-foreground/30 hover:text-foreground/50 transition-colors"
+                    >
+                      <ChevronDown className="w-3.5 h-3.5" />
+                      <span className="font-medium">Collapse</span>
+                    </button>
+                  </div>
                 )}
               </div>
             )}
@@ -518,6 +579,89 @@ export default function OutputInterstitial({
                   <Bot className="w-12 h-12 text-foreground/10 mb-4" />
                   <p className="text-[15px] font-semibold text-foreground/40">No output yet</p>
                   <p className="text-[13px] text-foreground/25 mt-1.5">Click "Run Agent" to execute this assistant</p>
+                </div>
+              )}
+
+              {/* Feedback bar — shows after output is rendered */}
+              {displayOutput && !isStreaming && !isEditing && runId && (
+                <div className="mt-6 pt-4 border-t border-black/[0.06]">
+                  {feedbackSubmitted ? (
+                    <div className="flex items-center gap-2 text-[12px] text-foreground/40">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                      <span>Feedback recorded{feedbackRating === "up" ? " — glad it helped!" : " — we'll improve."}</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <span className="text-[12px] text-foreground/35 font-medium">Was this output helpful?</span>
+                        <div className="flex items-center gap-1.5">
+                          <motion.button
+                            onClick={() => submitFeedback("up")}
+                            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all ${
+                              feedbackRating === "up"
+                                ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
+                                : "text-foreground/35 hover:text-emerald-600 hover:bg-emerald-50 border border-transparent"
+                            }`}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <ThumbsUp className="w-3.5 h-3.5" />
+                            Yes
+                          </motion.button>
+                          <motion.button
+                            onClick={() => submitFeedback("down")}
+                            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all ${
+                              feedbackRating === "down"
+                                ? "bg-rose-100 text-rose-700 border border-rose-200"
+                                : "text-foreground/35 hover:text-rose-600 hover:bg-rose-50 border border-transparent"
+                            }`}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <ThumbsDown className="w-3.5 h-3.5" />
+                            No
+                          </motion.button>
+                        </div>
+                        {hadLiveContext && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-500 border border-blue-100 ml-auto">
+                            Grounded in live data
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Comment input for thumbs down */}
+                      <AnimatePresence>
+                        {showFeedbackComment && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={spring}
+                            className="overflow-hidden"
+                          >
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={feedbackComment}
+                                onChange={(e) => setFeedbackComment(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") persistFeedback("down", feedbackComment);
+                                }}
+                                placeholder="What could be better? (optional)"
+                                className="flex-1 text-[12px] px-3 py-2 rounded-lg border border-black/[0.08] bg-white focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300 transition-all placeholder:text-foreground/20"
+                                autoFocus
+                              />
+                              <motion.button
+                                onClick={() => persistFeedback("down", feedbackComment)}
+                                className="px-4 py-2 rounded-lg text-[12px] font-semibold bg-rose-600 text-white hover:bg-rose-700 transition-all"
+                                whileTap={{ scale: 0.95 }}
+                              >
+                                Submit
+                              </motion.button>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

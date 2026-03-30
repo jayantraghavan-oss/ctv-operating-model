@@ -85,6 +85,71 @@ export function getLastStatus(): ConnectorStatus | null {
 }
 
 // ============================================================================
+// DEEP HEALTH CHECK — actually calls each API and returns latency + sample data
+// ============================================================================
+
+export interface DeepHealthResult {
+  source: string;
+  status: "connected" | "unavailable" | "error";
+  latencyMs: number;
+  message: string;
+  sampleData: any | null;
+  checkedAt: number;
+}
+
+export interface DeepHealthReport {
+  results: DeepHealthResult[];
+  overallStatus: "all_connected" | "partial" | "all_unavailable";
+  checkedAt: number;
+}
+
+async function deepCheckSource(source: string): Promise<DeepHealthResult> {
+  const start = Date.now();
+  try {
+    let data: any = null;
+    switch (source) {
+      case "gong":
+        data = await getGongContext(undefined, 7);
+        break;
+      case "salesforce":
+        data = await getSalesforceContext();
+        break;
+      case "sensorTower":
+        data = await getSensorTowerContext();
+        break;
+      case "speedboat":
+        data = await getSpeedboatContext();
+        break;
+    }
+    const latency = Date.now() - start;
+    if (data) {
+      // Return a trimmed sample (first few items from each array)
+      const sample: any = { source: data.source };
+      for (const [k, v] of Object.entries(data)) {
+        if (Array.isArray(v)) sample[k] = v.slice(0, 2);
+        else if (k === "rawSummary") sample[k] = (v as string)?.slice(0, 200);
+        else sample[k] = v;
+      }
+      return { source, status: "connected", latencyMs: latency, message: "OK", sampleData: sample, checkedAt: Date.now() };
+    }
+    return { source, status: "unavailable", latencyMs: latency, message: "No data returned — check credentials or API access", sampleData: null, checkedAt: Date.now() };
+  } catch (err: any) {
+    return { source, status: "error", latencyMs: Date.now() - start, message: err.message?.slice(0, 200) || "Unknown error", sampleData: null, checkedAt: Date.now() };
+  }
+}
+
+export async function deepHealthCheck(): Promise<DeepHealthReport> {
+  const sources = ["gong", "salesforce", "sensorTower", "speedboat"];
+  const results = await Promise.all(sources.map(s => deepCheckSource(s)));
+  const connected = results.filter(r => r.status === "connected").length;
+  return {
+    results,
+    overallStatus: connected === sources.length ? "all_connected" : connected > 0 ? "partial" : "all_unavailable",
+    checkedAt: Date.now(),
+  };
+}
+
+// ============================================================================
 // PYTHON SCRIPT RUNNER
 // ============================================================================
 

@@ -509,3 +509,29 @@
 ### Testing
 - [x] Write vitest tests for live data connector logic (9 new tests)
 - [x] Test graceful fallback when connectors are unavailable (83 total tests passing)
+
+## Phase 44: Health Check + Data Explorer + Feedback Loop
+
+### Feature 1: Live Credential Health Check
+- [x] Add deep health check endpoint that actually calls each API (not just checks env vars)
+- [x] Add health check UI page/panel with per-source status, latency, last-checked timestamp
+- [x] Show sample data preview from each source on successful health check
+- [x] Add auto-retry and manual retry buttons
+
+### Feature 2: Data Explorer Page
+- [x] Create DataExplorer page with tabs for Gong, Salesforce, Sensor Tower, Speedboat
+- [x] Gong tab: browse recent calls, transcripts, rep activity
+- [x] Salesforce tab: browse accounts, opportunities, pipeline by stage
+- [x] Sensor Tower tab: browse app rankings, downloads, SDK intel
+- [x] Speedboat tab: browse advertiser performance, campaigns, geo breakdown
+- [x] Add search/filter within each tab
+- [x] Add route in App.tsx and sidebar nav entry
+- [x] Mobile-friendly card layout
+
+### Feature 3: Feedback Loop on Agent Outputs
+- [x] Add feedback table to DB schema (agent_run_id, rating, comment, timestamp, user_id, had_live_context)
+- [x] Add tRPC procedures for submitting and retrieving feedback (feedback.submit, feedback.list, feedback.stats)
+- [x] Add thumbs up/down + comment UI to OutputInterstitial
+- [x] Track live context vs synthetic for quality comparison
+- [x] Store feedback in DB for continuous improvement tracking
+- [x] Add vitest tests for feedback system (7 new tests, 90 total passing)

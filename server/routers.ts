@@ -11,6 +11,9 @@ import {
   listWorkflowSessions,
   getWorkflowSession,
   getWorkflowSessionStats,
+  saveFeedback,
+  listFeedback,
+  getFeedbackStats,
 } from "./db";
 import {
   checkConnectorStatus,
@@ -22,6 +25,7 @@ import {
   enrichContext,
   formatContextForPrompt,
   clearCache,
+  deepHealthCheck,
 } from "./liveData";
 
 export const appRouter = router({
@@ -238,6 +242,13 @@ export const appRouter = router({
       }),
 
     /**
+     * Deep health check — actually calls each API, returns latency + sample data.
+     */
+    deepHealth: publicProcedure.query(async () => {
+      return deepHealthCheck();
+    }),
+
+    /**
      * Clear all cached data (force refresh).
      */
     clearCache: publicProcedure.mutation(async () => {
@@ -299,6 +310,50 @@ export const appRouter = router({
      */
     stats: publicProcedure.query(async () => {
       return getWorkflowSessionStats();
+    }),
+  }),
+
+  feedback: router({
+    /**
+     * Submit feedback (thumbs up/down + optional comment) on an agent output.
+     */
+    submit: publicProcedure
+      .input(
+        z.object({
+          id: z.string(),
+          runId: z.string(),
+          promptId: z.number(),
+          moduleId: z.number(),
+          rating: z.enum(["up", "down"]),
+          comment: z.string().optional(),
+          hadLiveContext: z.boolean().optional(),
+          liveDataSources: z.array(z.string()).optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        return saveFeedback(input);
+      }),
+
+    /**
+     * List feedback entries with optional filters.
+     */
+    list: publicProcedure
+      .input(
+        z.object({
+          runId: z.string().optional(),
+          moduleId: z.number().optional(),
+          limit: z.number().optional(),
+        }).optional()
+      )
+      .query(async ({ input }) => {
+        return listFeedback(input || undefined);
+      }),
+
+    /**
+     * Get aggregate feedback stats — includes live vs synthetic comparison.
+     */
+    stats: publicProcedure.query(async () => {
+      return getFeedbackStats();
     }),
   }),
 });
