@@ -29,10 +29,43 @@ import {
 } from "./liveData";
 import { buildInsightsReport } from "./reporting";
 
+/**
+ * Retry helper with exponential backoff for rate-limited LLM calls.
+ * Retries up to 3 times with 1s, 2s, 4s delays.
+ */
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelayMs: number = 1000,
+): Promise<T> {
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err: any) {
+      lastError = err;
+      const isRateLimit =
+        err?.message?.includes("Rate") ||
+        err?.message?.includes("rate") ||
+        err?.message?.includes("429") ||
+        err?.message?.includes("Too Many") ||
+        err?.message?.includes("exceeded") ||
+        err?.status === 429;
+      if (!isRateLimit || attempt === maxRetries) {
+        throw err;
+      }
+      const delay = baseDelayMs * Math.pow(2, attempt) + Math.random() * 500;
+      console.log(`[LLM] Rate limited, retrying in ${Math.round(delay)}ms (attempt ${attempt + 1}/${maxRetries})`);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+  throw lastError || new Error("Retry exhausted");
+}
+
 export const appRouter = router({
   llm: router({
     /**
-     * Non-streaming LLM chat completion.
+     * Non-streaming LLM chat completion with retry logic for rate limits.
      * The client sends messages + params, we proxy through the server-side Forge API key.
      */
     chat: publicProcedure
@@ -49,11 +82,13 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input }) => {
-        const response = await invokeLLM({
-          messages: input.messages,
-          temperature: input.temperature,
-          max_tokens: input.max_tokens,
-        });
+        const response = await retryWithBackoff(() =>
+          invokeLLM({
+            messages: input.messages,
+            temperature: input.temperature,
+            max_tokens: input.max_tokens,
+          })
+        );
 
         const choice = (response as any).choices?.[0];
         return {

@@ -596,3 +596,71 @@
 - [x] Added auto-refresh (5-min countdown timer, Auto/Manual toggle) to Reporting dashboard header
 - [x] Added live data source indicators (Slack/Gong/SFDC green dots with pulse animation)
 - [x] Verified: $1.4M closed, $1.7M pipeline, 8 campaigns, all 5 sections rendering with real data + live status
+
+## Phase 49: Authorize Speedboat MCP + Wire Live Campaign Metrics
+
+- [ ] Read Speedboat MCP skill and attempt OAuth authorization
+- [ ] Query Speedboat for CTV advertiser campaign metrics (spend, ROAS, DRR)
+- [ ] Build server-side Speedboat connector in liveData.ts
+- [ ] Update reporting.ts to merge Speedboat live data with static baseline
+- [ ] Replace static campaign spend/ROAS with real-time Speedboat data
+- [ ] Test and verify live Speedboat data displays in the dashboard
+
+## Phase 50: Critical Bug Fixes (Dan McDonald Feedback)
+
+- [x] Fix "Rate exceeded" errors when clicking Run Agent — add retry logic + exponential backoff
+- [x] Fix "Run Agent → generic doc" — Sales Coaching agent produces boilerplate instead of tactical output
+- [x] Fix "Unable to load report" error on Reporting tab
+- [x] Fix "Data sources unavailable" — Data Explorer shows all sources unavailable
+- [ ] Revert unnecessary Speedboat OAuth routes from server/_core/index.ts (cleanup)
+
+## Phase 51: Deep Agent Specialization — Make Every Agent Tactical
+
+### Core Problem: All 200 agents share the same generic system prompt template
+- [x] Rewrite buildAgentSystemPrompt with per-section specialized context blocks (not just per-module)
+- [x] Add structured output templates per agent function (battlecard format, coaching scorecard, pipeline table, etc.)
+- [x] Replace generic user message "Execute this agent task now" with section-specific instructions
+- [x] Inject real CTV account data (Tang Luck, CHAI, Experian, Fanatics, Novig) into every relevant prompt
+- [x] Add real competitor intelligence (TTD $1.9B rev, tvScientific Series B, Roku OneView, Amazon DSP Freevee)
+- [x] Add real Moloco CTV metrics (DRR, GAS/ARR, pipeline stages, test fund burn)
+- [x] Add CTV-to-App vs CTV-to-Web mode-specific context per cluster
+- [x] Add real measurement methodology context (MMP integration, incrementality testing, ghost bidding)
+
+### Per-Section Specialization (20 section-level context blocks)
+- [x] industry-sensing: Real CTV market data, FAST channel growth, signal loss trends
+- [x] competitor-intel: Live battlecard data for TTD, tvScientific, Amazon DSP, Roku, Viant
+- [x] customer-voice: Real objection patterns from Gong, win/loss drivers
+- [x] analyst-tracking: Real analyst firms, influencer names, narrative themes
+- [x] icp-intelligence: Real ICP segments with conversion data
+- [x] outbound-system: Real messaging templates, response rates, channel performance
+- [x] channel-optimization: Real channel effectiveness data by ICP
+- [x] digital-awareness: Real campaign strategies, test matrices
+- [x] sales-engagement: Real deal structures, negotiation levers, onboarding SLAs
+- [x] partnerships: Real partner names (AppsFlyer, Adjust, Branch, Kochava, PMG)
+- [x] content-engine: Real content types that convert, case study pipeline
+- [x] website-digital: Real landing page strategies, CTA optimization
+- [x] test-funding: Real test fund allocation ($120K APAC, $350K Web)
+- [x] event-activation: Real event strategy context
+- [x] onboarding: Real onboarding checklist, measurement verification steps
+- [x] performance-monitoring: Real KPI frameworks, alert thresholds
+- [x] cross-account-learning: Real cross-account patterns by vertical
+- [x] case-study-pipeline: Real case study candidates and development process
+- [x] long-term-health: Real health scoring model, expansion triggers
+- [x] commercial-performance: Real pipeline visibility, ARR pacing
+- [x] learning-goals: Real EOQ2 learning goals and conviction tracking
+- [x] operating-rhythm: Real weekly prep format, OKR tracking
+
+### Structured Output Templates
+- [x] Battlecard template: competitor name, their claim, reality, our counter, evidence
+- [x] Coaching scorecard: rep name, call date, strengths, gaps, specific improvement actions
+- [x] Pipeline table: account, stage, value, next step, risk level, days in stage
+- [x] ICP profile: segment name, TAM, conversion rate, top accounts, messaging angle
+- [x] Outbound sequence: subject line, body, CTA, expected response rate, A/B variant
+- [x] Health check: account name, spend trend, ROAS trend, sentiment, risk signals, recommended action
+- [x] Weekly prep: agenda items, pre-read links, decisions needed, blockers to surface
+
+### Fix Agent Execution Pipeline
+- [x] Add retry logic with exponential backoff for rate limit errors
+- [x] Thread accountName from UI into enrichContext calls
+- [x] Fix Speedboat MCP connector to use correct CLI syntax
+- [x] Ensure Slack live data flows into agent prompts (not just reporting)

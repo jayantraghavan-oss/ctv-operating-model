@@ -11,12 +11,12 @@
  *     → returns structured context blocks
  */
 
-import { execFile } from "child_process";
+import { execFile, exec } from "child_process";
 import { promisify } from "util";
 import * as fs from "fs";
 import * as path from "path";
-
 const execFileAsync = promisify(execFile);
+const execAsync = promisify(exec);
 
 // Cache TTL: 5 minutes for most sources, 15 minutes for Sensor Tower
 const CACHE_TTL_MS = 5 * 60 * 1000;
@@ -155,13 +155,47 @@ export async function deepHealthCheck(): Promise<DeepHealthReport> {
 
 const SCRIPTS_DIR = "/home/ubuntu/ctv-operating-model/server/scripts";
 
+/**
+ * Read env vars from ~/.bashrc that are behind the non-interactive guard.
+ * Caches the result so we only parse once.
+ */
+let _bashrcEnv: Record<string, string> | null = null;
+function getBashrcEnv(): Record<string, string> {
+  if (_bashrcEnv) return _bashrcEnv;
+  _bashrcEnv = {};
+  try {
+    const bashrc = fs.readFileSync("/home/ubuntu/.bashrc", "utf-8");
+    const exportRegex = /^export\s+(\w+)=["']?([^"'\n]*)["']?/gm;
+    let match;
+    while ((match = exportRegex.exec(bashrc)) !== null) {
+      _bashrcEnv[match[1]] = match[2];
+    }
+  } catch {
+    // ignore
+  }
+  return _bashrcEnv;
+}
+
 async function runPythonScript(scriptName: string, args: string[] = [], timeoutMs: number = 30000): Promise<any> {
   const scriptPath = path.join(SCRIPTS_DIR, `${scriptName}.py`);
   
   try {
-    const { stdout, stderr } = await execFileAsync("python3", [scriptPath, ...args], {
+    // Inject env vars from bashrc directly (bashrc has non-interactive guard that blocks `source`)
+    const bashrcVars = getBashrcEnv();
+    // Build clean env: remove PYTHONHOME (conflicts with /usr/bin/python3 when UV sets it to cpython-3.13)
+    const cleanEnv = { ...process.env };
+    delete cleanEnv.PYTHONHOME;
+    delete cleanEnv.PYTHONPATH;
+    
+    const { stdout, stderr } = await execFileAsync("/usr/bin/python3", [scriptPath, ...args], {
       timeout: timeoutMs,
-      env: { ...process.env, PYTHONPATH: "/home/ubuntu/skills/gong-api/scripts:/home/ubuntu/skills/salesforce-connector/scripts:/home/ubuntu/skills/sensor-tower-api/scripts" },
+      env: {
+        ...cleanEnv,
+        ...bashrcVars,
+        PATH: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:" + (process.env.PATH || ""),
+        HOME: "/home/ubuntu",
+        PYTHONPATH: "/home/ubuntu/skills/gong-api/scripts:/home/ubuntu/skills/salesforce-connector/scripts:/home/ubuntu/skills/sensor-tower-api/scripts",
+      },
       maxBuffer: 5 * 1024 * 1024, // 5MB
     });
     
@@ -171,7 +205,19 @@ async function runPythonScript(scriptName: string, args: string[] = [], timeoutM
     
     return JSON.parse(stdout.trim());
   } catch (err: any) {
+    const stderr = err.stderr ? err.stderr.slice(0, 500) : "";
+    const stdout = err.stdout ? err.stdout.slice(0, 500) : "";
     console.error(`[LiveData] ${scriptName} failed:`, err.message?.slice(0, 200));
+    if (stderr) console.error(`[LiveData] ${scriptName} stderr:`, stderr);
+    if (stdout) console.error(`[LiveData] ${scriptName} stdout:`, stdout);
+    // If the script printed valid JSON to stdout before failing, try to parse it
+    if (stdout) {
+      try {
+        return JSON.parse(stdout.trim());
+      } catch {
+        // not valid JSON
+      }
+    }
     return null;
   }
 }

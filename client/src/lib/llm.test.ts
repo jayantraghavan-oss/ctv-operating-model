@@ -22,17 +22,20 @@ describe("buildAgentSystemPrompt", () => {
 
   it("includes agent type description for persistent", () => {
     const prompt = buildAgentSystemPrompt("Test", 1, "Sub", "persistent", "agent");
-    expect(prompt).toContain("runs continuously");
+    expect(prompt).toContain("always-on");
+    expect(prompt).toContain("monitor continuously");
   });
 
   it("includes agent type description for triggered", () => {
     const prompt = buildAgentSystemPrompt("Test", 2, "Sub", "triggered", "agent-human");
-    expect(prompt).toContain("fires on specific events");
+    expect(prompt).toContain("on-demand");
+    expect(prompt).toContain("fire on specific events");
   });
 
   it("includes agent type description for orchestrator", () => {
     const prompt = buildAgentSystemPrompt("Test", 0, "Sub", "orchestrator", "agent");
-    expect(prompt).toContain("coordinates other agents");
+    expect(prompt).toContain("coordinator");
+    expect(prompt).toContain("synthesize across other agents");
   });
 
   it("includes ownership model description for agent", () => {
@@ -42,12 +45,12 @@ describe("buildAgentSystemPrompt", () => {
 
   it("includes ownership model description for agent-human", () => {
     const prompt = buildAgentSystemPrompt("Test", 1, "Sub", "persistent", "agent-human");
-    expect(prompt).toContain("you generate, human approves");
+    expect(prompt).toContain("human reviews and approves");
   });
 
   it("includes ownership model description for human-led", () => {
     const prompt = buildAgentSystemPrompt("Test", 1, "Sub", "persistent", "human-led");
-    expect(prompt).toContain("human leads, you assist");
+    expect(prompt).toContain("human leads the action");
   });
 
   it("includes the actual task prompt text", () => {
@@ -60,21 +63,21 @@ describe("buildAgentSystemPrompt", () => {
     const prompt = buildAgentSystemPrompt("Test", 1, "Sub", "persistent", "agent");
     expect(prompt).toContain("Moloco");
     expect(prompt).toContain("CTV");
-    expect(prompt).toContain("$200M");
+    expect(prompt).toContain("$10M");
   });
 
   it("includes output formatting requirements", () => {
     const prompt = buildAgentSystemPrompt("Test", 1, "Sub", "persistent", "agent");
-    expect(prompt).toContain("markdown");
+    expect(prompt).toContain("structured formats");
     expect(prompt).toContain("600 words");
   });
 
   it("handles all 4 module IDs correctly", () => {
     const moduleNames: Record<number, string> = {
       1: "Market Intelligence & Positioning",
-      2: "Demand Generation & Pipeline",
-      3: "Sales Execution & Revenue",
-      4: "Customer Success & Growth",
+      2: "Distribution & Activation",
+      3: "Customer Activation & Performance Management",
+      4: "Executive Governance & Business Intelligence",
     };
     for (const [id, name] of Object.entries(moduleNames)) {
       const prompt = buildAgentSystemPrompt("Test", parseInt(id), "Sub", "persistent", "agent");
@@ -85,6 +88,49 @@ describe("buildAgentSystemPrompt", () => {
   it("handles unknown module ID gracefully", () => {
     const prompt = buildAgentSystemPrompt("Test", 99, "Sub", "persistent", "agent");
     expect(prompt).toContain("Cross-Module");
+  });
+
+  it("includes live CTV account data", () => {
+    const prompt = buildAgentSystemPrompt("Test", 1, "Sub", "persistent", "agent");
+    expect(prompt).toContain("Tang Luck");
+    expect(prompt).toContain("CHAI");
+    expect(prompt).toContain("Experian");
+  });
+
+  it("includes measurement context", () => {
+    const prompt = buildAgentSystemPrompt("Test", 1, "Sub", "persistent", "agent");
+    // MEASUREMENT_CONTEXT includes "Incrementality" (capital I)
+    expect(prompt).toContain("Incrementality");
+    expect(prompt).toContain("Ghost bidding");
+  });
+
+  it("includes dual mode context for modules 2 and 3", () => {
+    const prompt2 = buildAgentSystemPrompt("Test", 2, "Sub", "persistent", "agent");
+    expect(prompt2).toContain("CTV-to-App");
+    expect(prompt2).toContain("CTV-to-Web");
+
+    const prompt3 = buildAgentSystemPrompt("Test", 3, "Sub", "persistent", "agent");
+    expect(prompt3).toContain("CTV-to-App");
+    expect(prompt3).toContain("CTV-to-Web");
+  });
+
+  it("does NOT include dual mode context for modules 1 and 4", () => {
+    const prompt1 = buildAgentSystemPrompt("Test", 1, "Sub", "persistent", "agent");
+    expect(prompt1).not.toContain("Dual Operating Modes");
+
+    const prompt4 = buildAgentSystemPrompt("Test", 4, "Sub", "persistent", "agent");
+    expect(prompt4).not.toContain("Dual Operating Modes");
+  });
+
+  it("includes live context when provided", () => {
+    const prompt = buildAgentSystemPrompt("Test", 1, "Sub", "persistent", "agent", "## Gong Data\n3 calls this week");
+    expect(prompt).toContain("Live Data Feed");
+    expect(prompt).toContain("3 calls this week");
+  });
+
+  it("omits live context section when not provided", () => {
+    const prompt = buildAgentSystemPrompt("Test", 1, "Sub", "persistent", "agent");
+    expect(prompt).not.toContain("Live Data Feed");
   });
 });
 

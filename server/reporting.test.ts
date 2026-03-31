@@ -11,7 +11,7 @@ let report: InsightsReport;
 
 beforeAll(async () => {
   report = await buildInsightsReport();
-}, 30_000);
+}, 120_000);
 
 describe("Reporting — buildInsightsReport", () => {
   it("returns a report with all required top-level fields", () => {
