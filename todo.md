@@ -585,3 +585,14 @@
 - [x] Replaced all placeholder data with 8 real CTV campaigns (Tang Luck, CHAI, Experian/PMG, Fanatics, Novig, CTV2Web, APAC/Web funds)
 - [x] Updated Reporting dashboard — $1.4M closed, $1.7M weighted pipeline, $6.9M gap to $10M target
 - [x] Verified all 5 sections display real data: Revenue, VoC (45 calls), Rep Pulse (10/12 reps), GTM Funnel, Campaign Health (8 campaigns)
+
+## Phase 48: Speedboat MCP + Dan McDonald's Markdown — Live Campaign Metrics
+
+- [x] Read Speedboat MCP skill — requires OAuth auth (timing out), used Slack live data as primary source
+- [x] Found Dan McDonald's BQ queries: JSON_VALUE($.type) LIKE '%CTV%' on fact_dsp_core + campaign tables, top platforms: KRAKEN, PMG, ARBGAMINGLLC, REELSHORT
+- [x] Built server-side Slack live data connector (slack_ctv_live.py) — reads #sdk-biz-alerts, #ctv-all, #ctv-commercial, #ctv-vip-winnerstudio
+- [x] Parsed Dan's spend alert format: advertiser, ad_format, spend_today, spend_yesterday, delta, pct_change, sov
+- [x] Updated reporting.ts: buildInsightsReport() merges live Slack GAS/ARR + spend alerts with static baseline
+- [x] Added auto-refresh (5-min countdown timer, Auto/Manual toggle) to Reporting dashboard header
+- [x] Added live data source indicators (Slack/Gong/SFDC green dots with pulse animation)
+- [x] Verified: $1.4M closed, $1.7M pipeline, 8 campaigns, all 5 sections rendering with real data + live status

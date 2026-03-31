@@ -24,10 +24,12 @@ import {
   getSalesforceContext,
   getSpeedboatContext,
   getSensorTowerContext,
+  getSlackLiveMetrics,
   type GongContext,
   type SalesforceContext,
   type SpeedboatContext,
   type SensorTowerContext,
+  type SlackLiveMetrics,
 } from "./liveData";
 
 // ============================================================================
@@ -114,6 +116,21 @@ export interface CampaignHealth {
   alerts: { type: "success" | "warning" | "critical"; message: string; campaign: string; date: string }[];
 }
 
+export interface LiveDataStatus {
+  slackConnected: boolean;
+  gongConnected: boolean;
+  salesforceConnected: boolean;
+  speedboatConnected: boolean;
+  lastRefreshed: string;
+  nextRefreshIn: number; // seconds
+  channelsMonitored: string[];
+  bqQueryPattern: {
+    tables: string[];
+    ctvFilter: string;
+    topPlatforms: string[];
+  } | null;
+}
+
 export interface InsightsReport {
   generatedAt: number;
   revenue: RevenueTarget;
@@ -125,6 +142,7 @@ export interface InsightsReport {
   keyRisks: string[];
   keyWins: string[];
   recommendations: string[];
+  liveDataStatus: LiveDataStatus;
 }
 
 // ============================================================================
@@ -845,23 +863,77 @@ function generateExecutiveSummary(
 
 /**
  * Build the full insights report by pulling from all live data sources.
+ * Merges live Slack data (Dan McDonald's BQ-powered spend alerts, GAS/ARR from #ctv-all)
+ * with Gong, Salesforce, and Speedboat data.
  * Falls back gracefully to real CTV data from Slack if connectors are unavailable.
  */
 export async function buildInsightsReport(): Promise<InsightsReport> {
-  // Fetch all sources in parallel
-  const [gong, sf, sb, st] = await Promise.all([
+  // Fetch all sources in parallel — including the new Slack live connector
+  const [gong, sf, sb, st, slackLive] = await Promise.all([
     getGongContext().catch(() => null),
     getSalesforceContext().catch(() => null),
     getSpeedboatContext().catch(() => null),
     getSensorTowerContext().catch(() => null),
+    getSlackLiveMetrics().catch(() => null),
   ]);
 
+  // If Slack live data has a newer GAS/ARR figure, overlay it onto the revenue builder
   const revenue = buildRevenueTarget(sf, sb);
+
+  // Overlay live Slack GAS/ARR if available and newer
+  if (slackLive?.gasArr?.weeklyGas && slackLive.gasArr.weeklyGas > 0) {
+    const liveARR = slackLive.gasArr.arr;
+    if (liveARR > revenue.currentARR) {
+      revenue.currentARR = liveARR;
+      // Recalculate run rate based on live ARR
+      revenue.runRate = liveARR; // ARR is already annualized
+      revenue.gapToTarget = Math.max(0, revenue.annualTarget - (revenue.closedWon + revenue.pipelineWeighted));
+      revenue.onTrack = revenue.runRate >= revenue.annualTarget * 0.85;
+      if (revenue.closedWon + revenue.pipelineWeighted >= revenue.annualTarget * 0.9) revenue.confidence = "high";
+      else if (revenue.closedWon + revenue.pipelineWeighted >= revenue.annualTarget * 0.6) revenue.confidence = "medium";
+    }
+  }
+
   const voc = buildVoiceOfCustomer(gong);
   const repPulse = buildRepPulse(gong);
   const funnel = buildGTMFunnel(sf);
   const campaignHealth = buildCampaignHealth(sb, sf);
+
+  // Enrich campaign health with live Slack spend alerts
+  if (slackLive?.spendAlerts && slackLive.spendAlerts.length > 0) {
+    slackLive.spendAlerts.forEach(alert => {
+      // Add spend swing alerts to campaign health alerts
+      const alertType = alert.pctChange < -20 ? "critical" as const : alert.pctChange < -10 ? "warning" as const : "success" as const;
+      campaignHealth.alerts.push({
+        type: alertType,
+        message: `${alert.advertiser} ${alert.adFormat}: spend ${alert.delta} (${alert.pctChange > 0 ? "+" : ""}${alert.pctChange.toFixed(0)}% DoD)`,
+        campaign: alert.advertiser,
+        date: slackLive.fetchedAt.split("T")[0],
+      });
+    });
+  }
+
   const { summary, risks, wins, recommendations } = generateExecutiveSummary(revenue, voc, repPulse, funnel, campaignHealth);
+
+  // Build live data status
+  const CACHE_TTL_SECONDS = 5 * 60; // 5 min cache
+  const liveDataStatus: LiveDataStatus = {
+    slackConnected: slackLive !== null,
+    gongConnected: gong !== null,
+    salesforceConnected: sf !== null,
+    speedboatConnected: sb !== null,
+    lastRefreshed: new Date().toISOString(),
+    nextRefreshIn: CACHE_TTL_SECONDS,
+    channelsMonitored: slackLive?.channelSignals?.map(s => s.channel) || [
+      "#sdk-biz-alerts", "#ctv-all", "#ctv-commercial",
+      "#ctv-sales-amer", "#ctv-sales-apac", "#ctv-vip-winnerstudio", "#ctv-chn-activation",
+    ],
+    bqQueryPattern: slackLive?.bqQueryPattern || {
+      tables: ["moloco-ae-view.athena.fact_dsp_core", "moloco-dsp-data-source.standard_cs_v5_items_view.campaign"],
+      ctvFilter: "JSON_VALUE(original_json, '$.type') LIKE '%CTV%'",
+      topPlatforms: ["KRAKEN", "PMG", "ARBGAMINGLLC", "REELSHORT"],
+    },
+  };
 
   return {
     generatedAt: Date.now(),
@@ -874,5 +946,6 @@ export async function buildInsightsReport(): Promise<InsightsReport> {
     keyRisks: risks,
     keyWins: wins,
     recommendations,
+    liveDataStatus,
   };
 }

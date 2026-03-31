@@ -349,6 +349,106 @@ export async function getSpeedboatContext(advertiserName?: string): Promise<Spee
 }
 
 // ============================================================================
+// SLACK LIVE METRICS CONNECTOR
+// ============================================================================
+
+export interface SlackSpendAlert {
+  advertiser: string;
+  appName: string;
+  adFormat: string;
+  spendBefore: string;
+  spendAfter: string;
+  pctChange: number;
+  delta: string;
+  sov?: { before: number; after: number; changePct: number };
+}
+
+export interface SlackCampaignUpdate {
+  text: string;
+  amounts: string[];
+  context: string;
+}
+
+export interface SlackLiveMetrics {
+  source: "slack_live";
+  gasArr: { weeklyGas: number; arr: number; source: string; date: string };
+  spendAlerts: SlackSpendAlert[];
+  campaignUpdates: SlackCampaignUpdate[];
+  drrSignals: { channel: string; drr: number }[];
+  channelSignals: { channel: string; channelId: string; updatesFound: number; hasSpendData: boolean }[];
+  bqQueryPattern: {
+    tables: string[];
+    ctvFilter: string;
+    topPlatforms: string[];
+  };
+  fetchedAt: string;
+  errors: string[];
+}
+
+/**
+ * Pull live CTV metrics from Slack channels via MCP.
+ * Calls the slack_ctv_live.py script which reads from:
+ *   - #sdk-biz-alerts (Dan McDonald's automated spend alerts)
+ *   - #ctv-all (GAS/ARR headline data)
+ *   - #ctv-commercial, #ctv-sales-amer, #ctv-sales-apac
+ *   - #ctv-vip-winnerstudio, #ctv-chn-activation
+ */
+export async function getSlackLiveMetrics(): Promise<SlackLiveMetrics | null> {
+  const cacheKey = "slack_live:all";
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
+  const result = await runPythonScript("slack_ctv_live", [], 120000); // 2 min timeout for multiple MCP calls
+
+  if (!result) return null;
+
+  const context: SlackLiveMetrics = {
+    source: "slack_live",
+    gasArr: {
+      weeklyGas: result.gas_arr?.weekly_gas || 0,
+      arr: result.gas_arr?.arr || 0,
+      source: result.gas_arr?.source || "",
+      date: result.gas_arr?.date || "",
+    },
+    spendAlerts: (result.spend_alerts || []).map((a: any) => ({
+      advertiser: a.advertiser || "",
+      appName: a.app_name || "",
+      adFormat: a.ad_format || "",
+      spendBefore: a.spend_before || "",
+      spendAfter: a.spend_after || "",
+      pctChange: a.pct_change || 0,
+      delta: a.delta || "",
+      sov: a.sov ? { before: a.sov.before, after: a.sov.after, changePct: a.sov.change_pct } : undefined,
+    })),
+    campaignUpdates: (result.campaign_updates || []).map((u: any) => ({
+      text: u.text || "",
+      amounts: u.amounts || [],
+      context: u.context || "",
+    })),
+    drrSignals: (result.drr_signals || []).map((d: any) => ({
+      channel: d.channel || "",
+      drr: d.drr || 0,
+    })),
+    channelSignals: (result.channel_signals || []).map((s: any) => ({
+      channel: s.channel || "",
+      channelId: s.channel_id || "",
+      updatesFound: s.updates_found || 0,
+      hasSpendData: s.has_spend_data || false,
+    })),
+    bqQueryPattern: {
+      tables: result.bq_query_pattern?.tables || [],
+      ctvFilter: result.bq_query_pattern?.ctv_filter || "",
+      topPlatforms: result.bq_query_pattern?.top_platforms || [],
+    },
+    fetchedAt: result.metadata?.fetched_at || new Date().toISOString(),
+    errors: result.metadata?.errors || [],
+  };
+
+  setCache(cacheKey, context, CACHE_TTL_MS);
+  return context;
+}
+
+// ============================================================================
 // CONTEXT ENRICHMENT — Maps modules to data sources
 // ============================================================================
 

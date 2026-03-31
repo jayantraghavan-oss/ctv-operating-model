@@ -33,6 +33,21 @@ const spring = { type: "spring" as const, stiffness: 300, damping: 30 };
 // TYPES (mirrors server/reporting.ts)
 // ============================================================================
 
+interface LiveDataStatus {
+  slackConnected: boolean;
+  gongConnected: boolean;
+  salesforceConnected: boolean;
+  speedboatConnected: boolean;
+  lastRefreshed: string;
+  nextRefreshIn: number;
+  channelsMonitored: string[];
+  bqQueryPattern: {
+    tables: string[];
+    ctvFilter: string;
+    topPlatforms: string[];
+  } | null;
+}
+
 interface InsightsReport {
   generatedAt: number;
   revenue: any;
@@ -44,6 +59,7 @@ interface InsightsReport {
   keyRisks: string[];
   keyWins: string[];
   recommendations: string[];
+  liveDataStatus?: LiveDataStatus;
 }
 
 // ============================================================================
@@ -232,7 +248,26 @@ export default function Reporting() {
     }
   };
 
+  // Auto-refresh every 5 minutes
+  const [refreshCountdown, setRefreshCountdown] = useState(300);
+  const [isAutoRefresh, setIsAutoRefresh] = useState(true);
+
   useEffect(() => { fetchReport(); }, []);
+
+  // Auto-refresh timer
+  useEffect(() => {
+    if (!isAutoRefresh) return;
+    const interval = setInterval(() => {
+      setRefreshCountdown(prev => {
+        if (prev <= 1) {
+          fetchReport();
+          return 300;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isAutoRefresh]);
 
   // Scroll to section
   const scrollTo = (id: string) => {
@@ -250,7 +285,7 @@ export default function Reporting() {
               <div className="absolute inset-0 w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
             <span className="text-sm font-medium text-muted-foreground">Aggregating live data...</span>
-            <span className="text-xs text-muted-foreground/60">Gong, Salesforce, Sensor Tower, Speedboat</span>
+            <span className="text-xs text-muted-foreground/60">Slack channels, Gong, Salesforce, Speedboat</span>
           </motion.div>
         </div>
       </NeuralShell>
@@ -288,14 +323,41 @@ export default function Reporting() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            {/* Live data source indicators */}
+            {report.liveDataStatus && (
+              <div className="flex items-center gap-1.5">
+                <span className={`w-1.5 h-1.5 rounded-full ${report.liveDataStatus.slackConnected ? "bg-emerald-500 animate-pulse" : "bg-gray-300"}`} />
+                <span className="text-[10px] text-muted-foreground/60">Slack</span>
+                <span className={`w-1.5 h-1.5 rounded-full ${report.liveDataStatus.gongConnected ? "bg-emerald-500" : "bg-gray-300"}`} />
+                <span className="text-[10px] text-muted-foreground/60">Gong</span>
+                <span className={`w-1.5 h-1.5 rounded-full ${report.liveDataStatus.salesforceConnected ? "bg-emerald-500" : "bg-gray-300"}`} />
+                <span className="text-[10px] text-muted-foreground/60">SFDC</span>
+              </div>
+            )}
+            <div className="h-3 w-px bg-border/40" />
             <span className="text-[10px] text-muted-foreground/60">
               Updated {new Date(report.generatedAt).toLocaleTimeString()}
             </span>
+            {isAutoRefresh && (
+              <span className="text-[10px] text-muted-foreground/40">
+                Next in {Math.floor(refreshCountdown / 60)}:{String(refreshCountdown % 60).padStart(2, "0")}
+              </span>
+            )}
             <button
-              onClick={fetchReport}
+              onClick={() => setIsAutoRefresh(!isAutoRefresh)}
+              className={`text-[10px] px-2 py-0.5 rounded-full border transition-all ${
+                isAutoRefresh
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  : "bg-muted/40 text-muted-foreground border-border/40"
+              }`}
+            >
+              {isAutoRefresh ? "Auto" : "Manual"}
+            </button>
+            <button
+              onClick={() => { fetchReport(); setRefreshCountdown(300); }}
               className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 transition-colors"
             >
-              <RefreshCw className="w-3 h-3" /> Refresh
+              <RefreshCw className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} /> Refresh
             </button>
           </div>
         </div>
