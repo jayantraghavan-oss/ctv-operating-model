@@ -1,0 +1,35 @@
+{
+  "query": "SELECT * FROM __drizzle_migrations ORDER BY created_at;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3pmUMCqAYdoymgd.604dbdf7168e --database Wr22fCMnjpJGgmtKZSL2hG --execute SELECT * FROM __drizzle_migrations ORDER BY created_at;",
+  "rows": [
+    {
+      "id": "1",
+      "hash": "814a08e40d7fc2bcfd458759d18319198ca8ae394f2fa15617a78678e9c9c93b",
+      "created_at": "1774651466607"
+    },
+    {
+      "id": "867581",
+      "hash": "3e27fe6886c022b6a0f0f8fc08fe4a4b4620ec554ee0778eb6460eb6e8e535df",
+      "created_at": "1774655081100"
+    },
+    {
+      "id": "1234107",
+      "hash": "b21dc60ae4d50d992bbca6e48b09f036e5a6203b9f07989b6b29300a450c85f0",
+      "created_at": "1774670930911"
+    },
+    {
+      "id": "3234107",
+      "hash": "0000_motionless_bastion",
+      "created_at": "1774670930911"
+    },
+    {
+      "id": "3234108",
+      "hash": "0001_bumpy_goliath",
+      "created_at": "1774809346112"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\thash\tcreated_at\n1\t814a08e40d7fc2bcfd458759d18319198ca8ae394f2fa15617a78678e9c9c93b\t1774651466607\n867581\t3e27fe6886c022b6a0f0f8fc08fe4a4b4620ec554ee0778eb6460eb6e8e535df\t1774655081100\n1234107\tb21dc60ae4d50d992bbca6e48b09f036e5a6203b9f07989b6b29300a450c85f0\t1774670930911\n3234107\t0000_motionless_bastion\t1774670930911\n3234108\t0001_bumpy_goliath\t1774809346112\n",
+  "stderr": "",
+  "execution_time_ms": 186
+}

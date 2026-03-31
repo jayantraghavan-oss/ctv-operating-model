@@ -9,7 +9,7 @@ export const user = mysqlTable("user", {
   openId: varchar("open_id", { length: 255 }).notNull().unique(),
   name: text("name"),
   avatarUrl: text("avatar_url"),
-  role: mysqlEnum("role", ["admin", "user"]).default("user").notNull(),
+  role: mysqlEnum("role", ["admin", "user"]).default("admin").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 });

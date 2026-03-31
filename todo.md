@@ -569,3 +569,10 @@
 - [x] Wire Gong connector for call transcripts and sentiment
 - [x] Wire Slack connector for rep channel analysis (synthesized from known channels)
 - [x] Graceful fallback with sample data when connectors unavailable
+
+## Phase 46: VP Summary Email + Vite WebSocket Fix
+
+- [x] Scan full project and draft VP-level summary email
+- [x] Fix Vite WebSocket connection error on page load (passed httpServer to Vite HMR config)
+- [x] Ensure all authenticated collaborators get full admin-level access (default role = admin)
+- [x] Auto-promote Mayukh (mayukh.chowdhury@moloco.com) to admin on login (all new users default to admin)

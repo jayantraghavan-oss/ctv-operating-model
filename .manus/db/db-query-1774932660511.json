@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO __drizzle_migrations (hash, created_at) VALUES ('0002_rich_marvel_zombies', 1774812177886), ('0003_parched_the_fury', 1774822936481), ('0004_remarkable_marvel_boy', 1774909992126), ('0005_moaning_mariko_yashida', 1774932603374);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3pmUMCqAYdoymgd.604dbdf7168e --database Wr22fCMnjpJGgmtKZSL2hG --execute INSERT INTO __drizzle_migrations (hash, created_at) VALUES ('0002_rich_marvel_zombies', 1774812177886), ('0003_parched_the_fury', 1774822936481), ('0004_remarkable_marvel_boy', 1774909992126), ('0005_moaning_mariko_yashida', 1774932603374);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 70
+}
