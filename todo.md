@@ -576,3 +576,12 @@
 - [x] Fix Vite WebSocket connection error on page load (passed httpServer to Vite HMR config)
 - [x] Ensure all authenticated collaborators get full admin-level access (default role = admin)
 - [x] Auto-promote Mayukh (mayukh.chowdhury@moloco.com) to admin on login (all new users default to admin)
+
+## Phase 47: Fix CTV Revenue Reporting with Real Data
+
+- [x] Found and parsed Beth's GTM alignment doc + Dan's CTV tracker data from Slack
+- [x] Pulled real revenue data from Slack channels (#ctv-all, #amer-win-wire, #ctv-sales-apac, #ctv-vip-winnerstudio)
+- [x] Speedboat MCP auth timeout — used Slack + doc data as primary sources instead
+- [x] Replaced all placeholder data with 8 real CTV campaigns (Tang Luck, CHAI, Experian/PMG, Fanatics, Novig, CTV2Web, APAC/Web funds)
+- [x] Updated Reporting dashboard — $1.4M closed, $1.7M weighted pipeline, $6.9M gap to $10M target
+- [x] Verified all 5 sections display real data: Revenue, VoC (45 calls), Rep Pulse (10/12 reps), GTM Funnel, Campaign Health (8 campaigns)
