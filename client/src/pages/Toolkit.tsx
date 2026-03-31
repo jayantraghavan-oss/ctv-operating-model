@@ -659,8 +659,9 @@ export default function Toolkit() {
                     <button
                       onClick={() => {
                         if (run.output) {
-                          navigator.clipboard.writeText(run.output);
-                          toast.success("Copied to clipboard");
+                          navigator.clipboard.writeText(run.output)
+                            .then(() => toast.success("Copied to clipboard"))
+                            .catch(() => toast.error("Failed to copy"));
                         }
                       }}
                       className="p-1.5 rounded-lg text-foreground/25 hover:text-foreground/50 hover:bg-black/[0.03] transition-colors"

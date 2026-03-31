@@ -24,32 +24,69 @@ const SOURCE_LABELS: Record<string, string> = {
 export default function LiveDataStatus() {
   const [status, setStatus] = useState<ConnectorStatus | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
 
   const checkStatus = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch(
         `/api/trpc/liveData.status?batch=1&input=${encodeURIComponent(JSON.stringify({ "0": { json: null } }))}`,
+        { credentials: "include" },
       );
-      if (res.ok) {
-        const data = await res.json();
-        const result = data?.[0]?.result?.data?.json;
-        if (result) setStatus(result);
+      if (!res.ok) {
+        setError(`Status check failed (${res.status})`);
+        return;
       }
-    } catch {
-      // Silently fail — status stays null
+      const data = await res.json();
+      const result = data?.[0]?.result?.data?.json;
+      if (result) {
+        setStatus(result);
+      } else {
+        setError("Invalid response format");
+      }
+    } catch (err: any) {
+      setError(err?.message || "Network error");
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Check on mount and every 5 minutes
+  // Check on mount and every 5 minutes, but pause when tab is hidden
   useEffect(() => {
     checkStatus();
-    const interval = setInterval(checkStatus, 5 * 60 * 1000);
-    return () => clearInterval(interval);
+    let interval: ReturnType<typeof setInterval> | null = null;
+
+    const startPolling = () => {
+      if (interval) clearInterval(interval);
+      interval = setInterval(checkStatus, 5 * 60 * 1000);
+    };
+
+    const stopPolling = () => {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    };
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        stopPolling();
+      } else {
+        checkStatus(); // Refresh immediately when tab becomes visible
+        startPolling();
+      }
+    };
+
+    startPolling();
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      stopPolling();
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, [checkStatus]);
 
   // Close popover on outside click
@@ -98,6 +135,8 @@ export default function LiveDataStatus() {
         <span className="text-[11px] font-medium text-foreground/50 hidden sm:inline">
           {loading
             ? "Checking..."
+            : error
+            ? "Error"
             : status
             ? `${connectedCount}/${totalSources} Live`
             : "Data Sources"}
@@ -126,6 +165,11 @@ export default function LiveDataStatus() {
                 <RefreshCw className={`w-3 h-3 text-foreground/40 ${loading ? "animate-spin" : ""}`} />
               </button>
             </div>
+            {error && (
+              <div className="px-3 py-2 bg-red-50 border-b border-red-100">
+                <span className="text-[10px] text-red-600">{error}</span>
+              </div>
+            )}
             <div className="divide-y divide-border">
               {(["gong", "salesforce", "sensorTower", "speedboat"] as const).map((key) => {
                 const s = status?.[key];

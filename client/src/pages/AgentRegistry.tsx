@@ -84,8 +84,9 @@ export default function AgentRegistry() {
   }, [runAgent]);
 
   const copyOutput = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success("Copied to clipboard");
+    navigator.clipboard.writeText(text)
+      .then(() => toast.success("Copied to clipboard"))
+      .catch(() => toast.error("Failed to copy — try selecting and copying manually"));
   };
 
   return (

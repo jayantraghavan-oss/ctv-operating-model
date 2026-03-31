@@ -115,6 +115,21 @@ async function startServer() {
   });
 
   // =========================================================================
+  // Auth — returns owner identity from environment
+  // =========================================================================
+  app.get("/api/auth/me", (_req, res) => {
+    const name = process.env.OWNER_NAME || "CTV Operator";
+    const openId = process.env.OWNER_OPEN_ID || "";
+    res.json({
+      user: {
+        name,
+        openId,
+        role: "admin",
+      },
+    });
+  });
+
+  // =========================================================================
   // LLM Proxy — routes /api/llm to Forge API
   // =========================================================================
   const FORGE_URL = process.env.BUILT_IN_FORGE_API_URL || "https://forge.manus.ai";

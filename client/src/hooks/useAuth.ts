@@ -1,7 +1,8 @@
 /**
- * useAuth — Simple auth hook that returns current user state.
- * Since the _core auth files weren't created by the feature upgrade,
- * this provides a lightweight implementation that checks for a session cookie.
+ * useAuth — Auth hook that returns current user state.
+ * Since this is an internal tool without OAuth login flow,
+ * we use the owner info from the server environment.
+ * The /api/auth/me endpoint returns the owner's identity.
  */
 import { useState, useEffect } from "react";
 
@@ -26,21 +27,19 @@ export function useAuth(): AuthState {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Try to get user info from the auth endpoint
     const checkAuth = async () => {
       try {
-        const res = await fetch("/api/trpc/auth.me", {
+        const res = await fetch("/api/auth/me", {
           credentials: "include",
         });
         if (res.ok) {
           const data = await res.json();
-          const result = data?.result?.data;
-          if (result?.user) {
-            setUser(result.user);
+          if (data?.user) {
+            setUser(data.user);
           }
         }
       } catch {
-        // Not authenticated — that's fine
+        // Not authenticated — that's fine for an internal tool
       } finally {
         setLoading(false);
       }
@@ -49,16 +48,8 @@ export function useAuth(): AuthState {
   }, []);
 
   const logout = () => {
-    // Clear session and redirect
-    fetch("/api/trpc/auth.logout", { method: "POST", credentials: "include" })
-      .then(() => {
-        setUser(null);
-        window.location.href = "/";
-      })
-      .catch(() => {
-        setUser(null);
-        window.location.href = "/";
-      });
+    setUser(null);
+    window.location.href = "/";
   };
 
   return {

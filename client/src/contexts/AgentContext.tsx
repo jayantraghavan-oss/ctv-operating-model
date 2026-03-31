@@ -312,7 +312,7 @@ export function AgentProvider({ children }: { children: ReactNode }) {
     const startTime = Date.now();
 
     // Fetch live context from server (non-blocking — enriches prompt if available)
-    const liveContextPromise = fetch(`/api/trpc/liveData.enrichContext?batch=1&input=${encodeURIComponent(JSON.stringify({ "0": { json: { moduleId, subModuleName } } }))}`)
+    const liveContextPromise = fetch(`/api/trpc/liveData.enrichContext?batch=1&input=${encodeURIComponent(JSON.stringify({ "0": { json: { moduleId, subModuleName } } }))}`, { credentials: "include" })
       .then(r => r.ok ? r.json() : null)
       .then(data => data?.[0]?.result?.data?.json?.formatted || null)
       .catch(() => null);

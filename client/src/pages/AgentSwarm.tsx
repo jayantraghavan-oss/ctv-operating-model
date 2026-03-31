@@ -121,8 +121,9 @@ export default function AgentSwarm() {
   const getRunForPrompt = (promptId: number) => recentRuns.find((r) => r.promptId === promptId);
 
   const copyOutput = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success("Copied to clipboard");
+    navigator.clipboard.writeText(text)
+      .then(() => toast.success("Copied to clipboard"))
+      .catch(() => toast.error("Failed to copy"));
   };
 
   return (

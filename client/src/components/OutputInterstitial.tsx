@@ -167,8 +167,9 @@ export default function OutputInterstitial({
   };
 
   const copyOutput = () => {
-    navigator.clipboard.writeText(displayOutput);
-    toast.success("Copied to clipboard");
+    navigator.clipboard.writeText(displayOutput)
+      .then(() => toast.success("Copied to clipboard"))
+      .catch(() => toast.error("Failed to copy — try selecting and copying manually"));
   };
 
   const submitFeedback = async (rating: "up" | "down") => {
@@ -186,9 +187,10 @@ export default function OutputInterstitial({
     if (!runId) return;
     try {
       const fbId = `fb-${runId}-${Date.now()}`;
-      await fetch("/api/trpc/feedback.submit", {
+      const res = await fetch("/api/trpc/feedback.submit?batch=1", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           "0": {
             json: {
@@ -204,6 +206,7 @@ export default function OutputInterstitial({
           },
         }),
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setFeedbackSubmitted(true);
       setShowFeedbackComment(false);
       toast.success(rating === "up" ? "Thanks for the positive feedback!" : "Feedback recorded — we'll improve.");

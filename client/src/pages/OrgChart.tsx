@@ -824,8 +824,9 @@ function ScenarioSummaryPanel({
 
   const copyAll = () => {
     const text = buildCompiledOutput();
-    navigator.clipboard.writeText(`# ${scenario.name} — Executive Summary\n\n${text}`);
-    toast.success("Full summary copied to clipboard");
+    navigator.clipboard.writeText(`# ${scenario.name} — Executive Summary\n\n${text}`)
+      .then(() => toast.success("Full summary copied to clipboard"))
+      .catch(() => toast.error("Failed to copy"));
   };
 
   const saveSession = async () => {
@@ -846,27 +847,30 @@ function ScenarioSummaryPanel({
 
       const isCustom = scenario.id.startsWith("custom-");
 
-      await fetch("/api/trpc/workflowSessions.save", {
+      const saveRes = await fetch("/api/trpc/workflowSessions.save?batch=1", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          json: {
-            id: sessionId,
-            name: scenario.name,
-            description: scenario.description,
-            queryType: isCustom ? "custom" : "preset",
-            customQuery: isCustom ? scenario.description : undefined,
-            agentCount: scenario.nodeSequence.length,
-            completedCount: completedNodes.length,
-            totalDurationMs: totalDuration,
-            compiledOutput,
-            nodeDetails,
-            startedAt: Date.now() - totalDuration,
-            completedAt: Date.now(),
+          "0": {
+            json: {
+              id: sessionId,
+              name: scenario.name,
+              description: scenario.description,
+              queryType: isCustom ? "custom" : "preset",
+              customQuery: isCustom ? scenario.description : undefined,
+              agentCount: scenario.nodeSequence.length,
+              completedCount: completedNodes.length,
+              totalDurationMs: totalDuration,
+              compiledOutput,
+              nodeDetails,
+              startedAt: Date.now() - totalDuration,
+              completedAt: Date.now(),
+            },
           },
         }),
       });
+      if (!saveRes.ok) throw new Error(`HTTP ${saveRes.status}`);
 
       setSavedSessionId(sessionId);
       toast.success("Session saved! You can revisit it anytime.");
@@ -1009,7 +1013,7 @@ function ScenarioSummaryPanel({
                             <Sparkles className="w-3 h-3" /> AI Output
                           </span>
                           <button
-                            onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(info.output); toast.success("Copied"); }}
+                            onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(info.output).then(() => toast.success("Copied")).catch(() => toast.error("Failed to copy")); }}
                             className="p-1 rounded hover:bg-black/[0.04] text-foreground/25 hover:text-foreground/50 transition-colors"
                           >
                             <Copy className="w-3 h-3" />

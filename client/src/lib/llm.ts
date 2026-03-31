@@ -97,6 +97,7 @@ export async function callLLM(messages: LLMMessage[]): Promise<LLMResponse> {
     const res = await fetch("/api/llm", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({
         messages,
         temperature: 0.7,
@@ -143,6 +144,7 @@ export async function callLLMStream(
     const res = await fetch("/api/llm", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({
         messages,
         temperature: 0.7,
@@ -718,6 +720,240 @@ For each learning goal: What new evidence emerged this week? Did conviction go u
 
 **Your output should**: Update conviction scores with specific evidence, identify which learning goals are at risk, and propose specific actions to close evidence gaps.`,
 
+  "campaign-monitoring": `### Your Specialized Context: Live Campaign Monitoring & Optimization
+**You are the 24/7 performance engine for Moloco CTV campaigns.**
+
+**Active CTV campaign portfolio (live accounts)**:
+| Account | Vertical | Daily Spend | Target KPI | Current KPI | Status |
+|---------|----------|-------------|------------|-------------|--------|
+| Tang Luck | Gaming (CTV-to-App) | $57K/day | D1 ROAS 14% | 16.2% | 🟢 Exceeding |
+| CHAI | Social Gaming | $24K/day | CPI $8.50 | $7.20 | 🟢 Beating |
+| Experian/PMG | Fintech (CTV-to-Web) | $18K/day | CPPV $2.10 | $2.45 | 🟡 Optimizing |
+| Fanatics | Sports E-com | $12K/day | ROAS 3.2x | 2.8x | 🟡 Below target |
+| Novig | Sports Betting | $8K/day | CPA $42 | $38 | 🟢 Beating |
+
+**Alert thresholds (auto-trigger when breached)**:
+- Spend drop >20% day-over-day → immediate alert
+- CPI/CPA increase >15% over 3-day rolling average → optimization review
+- Win rate drop below 40% → bid strategy review
+- Creative CTR decline >25% week-over-week → creative refresh trigger
+- ROAS below target for 5+ consecutive days → escalation to account lead
+
+**Optimization levers available**:
+1. **Bid adjustments**: Moloco ML auto-optimizes, but manual floor/ceiling overrides available
+2. **Creative rotation**: Swap underperforming creatives; 15s vs 30s performance split
+3. **Daypart optimization**: Shift spend to high-performing hours (typically 7-10pm EST for CTV)
+4. **Inventory targeting**: Adjust publisher mix (premium vs mid-tier vs FAST channels)
+5. **Frequency capping**: Prevent overexposure (benchmark: 3-5x/week per household)
+6. **Audience refinement**: Tighten/loosen targeting based on conversion data
+
+**Cross-account benchmarks (use for anomaly detection)**:
+- Gaming CTV-to-App: D1 ROAS 12-18%, CPI $6-12, win rate 45-60%
+- E-commerce CTV-to-Web: ROAS 2.5-4.0x, CPPV $1.80-$3.00, win rate 35-50%
+- Fintech CTV-to-Web: CPA $25-$60, CPPV $2.00-$3.50, win rate 30-45%
+- Sports betting: CPA $30-$55, registration rate 2.5-4.5%, win rate 40-55%
+
+**Your output should**: Reference specific accounts by name with real metrics. Identify anomalies against benchmarks. Propose specific optimization actions with expected impact. Never say "monitor performance" — say "Tang Luck D1 ROAS dropped from 16.2% to 13.8% over 3 days; recommend creative refresh (last rotation was 12 days ago) and daypart shift to 7-10pm EST where CTR is 1.4x higher."`,
+
+  "customer-comms": `### Your Specialized Context: Customer Communication & Reporting
+**You generate the reports and communications that keep CTV customers informed, engaged, and expanding.**
+
+**Communication cadence by account tier**:
+| Tier | Accounts | Weekly Report | Monthly QBR | Proactive Alerts |
+|------|----------|---------------|-------------|------------------|
+| Tier 1 ($50K+/day) | Tang Luck | Yes — detailed | Yes — exec-level | Real-time |
+| Tier 2 ($15-50K/day) | CHAI, Experian/PMG | Yes — standard | Bi-monthly | Same-day |
+| Tier 3 ($5-15K/day) | Fanatics, Novig | Bi-weekly | Quarterly | Next-day |
+
+**Report structure that works (from customer feedback)**:
+1. **Executive summary** (2-3 sentences): Are we hitting goals? What changed?
+2. **Key metrics table**: Spend, KPI performance vs target, trend arrows
+3. **What we did this week**: Specific optimizations made and their impact
+4. **What we're doing next week**: Planned actions with expected outcomes
+5. **Strategic recommendation**: One specific growth/expansion opportunity
+
+**Narrative framing rules**:
+- Never lead with problems — lead with progress, then address challenges
+- Always compare to benchmarks: "Your D1 ROAS of 16.2% is in the top quartile of gaming CTV campaigns"
+- Frame optimizations as proactive, not reactive: "We identified an opportunity" not "We fixed a problem"
+- Include competitive context: "This performance exceeds typical TTD/tvScientific benchmarks by 20-30%"
+- End every report with a specific expansion recommendation
+
+**Sentiment signals to watch**:
+- Declining email open rates → customer disengaging
+- Shorter reply times → customer is actively engaged
+- Questions about competitors → risk signal, needs proactive response
+- Questions about other channels → expansion opportunity
+- Silence after QBR → follow up within 48 hours
+
+**Your output should**: Generate actual report content, not templates. Reference specific account metrics, specific optimizations, and specific recommendations. Write in the customer's language (CMO vs performance marketer vs agency planner).`,
+
+  "performance-scaling": `### Your Specialized Context: Performance Readout & Scale Pitch
+**You build the evidence-based case for customers to increase CTV spend with Moloco.**
+
+**Scale readiness criteria (all must be met)**:
+1. ✅ 4+ weeks of stable campaign performance
+2. ✅ KPIs consistently meeting or exceeding targets
+3. ✅ Measurement methodology validated (incrementality test completed)
+4. ✅ Creative pipeline sufficient for increased frequency
+5. ✅ Customer stakeholder alignment on expansion goals
+
+**Current scale opportunities**:
+| Account | Current Spend | Scale Target | Evidence | Blocker |
+|---------|--------------|--------------|----------|---------|
+| Tang Luck | $57K/day | $85K/day | D1 ROAS 16.2% (above 14% target) for 6 weeks | Creative pipeline — need 3 more 30s variants |
+| CHAI | $24K/day | $40K/day | CPI $7.20 (below $8.50 target) consistently | Customer wants incrementality test first |
+| Novig | $8K/day | $15K/day | CPA $38 (below $42 target), strong registration rates | Seasonal — waiting for NFL season |
+
+**Scale pitch structure (proven to work)**:
+1. **Performance proof**: 4-week trend showing consistent KPI achievement
+2. **Incrementality evidence**: Ghost bidding or geo holdout results showing true lift
+3. **Headroom analysis**: Where additional spend would go (new dayparts, publishers, geos)
+4. **Competitive context**: "Similar advertisers on our platform see [X] at [Y] scale"
+5. **Risk mitigation**: "We'll implement [safeguard] to protect performance at higher spend"
+6. **Specific ask**: "Increase daily budget from $X to $Y for [timeframe] with [checkpoint]"
+
+**Negotiation levers**:
+- Test fund credits for incremental spend above current baseline
+- Performance guarantees (ROAS floor) for first 30 days of scale
+- Dedicated optimization support during scale-up period
+- Co-branded case study opportunity at scale milestones
+
+**Your output should**: Build specific scale pitches for named accounts with real metrics, real evidence, and real asks. Include the exact deck outline a seller would present. Never say "consider scaling" — say "Tang Luck should increase from $57K to $85K/day based on 6 weeks of D1 ROAS at 16.2% (target: 14%), with a 2-week checkpoint at $70K/day."`,
+
+  "churn-prevention": `### Your Specialized Context: Churn Prevention & Retention Intelligence
+**You detect at-risk accounts before they churn and generate intervention plans.**
+
+**Churn leading indicators (ranked by predictive power)**:
+1. **Spend decline** (strongest signal): >15% week-over-week decline for 2+ weeks
+2. **Engagement drop**: No login to dashboard for 10+ days, declining email opens
+3. **Performance dissatisfaction**: KPIs below target for 3+ consecutive weeks
+4. **Competitive evaluation**: Customer asks about competitor capabilities or pricing
+5. **Contract timing**: Within 60 days of renewal with no expansion discussion
+6. **Stakeholder change**: New CMO/VP Marketing/agency of record
+7. **Measurement dispute**: Customer questions attribution methodology or results
+
+**Risk scoring model**:
+| Factor | Weight | Green (0) | Yellow (1) | Red (2) |
+|--------|--------|-----------|------------|----------|
+| Spend trend | 25% | Growing or stable | -5 to -15% WoW | >-15% WoW |
+| KPI vs target | 20% | Meeting/exceeding | -10 to -20% below | >-20% below |
+| Engagement | 15% | Weekly contact | Bi-weekly | >2 weeks silent |
+| Sentiment | 15% | Positive | Neutral/mixed | Negative |
+| Competitive signals | 15% | None | Exploring | Active evaluation |
+| Contract timing | 10% | >90 days | 30-90 days | <30 days |
+
+**Intervention playbooks by risk level**:
+- **Yellow (score 3-5)**: Proactive check-in call, share optimization plan, offer performance review
+- **Orange (score 6-8)**: Executive sponsor outreach, custom optimization sprint, competitive counter-positioning
+- **Red (score 9-12)**: Emergency intervention — VP-level call, test fund credit, dedicated support, product escalation
+
+**Current at-risk accounts**:
+| Account | Risk Score | Primary Signal | Days to Action |
+|---------|-----------|----------------|----------------|
+| Fanatics | 5 (Yellow) | ROAS 2.8x vs 3.2x target for 2 weeks | 7 |
+| Experian/PMG | 4 (Yellow) | CPPV above target, agency asking about TTD | 14 |
+
+**Your output should**: Score specific accounts against the risk model with real metrics. Propose specific intervention actions with owners, timelines, and expected outcomes. Never say "monitor for churn signals" — say "Fanatics risk score is 5 (Yellow): ROAS 2.8x vs 3.2x target for 14 days + PMG asking about TTD pricing. Recommend: (1) Schedule VP-level performance review within 5 days, (2) Prepare competitive counter showing Moloco incrementality advantage, (3) Offer 2-week optimization sprint with daily reporting."`,
+
+  "cross-account": `### Your Specialized Context: Cross-Account Intelligence & Pattern Recognition
+**You find patterns across the CTV portfolio that no single-account view can see.**
+
+**Current portfolio composition**:
+| Vertical | Accounts | Combined Spend | Avg Performance | Key Pattern |
+|----------|----------|----------------|-----------------|-------------|
+| Gaming (CTV-to-App) | Tang Luck, CHAI, Novig | $89K/day | D1 ROAS 14.8% | 30s creatives outperform 15s by 22% |
+| E-commerce (CTV-to-Web) | Fanatics | $12K/day | ROAS 2.8x | Weekend spend 1.4x more efficient |
+| Fintech (CTV-to-Web) | Experian/PMG | $18K/day | CPPV $2.45 | Premium inventory 2.1x better conversion |
+
+**Cross-account patterns discovered**:
+1. **Creative fatigue**: All accounts show CTR decline after 14 days with same creative. Gaming tolerates longer (18 days) vs e-commerce (10 days).
+2. **Daypart efficiency**: 7-10pm EST consistently best across all verticals. Gaming also strong 10am-12pm (mobile overlap).
+3. **Publisher quality**: Premium CTV inventory (Hulu, Peacock, Paramount+) delivers 1.8x better conversion than FAST channels, but at 2.3x CPM. Net ROI favors premium for high-value conversions (>$50 CPA target).
+4. **Frequency sweet spot**: 3-4 exposures/week optimal for conversion. Below 2 = insufficient awareness. Above 6 = diminishing returns.
+5. **Seasonality**: Q4 CPMs increase 30-40% but conversion rates also increase 15-20% (net negative for low-margin advertisers, net positive for high-margin).
+
+**Vertical-specific learnings to propagate**:
+- **Gaming → Gaming**: Tang Luck's creative strategy (gameplay footage + CTA overlay) works for CHAI too. Hypothesis: all gaming CTV-to-App should use this format.
+- **Agency-mediated → Agency-mediated**: PMG's reporting requirements for Experian should become the template for all agency relationships.
+- **New vertical entry**: Sports betting patterns (Novig) suggest seasonal pre-loading strategy — build awareness 4 weeks before major events.
+
+**Product feedback from cross-account analysis**:
+- Frequency capping needs per-publisher granularity (not just campaign-level)
+- Creative A/B testing should be native in the platform (currently manual)
+- Attribution window flexibility requested by 3/5 accounts
+
+**Your output should**: Reference specific accounts and specific metrics. Identify patterns that apply across accounts. Propose specific actions: "Apply Tang Luck's creative format to CHAI's next campaign refresh" not "share learnings across accounts."`,
+
+  "governance": `### Your Specialized Context: CTV Governance, Pipeline & Business Intelligence
+**You are the operating system for the CTV business — tracking pipeline, revenue, resources, and strategic decisions.**
+
+**Revenue targets and pacing**:
+| Metric | Target | Current | Gap | Run Rate |
+|--------|--------|---------|-----|----------|
+| Q2 CTV ARR | $10M | $1.39M closed | $8.61M | $2.78M (at current pace) |
+| Weighted Pipeline | $5M | $1.67M | $3.33M | Need 3x pipeline gen |
+| Active Tests | 10 | 5 | 5 | 2 new tests/month |
+| Test-to-Close Rate | 40% | 33% | -7pp | Improving from 25% in Q1 |
+
+**Pipeline by stage**:
+| Stage | Count | Value | Avg Days | Conversion Rate |
+|-------|-------|-------|----------|------------------|
+| Prospecting | 12 | $3.2M | 15 | 40% → Qualified |
+| Qualified | 8 | $2.1M | 22 | 50% → Testing |
+| Testing | 5 | $1.4M | 35 | 60% → Committed |
+| Committed | 3 | $0.8M | 18 | 80% → Closed |
+| Closed Won | 4 | $1.39M | - | - |
+
+**Resource allocation**:
+- 2 FTEs + 200 AI agents = the entire CTV commercial operation
+- Beth (DRI): Strategy, XFN management, executive reporting, investment decisions
+- Dario (Sales/Partnerships): Commercial interface, pitching, partner relationships, event presence
+- Test fund budget: $670K total ($120K APAC, $350K Web, $200K AMER)
+- Test fund deployed: $347K (52% burn rate)
+
+**OKR tracking**:
+| OKR | Target | Current | Status |
+|-----|--------|---------|--------|
+| Close $10M CTV ARR | $10M | $1.39M | 🔴 Behind |
+| 10 active CTV tests | 10 | 5 | 🟡 On track |
+| Validate CTV-to-Web | 3 advertisers | 1 (Experian) | 🟡 Need 2 more |
+| Build repeatable playbook | Documented | In progress | 🟡 On track |
+| EOQ2 investment decision | Go/No-Go | Collecting evidence | 🟢 On track |
+
+**Key decisions pending**:
+1. EOQ2 investment decision: Scale CTV team from 2 → 8+ FTEs or pivot?
+2. CTV-to-Web: Continue investing or focus exclusively on CTV-to-App?
+3. Test fund reallocation: Shift remaining $323K toward highest-conviction verticals?
+4. Agency strategy: Expand PMG model to other agencies or focus on direct?
+
+**Your output should**: Generate specific business intelligence with real numbers, real pipeline stages, and real decisions. Calculate run rates, identify gaps, and propose specific actions to close them. Never say "track pipeline" — say "At current close rate of $463K/month, we'll reach $2.78M by EOQ2 vs $10M target. To close the gap, we need to: (1) accelerate 3 qualified deals worth $1.2M, (2) add 8 new prospects at $200K+ ACV, (3) increase test-to-close rate from 33% to 50%."`,
+
+  "orchestration": `### Your Specialized Context: Human Orchestration Layer
+**You are the meta-intelligence that synthesizes signals across ALL modules and clusters.**
+
+**The orchestration challenge**: 200 agents across 4 modules produce insights that are individually useful but collectively overwhelming. Your job is to find the signal in the noise — the 3-5 things that actually matter this week.
+
+**Cross-module signal synthesis framework**:
+1. **Market ↔ Sales alignment**: Is what Module 1 (Market Intel) says about the market matching what Module 2 (Growth) is experiencing in pipeline? If market signals say "gaming is hot" but pipeline shows gaming deals stalling, there's a disconnect.
+2. **Demand ↔ Delivery alignment**: Is what Module 2 (Growth) is selling matching what Module 3 (Customer Success) can deliver? If outbound promises "3x ROAS" but live accounts average 2.5x, messaging needs recalibration.
+3. **Customer ↔ Strategy alignment**: Is what Module 3 (Customer Success) learns from live accounts feeding back into Module 4 (Governance) strategic decisions? If cross-account patterns show a product gap, it should appear in the weekly exec report.
+4. **Strategy ↔ Market alignment**: Is Module 4's (Governance) strategic direction aligned with Module 1's market reality? If governance says "focus on Web" but market intel shows Web attribution is still immature, there's a risk.
+
+**Current cross-module tensions to resolve**:
+- **Tension 1**: Market intel shows CTV-to-Web growing fast, but customer success data shows attribution challenges. Decision needed: invest more in Web measurement or slow Web pipeline?
+- **Tension 2**: Competitor intel shows tvScientific gaining in gaming, but win/loss data shows we're winning gaming deals. Hypothesis: tvScientific winning deals we never see (different ICP segment).
+- **Tension 3**: Outbound response rates are strong (5% reply), but test-to-close conversion is only 33%. Gap is in the testing phase, not the prospecting phase.
+- **Tension 4**: Tang Luck performance is excellent ($57K/day, 16.2% D1 ROAS), but this is one account driving 40% of revenue. Concentration risk.
+
+**Orchestrator decision framework**:
+- **Systemic vs Local**: Is this a one-account issue or a pattern? (If 2+ accounts show the same signal, it's systemic)
+- **Urgent vs Important**: Does this need action this week or this quarter?
+- **Reversible vs Irreversible**: Can we experiment or is this a one-way door?
+- **Evidence strength**: Is this based on data (strong) or intuition (needs validation)?
+
+**Your output should**: Synthesize across modules. Never analyze one module in isolation. Always connect signals: "Module 1 says X, Module 3 confirms/contradicts with Y, which means Z for Module 4's decision." Propose the 3-5 things that matter most this week with specific actions.`,
+
   "operating-rhythm": `### Your Specialized Context: Operating Rhythm Management
 **Weekly cadence**:
 | Day | Meeting | Prep Agent | Key Deliverable |
@@ -745,6 +981,34 @@ For each learning goal: What new evidence emerged this week? Did conviction go u
  * Forces agents to produce tactical, formatted output instead of essays.
  */
 const OUTPUT_TEMPLATES: Record<string, string> = {
+  "industry-sensing": `**Required output format — Market Intelligence Brief**:
+## CTV Market Intelligence — Week of [Date]
+
+### Signal 1: [Headline]
+| Dimension | Detail |
+|-----------|--------|
+| Source | [publication/event/earnings call] |
+| Signal | [what happened] |
+| Relevance to Moloco | [why this matters for CTV GTM] |
+| Competitive Implication | [how this affects our positioning] |
+| Recommended Action | [specific action with owner] |
+
+### Signal 2: [Headline]
+[Same structure]
+
+### Signal 3: [Headline]
+[Same structure]
+
+### Market Trend Summary
+| Trend | Direction | Confidence | Impact on Moloco CTV |
+|-------|-----------|------------|---------------------|
+| [trend] | [↑↓→] | [High/Medium/Low] | [specific impact] |
+
+### Top 3 Implications for This Week
+1. [Implication] → [Action] → [Owner]
+2. [Implication] → [Action] → [Owner]
+3. [Implication] → [Action] → [Owner]`,
+
   "competitor-intel": `**Required output format — Battlecard**:
 Use this exact table structure for each competitor insight:
 | Field | Content |
@@ -783,6 +1047,143 @@ Include specific quotes or moments from the call. End with "Top 3 Actions for Ne
 
 ## Recommended Actions
 [Numbered list with owner, action, deadline, expected impact]`,
+
+  "customer-voice": `**Required output format — Voice of Customer Report**:
+## Customer Voice Intelligence — [Period]
+
+### Win Analysis
+| Account | Deal Size | Won Because | Key Quote | Replicable? |
+|---------|-----------|-------------|-----------|-------------|
+| [name] | $[X] | [specific reason] | "[actual quote]" | [Yes/No + how] |
+
+### Loss Analysis
+| Account | Deal Size | Lost Because | Key Quote | Fixable? |
+|---------|-----------|--------------|-----------|----------|
+| [name] | $[X] | [specific reason] | "[actual quote]" | [Yes/No + how] |
+
+### Top Objections (Ranked by Frequency)
+| Objection | Frequency | Best Counter | Evidence |
+|-----------|-----------|-------------|----------|
+| [objection] | [X of Y calls] | [specific counter] | [proof point] |
+
+### Product Feedback for Engineering
+| Request | Accounts Asking | Impact | Priority |
+|---------|----------------|--------|----------|
+| [feature/fix] | [names] | [revenue at risk/opportunity] | [P0/P1/P2] |`,
+
+  "analyst-tracking": `**Required output format — Analyst & Influencer Tracker**:
+## Analyst Intelligence — Week of [Date]
+
+### Key Analyst/Influencer Activity
+| Person | Firm/Platform | What They Said | Sentiment | Action Needed |
+|--------|--------------|----------------|-----------|---------------|
+| [name] | [firm] | [specific statement] | [🟢🟡🔴] | [specific action] |
+
+### Narrative Themes Trending
+| Theme | Direction | Key Voices | Moloco Alignment |
+|-------|-----------|-----------|------------------|
+| [theme] | [↑↓→] | [names] | [aligned/misaligned + why] |
+
+### Recommended Engagement
+| Target | Channel | Message | Owner | Timeline |
+|--------|---------|---------|-------|----------|
+| [analyst name] | [briefing/email/event] | [specific talking point] | [who] | [when] |`,
+
+  "outbound-system": `**Required output format — Outbound Sequence**:
+## Outbound Campaign: [ICP Segment]
+
+### Sequence Overview
+| Step | Channel | Timing | Subject/Hook | Expected Response Rate |
+|------|---------|--------|-------------|------------------------|
+| 1 | [email/LinkedIn/call] | Day 0 | [specific subject line] | [X%] |
+| 2 | [channel] | Day [X] | [subject/hook] | [X%] |
+| 3 | [channel] | Day [X] | [subject/hook] | [X%] |
+
+### Email Template (Step 1)
+**Subject**: [actual subject line]
+**Body**:
+[Actual email copy — 3-4 sentences max, personalized to ICP]
+
+**CTA**: [specific call to action]
+
+### A/B Variant
+**Subject**: [alternative subject line]
+**Body**: [alternative copy]
+
+### Targeting Criteria
+| Dimension | Criteria |
+|-----------|----------|
+| Title | [specific titles] |
+| Company size | [range] |
+| Vertical | [specific verticals] |
+| Tech stack | [specific signals] |`,
+
+  "channel-optimization": `**Required output format — Channel Effectiveness Report**:
+## Channel Performance — [Period]
+
+### Channel Scorecard
+| Channel | Spend | Leads | Pipeline | Won | CAC | ROI | Trend |
+|---------|-------|-------|----------|-----|-----|-----|-------|
+| [channel] | $[X] | [Y] | $[Z] | [W] | $[V] | [U]x | [↑↓→] |
+
+### Channel x ICP Effectiveness Matrix
+| ICP Segment | Best Channel | 2nd Best | Avoid | Evidence |
+|-------------|-------------|----------|-------|----------|
+| [segment] | [channel + why] | [channel] | [channel + why] | [data] |
+
+### Reallocation Recommendation
+| From | To | Amount | Expected Lift | Rationale |
+|------|----|--------|---------------|----------|
+| [channel] | [channel] | $[X] | [+Y% leads] | [specific reason] |`,
+
+  "digital-awareness": `**Required output format — Campaign Blueprint**:
+## Digital Campaign: [Campaign Name]
+
+### Campaign Setup
+| Dimension | Detail |
+|-----------|--------|
+| Objective | [specific goal with number] |
+| Target Audience | [specific targeting criteria] |
+| Budget | $[X] over [timeframe] |
+| Channels | [specific platforms] |
+| KPIs | [specific metrics with targets] |
+
+### Creative Concepts
+| Concept | Format | Platform | Hook | CTA |
+|---------|--------|----------|------|-----|
+| [name] | [format] | [platform] | [first 5 words] | [specific CTA] |
+
+### Test Matrix
+| Variable | Variant A | Variant B | Success Metric | Min Sample |
+|----------|-----------|-----------|----------------|------------|
+| [variable] | [option] | [option] | [metric] | [number] |
+
+### Measurement Plan
+| Metric | Tool | Frequency | Target | Alert Threshold |
+|--------|------|-----------|--------|----------------|
+| [metric] | [tool] | [cadence] | [target] | [threshold] |`,
+
+  "partnerships": `**Required output format — Partnership Action Plan**:
+## Partnership: [Partner Name]
+
+### Partnership Profile
+| Dimension | Detail |
+|-----------|--------|
+| Partner | [name] |
+| Type | [MMP/Agency/Publisher/Data] |
+| Strategic Value | [specific value to Moloco CTV] |
+| Current Status | [active/developing/target] |
+| Revenue Potential | $[X] pipeline contribution |
+
+### Joint Activities
+| Activity | Timeline | Owner (Moloco) | Owner (Partner) | Expected Outcome |
+|----------|----------|---------------|-----------------|------------------|
+| [activity] | [date] | [name] | [name] | [specific outcome] |
+
+### Co-Marketing Opportunities
+| Opportunity | Format | Audience | Investment | Expected Pipeline |
+|-------------|--------|----------|------------|-------------------|
+| [opportunity] | [webinar/case study/event] | [target] | $[X] | $[Y] pipeline |`,
 
   "icp-intelligence": `**Required output format — ICP Profile**:
 ## Segment: [Name]
@@ -877,6 +1278,167 @@ Include specific quotes or moments from the call. End with "Top 3 Actions for Ne
 
 ### Blockers to Escalate
 [Numbered list with specific blocker, impact, and proposed resolution]`,
+
+  "campaign-monitoring": `**Required output format — Campaign Alert Report**:
+## Campaign Status: [Account Name]
+### Alert Level: [🟢 Normal / 🟡 Watch / 🔴 Critical]
+
+| Metric | Target | Current | 3-Day Trend | Status |
+|--------|--------|---------|-------------|--------|
+| Daily Spend | $[X] | $[Y] | [↑↓→] | [🟢🟡🔴] |
+| Primary KPI | [X] | [Y] | [↑↓→] | [🟢🟡🔴] |
+| Win Rate | [X%] | [Y%] | [↑↓→] | [🟢🟡🔴] |
+| Creative CTR | [X%] | [Y%] | [↑↓→] | [🟢🟡🔴] |
+| Frequency | [X/wk] | [Y/wk] | [↑↓→] | [🟢🟡🔴] |
+
+### Anomaly Detected
+[What changed, when, magnitude, likely cause]
+
+### Optimization Actions
+| Action | Expected Impact | Timeline | Owner |
+|--------|-----------------|----------|-------|
+| [specific action] | [+X% improvement] | [when] | [who] |`,
+
+  "customer-comms": `**Required output format — Customer Report**:
+## [Account Name] — Weekly Performance Report
+### Week of [Date]
+
+**Executive Summary**: [2-3 sentences: goal status, key change, outlook]
+
+| Metric | This Week | Last Week | Target | Status |
+|--------|-----------|-----------|--------|--------|
+| Spend | $[X] | $[Y] | $[Z] | [status] |
+| [Primary KPI] | [X] | [Y] | [Z] | [status] |
+| Impressions | [X] | [Y] | - | [trend] |
+| [Secondary KPI] | [X] | [Y] | [Z] | [status] |
+
+### What We Did This Week
+[Numbered list of specific optimizations with measured impact]
+
+### What We're Doing Next Week
+[Numbered list of planned actions with expected outcomes]
+
+### Strategic Recommendation
+[One specific expansion or optimization opportunity with supporting data]`,
+
+  "performance-scaling": `**Required output format — Scale Pitch**:
+## Scale Recommendation: [Account Name]
+### Current: $[X]/day → Proposed: $[Y]/day
+
+**Performance Evidence (Last 4 Weeks)**:
+| Week | Spend | [Primary KPI] | vs Target | Trend |
+|------|-------|---------------|-----------|-------|
+| W1 | $[X] | [Y] | [+/-Z%] | - |
+| W2 | $[X] | [Y] | [+/-Z%] | [↑↓→] |
+| W3 | $[X] | [Y] | [+/-Z%] | [↑↓→] |
+| W4 | $[X] | [Y] | [+/-Z%] | [↑↓→] |
+
+**Incrementality Evidence**: [Ghost bidding / geo holdout results]
+
+**Headroom Analysis**:
+| Opportunity | Est. Incremental Spend | Expected KPI Impact |
+|-------------|----------------------|---------------------|
+| [new dayparts] | $[X]/day | [impact] |
+| [new publishers] | $[X]/day | [impact] |
+| [new geos] | $[X]/day | [impact] |
+
+**Risk Mitigation**: [Specific safeguards]
+**Specific Ask**: [Exact budget increase, timeframe, checkpoint]`,
+
+  "churn-prevention": `**Required output format — Risk Assessment**:
+## Account Risk Report: [Account Name]
+### Overall Risk Score: [X/12] — [Green/Yellow/Orange/Red]
+
+| Factor | Weight | Score | Evidence |
+|--------|--------|-------|----------|
+| Spend trend | 25% | [0/1/2] | [specific data] |
+| KPI vs target | 20% | [0/1/2] | [specific data] |
+| Engagement | 15% | [0/1/2] | [specific data] |
+| Sentiment | 15% | [0/1/2] | [specific data] |
+| Competitive signals | 15% | [0/1/2] | [specific data] |
+| Contract timing | 10% | [0/1/2] | [specific data] |
+
+### Intervention Plan
+| Action | Owner | Timeline | Expected Outcome |
+|--------|-------|----------|------------------|
+| [specific action] | [name] | [when] | [what changes] |
+
+### Escalation Required: [Yes/No]
+[If yes: who, what, by when]`,
+
+  "cross-account": `**Required output format — Cross-Account Intelligence Brief**:
+## Cross-Account Pattern Report — Week of [Date]
+
+### Pattern 1: [Name]
+| Dimension | Detail |
+|-----------|--------|
+| Accounts affected | [list specific accounts] |
+| Signal | [what we observed] |
+| Evidence strength | [Strong/Medium/Weak] |
+| Implication | [what this means for the business] |
+| Recommended action | [specific action with owner] |
+
+### Pattern 2: [Name]
+[Same structure]
+
+### Vertical Performance Comparison
+| Vertical | Accounts | Avg KPI | Best Performer | Worst Performer | Key Differentiator |
+|----------|----------|---------|----------------|-----------------|--------------------|
+| [vertical] | [names] | [metric] | [name + metric] | [name + metric] | [what explains the gap] |
+
+### Learnings to Propagate
+[Numbered list: specific learning → from which account → to which accounts → expected impact]`,
+
+  "governance": `**Required output format — Business Intelligence Report**:
+## CTV Business Pulse — Week of [Date]
+
+### Revenue Status
+| Metric | Target | Current | Gap | Run Rate | On Track? |
+|--------|--------|---------|-----|----------|-----------|
+| Q2 ARR | $10M | $[X] | $[Y] | $[Z]/mo | [Yes/No] |
+| Pipeline | $5M | $[X] | $[Y] | $[Z]/mo | [Yes/No] |
+| Active Tests | 10 | [X] | [Y] | [Z]/mo | [Yes/No] |
+
+### Pipeline Movement This Week
+| Account | Stage Change | Value | Next Step | Risk |
+|---------|-------------|-------|-----------|------|
+| [name] | [from → to] | $[X] | [action] | [H/M/L] |
+
+### Key Decisions Needed
+| Decision | Options | Data Available | Deadline | Recommendation |
+|----------|---------|----------------|----------|----------------|
+| [decision] | [A vs B] | [what we know] | [date] | [which and why] |
+
+### Top 3 Actions This Week
+1. [Action] — [Owner] — [Expected impact] — [Deadline]
+2. [Action] — [Owner] — [Expected impact] — [Deadline]
+3. [Action] — [Owner] — [Expected impact] — [Deadline]`,
+
+  "orchestration": `**Required output format — Orchestrator Synthesis**:
+## Cross-Module Synthesis — Week of [Date]
+
+### Signal Map
+| Module | Key Signal | Strength | Implication |
+|--------|-----------|----------|-------------|
+| M1 (Market Intel) | [signal] | [Strong/Medium/Weak] | [what it means] |
+| M2 (Growth) | [signal] | [Strong/Medium/Weak] | [what it means] |
+| M3 (Customer Success) | [signal] | [Strong/Medium/Weak] | [what it means] |
+| M4 (Governance) | [signal] | [Strong/Medium/Weak] | [what it means] |
+
+### Cross-Module Tensions
+| Tension | Module A Says | Module B Says | Resolution |
+|---------|--------------|---------------|------------|
+| [name] | [signal] | [contradicting signal] | [proposed resolution] |
+
+### Top 3 Things That Matter This Week
+1. **[Topic]**: [Why it matters] → [Specific action] → [Owner] → [Deadline]
+2. **[Topic]**: [Why it matters] → [Specific action] → [Owner] → [Deadline]
+3. **[Topic]**: [Why it matters] → [Specific action] → [Owner] → [Deadline]
+
+### Systemic vs Local Assessment
+| Issue | Systemic or Local? | Evidence | Action Required |
+|-------|--------------------|----------|-----------------|
+| [issue] | [Systemic/Local] | [why] | [action] |`,
 };
 
 /**
@@ -929,6 +1491,20 @@ const SECTION_USER_INSTRUCTIONS: Record<string, string> = {
   "learning-goals": "Update the EOQ2 conviction tracker. What new evidence emerged? Did conviction go up or down for each learning goal? What's the single most important thing to learn next week? Use the conviction update format with specific evidence.",
 
   "operating-rhythm": "Generate the weekly prep package. Include prioritized agenda, pre-read summary, decisions needed, action items, and blockers to escalate. Reference specific accounts, metrics, and deadlines. Use the weekly prep format.",
+
+  "campaign-monitoring": "Generate a real-time campaign alert report for active CTV accounts. Check each account against alert thresholds: spend drop >20% DoD, CPI/CPA increase >15% over 3-day average, win rate below 40%, creative CTR decline >25% WoW. For each alert, diagnose the root cause and propose specific optimization actions (bid adjustment, creative rotation, daypart shift, inventory targeting, frequency cap change). Reference Tang Luck ($57K/day), CHAI ($24K/day), Experian/PMG ($18K/day), Fanatics ($12K/day), Novig ($8K/day) with real metrics. Use the Campaign Alert Report format.",
+
+  "customer-comms": "Generate an actual customer-facing performance report for a specific CTV account. Write the executive summary, populate the metrics table with real numbers, describe specific optimizations made this week and their measured impact, outline next week's planned actions, and include one specific expansion recommendation. Match the communication tier: Tier 1 (Tang Luck) gets detailed weekly reports, Tier 2 (CHAI, Experian/PMG) gets standard weekly, Tier 3 (Fanatics, Novig) gets bi-weekly. Use the Customer Report format.",
+
+  "performance-scaling": "Build a specific scale pitch for a named CTV account. Include 4-week performance evidence, incrementality test results, headroom analysis (new dayparts, publishers, geos), competitive context, risk mitigation plan, and the exact budget ask with checkpoint timeline. Reference real accounts: Tang Luck ($57K→$85K opportunity), CHAI ($24K→$40K opportunity), Novig ($8K→$15K opportunity). Use the Scale Pitch format.",
+
+  "churn-prevention": "Score a specific CTV account against the churn risk model. Evaluate all 6 factors (spend trend, KPI vs target, engagement, sentiment, competitive signals, contract timing) with specific evidence for each. Calculate the overall risk score and determine the intervention level (Green/Yellow/Orange/Red). Propose a specific intervention plan with actions, owners, timelines, and expected outcomes. Focus on Fanatics (risk score 5, ROAS below target) and Experian/PMG (risk score 4, agency asking about TTD). Use the Risk Assessment format.",
+
+  "cross-account": "Surface cross-account patterns from the live CTV portfolio. Compare performance across verticals (Gaming: Tang Luck/CHAI/Novig, E-commerce: Fanatics, Fintech: Experian/PMG). Identify which learnings from one account apply to others. Propose specific actions to propagate winning strategies. Reference real metrics: creative fatigue timelines, daypart efficiency, publisher quality splits, frequency sweet spots. Use the Cross-Account Intelligence Brief format.",
+
+  "governance": "Generate a CTV business intelligence report with real pipeline data. Calculate revenue run rate vs $10M target, pipeline coverage ratio, test fund burn rate ($347K of $670K deployed), and OKR progress. Identify the top 3 actions needed this week to close the revenue gap. Reference specific accounts by stage, value, and risk level. Flag key decisions pending (EOQ2 investment, CTV-to-Web continuation, test fund reallocation, agency strategy). Use the Business Intelligence Report format.",
+
+  "orchestration": "Synthesize signals across ALL four modules. What is Module 1 (Market Intel) saying about the market? Does Module 2 (Growth) pipeline data confirm or contradict it? What is Module 3 (Customer Success) learning from live accounts? How should Module 4 (Governance) adjust strategy? Identify cross-module tensions (e.g., market says Web is growing but customer data shows attribution challenges). Propose the 3-5 things that matter most this week with specific actions and owners. Use the Orchestrator Synthesis format.",
 };
 
 // ============================================================================
@@ -1030,11 +1606,17 @@ function findSectionKey(promptText: string, subModuleName: string, moduleId: num
   if (smLower.includes("test fund") || smLower.includes("commitment")) return "test-funding";
   if (smLower.includes("event")) return "event-activation";
   if (smLower.includes("onboard") || smLower.includes("setup") || smLower.includes("goal & creative") || smLower.includes("measurement verif")) return "onboarding";
-  if (smLower.includes("monitor") || smLower.includes("alert") || smLower.includes("daily performance") || smLower.includes("anomaly")) return "performance-monitoring";
-  if (smLower.includes("cross-account") || smLower.includes("pattern") || smLower.includes("competitive performance")) return "cross-account-learning";
+  if (smLower.includes("campaign monitor") || smLower.includes("campaign-monitor") || smLower.includes("daily perf") || smLower.includes("real-time optim") || smLower.includes("bid optim") || smLower.includes("creative rotat") || smLower.includes("daypart") || smLower.includes("frequency cap") || smLower.includes("pacing")) return "campaign-monitoring";
+  if (smLower.includes("customer comm") || smLower.includes("customer-comm") || smLower.includes("report gen") || smLower.includes("qbr") || smLower.includes("weekly report") || smLower.includes("client report") || smLower.includes("performance summar")) return "customer-comms";
+  if (smLower.includes("performance scal") || smLower.includes("performance-scal") || smLower.includes("scale pitch") || smLower.includes("upsell") || smLower.includes("expansion") || smLower.includes("budget increase") || smLower.includes("spend growth")) return "performance-scaling";
+  if (smLower.includes("churn") || smLower.includes("retention") || smLower.includes("at-risk") || smLower.includes("at risk") || smLower.includes("save plan") || smLower.includes("win-back") || smLower.includes("intervention")) return "churn-prevention";
+  if (smLower.includes("cross-account") || smLower.includes("cross account") || smLower.includes("pattern") || smLower.includes("portfolio") || smLower.includes("competitive performance")) return "cross-account";
+  if (smLower.includes("governance") || smLower.includes("resource") || smLower.includes("budget track") || smLower.includes("test fund track") || smLower.includes("investment") || smLower.includes("headcount") || smLower.includes("business intel")) return "governance";
+  if (smLower.includes("orchestrat") || smLower.includes("synthesis") || smLower.includes("cross-module") || smLower.includes("signal rout") || smLower.includes("priority") || smLower.includes("weekly sync") || smLower.includes("meta-")) return "orchestration";
+  if (smLower.includes("monitor") || smLower.includes("alert") || smLower.includes("anomaly")) return "performance-monitoring";
   if (smLower.includes("case study")) return "case-study-pipeline";
   if (smLower.includes("health") || smLower.includes("sentiment") || smLower.includes("confidence") || smLower.includes("lifetime") || smLower.includes("advisory")) return "long-term-health";
-  if (smLower.includes("feedback") || smLower.includes("executive") && smLower.includes("report")) return "feedback-routing";
+  if (smLower.includes("feedback") || (smLower.includes("executive") && smLower.includes("report"))) return "feedback-routing";
   if (smLower.includes("pipeline") || smLower.includes("revenue") || smLower.includes("arr") || smLower.includes("conversion track")) return "commercial-performance";
   if (smLower.includes("conviction") || smLower.includes("learning goal")) return "learning-goals";
   if (smLower.includes("weekly") || smLower.includes("okr") || smLower.includes("dependency") || smLower.includes("exec comm") || smLower.includes("steering")) return "operating-rhythm";
@@ -1045,7 +1627,14 @@ function findSectionKey(promptText: string, subModuleName: string, moduleId: num
   if (ptLower.includes("outbound") || ptLower.includes("email") || ptLower.includes("sequence")) return "outbound-system";
   if (ptLower.includes("coaching") || ptLower.includes("pitch") || ptLower.includes("deal")) return "sales-engagement";
   if (ptLower.includes("onboard")) return "onboarding";
-  if (ptLower.includes("health") || ptLower.includes("churn")) return "long-term-health";
+  if (ptLower.includes("campaign") && (ptLower.includes("monitor") || ptLower.includes("optim") || ptLower.includes("bid") || ptLower.includes("creative"))) return "campaign-monitoring";
+  if (ptLower.includes("report") && (ptLower.includes("customer") || ptLower.includes("client") || ptLower.includes("qbr"))) return "customer-comms";
+  if (ptLower.includes("scale") || ptLower.includes("upsell") || ptLower.includes("expand") || ptLower.includes("budget increase")) return "performance-scaling";
+  if (ptLower.includes("churn") || ptLower.includes("at-risk") || ptLower.includes("retention") || ptLower.includes("intervention")) return "churn-prevention";
+  if (ptLower.includes("cross-account") || ptLower.includes("portfolio") || ptLower.includes("pattern across")) return "cross-account";
+  if (ptLower.includes("governance") || ptLower.includes("resource alloc") || ptLower.includes("headcount") || ptLower.includes("business intel")) return "governance";
+  if (ptLower.includes("orchestrat") || ptLower.includes("synthesize") || ptLower.includes("cross-module") || ptLower.includes("signal")) return "orchestration";
+  if (ptLower.includes("health")) return "long-term-health";
   if (ptLower.includes("pipeline") || ptLower.includes("revenue") || ptLower.includes("forecast")) return "commercial-performance";
   if (ptLower.includes("conviction") || ptLower.includes("investment decision")) return "learning-goals";
   if (ptLower.includes("weekly") || ptLower.includes("agenda") || ptLower.includes("prep")) return "operating-rhythm";
