@@ -19,6 +19,7 @@ import {
   LogIn,
   RotateCcw,
   Database,
+  BarChart3,
 } from "lucide-react";
 import { useState, useEffect, useRef, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -40,15 +41,16 @@ const primaryNav: NavItem[] = [
   { path: "/", label: "Control Center", shortLabel: "Control", icon: Network },
   { path: "/toolkit", label: "Toolkit", shortLabel: "Toolkit", icon: Wrench },
   { path: "/simulation", label: "Buyer Roleplay", shortLabel: "Roleplay", icon: MessageSquare },
+  { path: "/reporting", label: "Reporting", shortLabel: "Reports", icon: BarChart3 },
   { path: "/data-explorer", label: "Data Explorer", shortLabel: "Data", icon: Database },
 ];
 
-// Bottom nav items for mobile — same 3 tabs
+// Bottom nav items for mobile
 const bottomNav: NavItem[] = [
   { path: "/", label: "Control", icon: Network },
   { path: "/toolkit", label: "Toolkit", icon: Wrench },
+  { path: "/reporting", label: "Reports", icon: BarChart3 },
   { path: "/simulation", label: "Roleplay", icon: MessageSquare },
-  { path: "/data-explorer", label: "Data", icon: Database },
 ];
 
 export default function NeuralShell({ children }: { children: ReactNode }) {

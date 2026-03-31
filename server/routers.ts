@@ -27,6 +27,7 @@ import {
   clearCache,
   deepHealthCheck,
 } from "./liveData";
+import { buildInsightsReport } from "./reporting";
 
 export const appRouter = router({
   llm: router({
@@ -354,6 +355,16 @@ export const appRouter = router({
      */
     stats: publicProcedure.query(async () => {
       return getFeedbackStats();
+    }),
+  }),
+
+  reporting: router({
+    /**
+     * Build the full insights report — aggregates all live data sources
+     * into revenue tracking, voice of customer, rep pulse, GTM funnel, campaign health.
+     */
+    insights: publicProcedure.query(async () => {
+      return buildInsightsReport();
     }),
   }),
 });

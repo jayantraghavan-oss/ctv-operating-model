@@ -29,6 +29,7 @@ const WeeklyPrep = lazy(() => import("./pages/WeeklyPrep"));
 const ConvictionDashboard = lazy(() => import("./pages/ConvictionDashboard"));
 const LearningLoops = lazy(() => import("./pages/LearningLoops"));
 const DataExplorer = lazy(() => import("./pages/DataExplorer"));
+const Reporting = lazy(() => import("./pages/Reporting"));
 
 function PageLoader() {
   return (
@@ -73,6 +74,7 @@ function Router() {
           <Route path="/conviction" component={ConvictionDashboard} />
           <Route path="/learning-loops" component={LearningLoops} />
           <Route path="/data-explorer" component={DataExplorer} />
+          <Route path="/reporting" component={Reporting} />
 
           {/* Aliases */}
           <Route path="/org-chart" component={OrgChart} />

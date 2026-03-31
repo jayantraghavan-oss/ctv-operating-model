@@ -535,3 +535,37 @@
 - [x] Track live context vs synthetic for quality comparison
 - [x] Store feedback in DB for continuous improvement tracking
 - [x] Add vitest tests for feedback system (7 new tests, 90 total passing)
+
+## Phase 45: Interactive Reporting / Insights Dashboard
+
+### Revenue & Pipeline Tracking
+- [x] Build revenue tracker with $10M EOY target, monthly actuals, forecast, gap analysis
+- [x] Pipeline waterfall: by stage, conversion rates, velocity, weighted forecast
+- [x] Monthly/quarterly trend charts with target line overlay
+- [x] Deal-level drill-down table with stage, owner, close date, amount
+
+### Gong — Voice of Customer
+- [x] Customer sentiment analysis from call transcripts (positive/negative/neutral themes)
+- [x] Top objections and concerns surfaced from Gong calls
+- [x] Win/loss patterns — what customers say when they buy vs. churn
+- [x] Call volume and engagement trends over time
+
+### Slack — Rep Sentiment & Pulse
+- [x] Rep sentiment analysis from internal Slack channels
+- [x] Top themes reps are discussing (blockers, wins, product gaps)
+- [x] Morale/confidence indicator based on message tone
+- [x] Activity trends — channel volume, response times
+
+### Dashboard UX
+- [x] Single-page dashboard with 5 sections: Revenue, Voice of Customer, Rep Pulse, GTM Funnel, Campaign Health
+- [x] Interactive charts (Recharts: AreaChart, BarChart, ProgressRing)
+- [ ] Filters: time range, segment, rep, region
+- [x] Mobile-responsive card layout
+- [x] Add route to App.tsx and sidebar nav entry
+- [x] Server-side tRPC procedures for reporting data (server/reporting.ts + reporting.insights endpoint)
+
+### Data Integration
+- [x] Wire Salesforce connector for pipeline/revenue data
+- [x] Wire Gong connector for call transcripts and sentiment
+- [x] Wire Slack connector for rep channel analysis (synthesized from known channels)
+- [x] Graceful fallback with sample data when connectors unavailable
