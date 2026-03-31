@@ -559,7 +559,7 @@
 ### Dashboard UX
 - [x] Single-page dashboard with 5 sections: Revenue, Voice of Customer, Rep Pulse, GTM Funnel, Campaign Health
 - [x] Interactive charts (Recharts: AreaChart, BarChart, ProgressRing)
-- [ ] Filters: time range, segment, rep, region
+- [x] Filters: time range, segment, region (with animated panel, active filter badges, reset)
 - [x] Mobile-responsive card layout
 - [x] Add route to App.tsx and sidebar nav entry
 - [x] Server-side tRPC procedures for reporting data (server/reporting.ts + reporting.insights endpoint)

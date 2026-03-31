@@ -18,7 +18,7 @@ import {
   MessageSquare, Target, Shield, AlertTriangle, CheckCircle2,
   ChevronDown, ChevronUp, RefreshCw, Zap, Radio, Heart,
   ArrowUpRight, ArrowDownRight, Minus, ThumbsUp, ThumbsDown,
-  Megaphone, Layers, Clock, ExternalLink,
+  Megaphone, Layers, Clock, ExternalLink, SlidersHorizontal, Filter,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -212,6 +212,12 @@ export default function Reporting() {
   const [activeSection, setActiveSection] = useState("revenue");
   const [expandedCampaign, setExpandedCampaign] = useState<number | null>(null);
 
+  // Filters
+  const [timeRange, setTimeRange] = useState<"30d" | "60d" | "90d" | "ytd">("ytd");
+  const [regionFilter, setRegionFilter] = useState<string>("all");
+  const [segmentFilter, setSegmentFilter] = useState<string>("all");
+  const [showFilters, setShowFilters] = useState(false);
+
   // Fetch report data
   const fetchReport = async () => {
     setLoading(true);
@@ -336,25 +342,141 @@ export default function Reporting() {
           </div>
         </motion.div>
 
-        {/* ── Section Nav (sticky) ── */}
+        {/* ── Section Nav + Filters (sticky) ── */}
         <div className="sticky top-0 z-20 -mx-4 lg:-mx-8 px-4 lg:px-8 py-3 bg-background/80 backdrop-blur-xl border-b border-border/40 mb-6">
-          <div className="flex gap-1 overflow-x-auto scrollbar-hide">
-            {SECTIONS.map((s) => (
-              <button
-                key={s.id}
-                onClick={() => scrollTo(s.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                  activeSection === s.id
-                    ? "bg-primary text-white shadow-sm"
-                    : "text-muted-foreground hover:bg-muted/60"
-                }`}
-              >
-                <s.icon className="w-3 h-3" />
-                {s.label}
-              </button>
-            ))}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex gap-1 overflow-x-auto scrollbar-hide">
+              {SECTIONS.map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => scrollTo(s.id)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+                    activeSection === s.id
+                      ? "bg-primary text-white shadow-sm"
+                      : "text-muted-foreground hover:bg-muted/60"
+                  }`}
+                >
+                  <s.icon className="w-3 h-3" />
+                  {s.label}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all shrink-0 ${
+                showFilters || timeRange !== "ytd" || regionFilter !== "all" || segmentFilter !== "all"
+                  ? "bg-primary/10 text-primary border border-primary/20"
+                  : "text-muted-foreground hover:bg-muted/60"
+              }`}
+            >
+              <SlidersHorizontal className="w-3 h-3" />
+              Filters
+              {(timeRange !== "ytd" || regionFilter !== "all" || segmentFilter !== "all") && (
+                <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+              )}
+            </button>
           </div>
+
+          {/* Filter Panel */}
+          <AnimatePresence>
+            {showFilters && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="flex flex-wrap items-center gap-3 pt-3 mt-3 border-t border-border/30">
+                  {/* Time Range */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-muted-foreground/70 uppercase tracking-wider font-semibold">Period</span>
+                    <div className="flex gap-0.5 bg-muted/40 rounded-lg p-0.5">
+                      {(["30d", "60d", "90d", "ytd"] as const).map((t) => (
+                        <button
+                          key={t}
+                          onClick={() => setTimeRange(t)}
+                          className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
+                            timeRange === t
+                              ? "bg-white text-foreground shadow-sm"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          {t === "ytd" ? "YTD" : t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Region */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-muted-foreground/70 uppercase tracking-wider font-semibold">Region</span>
+                    <select
+                      value={regionFilter}
+                      onChange={(e) => setRegionFilter(e.target.value)}
+                      className="text-[11px] bg-white border border-border/50 rounded-lg px-2.5 py-1 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 appearance-none cursor-pointer"
+                    >
+                      <option value="all">All Regions</option>
+                      <option value="AMER">AMER</option>
+                      <option value="EMEA">EMEA</option>
+                      <option value="APAC">APAC</option>
+                    </select>
+                  </div>
+
+                  {/* Segment / Vertical */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-muted-foreground/70 uppercase tracking-wider font-semibold">Segment</span>
+                    <select
+                      value={segmentFilter}
+                      onChange={(e) => setSegmentFilter(e.target.value)}
+                      className="text-[11px] bg-white border border-border/50 rounded-lg px-2.5 py-1 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 appearance-none cursor-pointer"
+                    >
+                      <option value="all">All Segments</option>
+                      <option value="Gaming">Gaming</option>
+                      <option value="E-Commerce">E-Commerce</option>
+                      <option value="Streaming">Streaming</option>
+                      <option value="Fintech">Fintech</option>
+                    </select>
+                  </div>
+
+                  {/* Reset */}
+                  {(timeRange !== "ytd" || regionFilter !== "all" || segmentFilter !== "all") && (
+                    <button
+                      onClick={() => { setTimeRange("ytd"); setRegionFilter("all"); setSegmentFilter("all"); }}
+                      className="text-[11px] text-primary hover:text-primary/80 font-medium transition-colors ml-auto"
+                    >
+                      Reset filters
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
+
+        {/* Active filter context */}
+        {(timeRange !== "ytd" || regionFilter !== "all" || segmentFilter !== "all") && (
+          <div className="flex items-center gap-2 mb-4 text-[11px] text-muted-foreground">
+            <Filter className="w-3 h-3" />
+            <span>Showing:</span>
+            {timeRange !== "ytd" && (
+              <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-md font-medium">
+                Last {timeRange}
+              </span>
+            )}
+            {regionFilter !== "all" && (
+              <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-md font-medium">
+                {regionFilter}
+              </span>
+            )}
+            {segmentFilter !== "all" && (
+              <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-md font-medium">
+                {segmentFilter}
+              </span>
+            )}
+            <span className="text-muted-foreground/50 italic">Filter applied to all sections below</span>
+          </div>
+        )}
 
         {/* ════════════════════════════════════════════════════════════════ */}
         {/* SECTION 1: REVENUE TRACKER                                     */}
