@@ -1,84 +1,32 @@
 /**
- * Reporting — Interactive CTV Business Intelligence Dashboard.
+ * Reporting — CTV Strategic Intelligence
  *
- * Five sections:
- *   1. Revenue / Pipeline Tracker ($10M target)
- *   2. Voice of Customer (Gong themes, objections, sentiment)
- *   3. Rep Pulse (Slack sentiment, morale, training gaps)
- *   4. GTM Funnel (Pre-Pitch → Pitch → Onboarding → Test → Scale)
- *   5. Campaign Health (live campaigns, alerts, test-to-scale)
+ * Organized around 4 strategic questions:
+ *   Q1: Are we on track to hit $100M ARR?
+ *   Q2: What are our customers actually telling us?
+ *   Q3: What separates winning behaviors from losing ones?
+ *   Q4: How are we positioned in the market?
  *
- * Apple-style: white bg, glassy panels, soft shadows, polished typography.
+ * Apple-style: white bg, glassy panels, soft shadows, honest data maturity caveats.
  */
 import NeuralShell from "@/components/NeuralShell";
 import { trpcQuery } from "@/lib/trpcFetch";
 import { useState, useEffect, useMemo } from "react";
 import {
-  DollarSign, TrendingUp, Users, BarChart3, Activity,
-  MessageSquare, Target, Shield, AlertTriangle, CheckCircle2,
-  ChevronDown, ChevronUp, RefreshCw, Zap, Radio, Heart,
-  ArrowUpRight, ArrowDownRight, Minus, ThumbsUp, ThumbsDown,
-  Megaphone, Layers, Clock, ExternalLink, SlidersHorizontal, Filter,
+  DollarSign, TrendingUp, MessageSquare, Target,
+  AlertTriangle, CheckCircle2, ChevronDown, ChevronUp,
+  RefreshCw, ArrowUpRight, ArrowDownRight, Minus,
+  Shield, Crosshair, Users, BarChart3, Info,
+  ExternalLink, Award, XCircle, HelpCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line,
-  Legend, AreaChart, Area,
+  ResponsiveContainer, Cell, LineChart, Line, Legend,
+  AreaChart, Area,
 } from "recharts";
 
 const spring = { type: "spring" as const, stiffness: 300, damping: 30 };
-
-// ============================================================================
-// TYPES (mirrors server/reporting.ts)
-// ============================================================================
-
-interface LiveDataStatus {
-  slackConnected: boolean;
-  gongConnected: boolean;
-  salesforceConnected: boolean;
-  speedboatConnected: boolean;
-  lastRefreshed: string;
-  nextRefreshIn: number;
-  channelsMonitored: string[];
-  bqQueryPattern: {
-    tables: string[];
-    ctvFilter: string;
-    topPlatforms: string[];
-  } | null;
-}
-
-interface InsightsReport {
-  generatedAt: number;
-  revenue: any;
-  voiceOfCustomer: any;
-  repPulse: any;
-  gtmFunnel: any;
-  campaignHealth: any;
-  executiveSummary: string;
-  keyRisks: string[];
-  keyWins: string[];
-  recommendations: string[];
-  liveDataStatus?: LiveDataStatus;
-}
-
-// ============================================================================
-// SECTION NAV
-// ============================================================================
-
-interface Section {
-  id: string;
-  label: string;
-  icon: typeof DollarSign;
-}
-
-const SECTIONS: Section[] = [
-  { id: "revenue", label: "Revenue Tracker", icon: DollarSign },
-  { id: "customer", label: "Voice of Customer", icon: MessageSquare },
-  { id: "reps", label: "Rep Pulse", icon: Heart },
-  { id: "funnel", label: "GTM Funnel", icon: Layers },
-  { id: "campaigns", label: "Campaign Health", icon: Activity },
-];
 
 // ============================================================================
 // COLORS
@@ -92,201 +40,156 @@ const VIOLET = "#a78bfa";
 const SLATE = "#94a3b8";
 
 // ============================================================================
+// SECTION NAV
+// ============================================================================
+
+interface Section { id: string; label: string; question: string; icon: typeof DollarSign }
+
+const SECTIONS: Section[] = [
+  { id: "revenue", label: "Revenue & Pipeline", question: "Are we on track to hit $100M ARR?", icon: DollarSign },
+  { id: "customer", label: "Customer Voice", question: "What are customers telling us?", icon: MessageSquare },
+  { id: "patterns", label: "Win/Loss Patterns", question: "What separates winning from losing?", icon: Target },
+  { id: "market", label: "Market Position", question: "How are we positioned?", icon: Crosshair },
+];
+
+// ============================================================================
 // HELPER COMPONENTS
 // ============================================================================
 
-function MetricCard({
-  label,
-  value,
-  sub,
-  icon: Icon,
-  trend,
-  color = "text-foreground",
-}: {
-  label: string;
-  value: string | number;
-  sub?: string;
-  icon: typeof DollarSign;
-  trend?: "up" | "down" | "flat";
-  color?: string;
-}) {
+function DataMaturityBadge({ text }: { text: string }) {
   return (
-    <motion.div
-      className="glass rounded-2xl p-5 flex flex-col gap-2"
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={spring}
-    >
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
-        <Icon className={`w-4 h-4 ${color}`} />
-      </div>
-      <div className="flex items-end gap-2">
-        <span className={`text-2xl font-semibold tracking-tight ${color}`}>{value}</span>
-        {trend && (
-          <span className={`flex items-center text-xs font-medium ${
-            trend === "up" ? "text-emerald-600" : trend === "down" ? "text-rose-500" : "text-muted-foreground"
-          }`}>
-            {trend === "up" ? <ArrowUpRight className="w-3 h-3" /> : trend === "down" ? <ArrowDownRight className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
-          </span>
-        )}
-      </div>
-      {sub && <span className="text-xs text-muted-foreground">{sub}</span>}
-    </motion.div>
+    <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-50/60 border border-amber-200/60 mb-6">
+      <Info className="w-3.5 h-3.5 text-amber-600 mt-0.5 shrink-0" />
+      <p className="text-xs text-amber-800 leading-relaxed">{text}</p>
+    </div>
   );
 }
 
-function SectionHeader({
-  id,
-  title,
-  icon: Icon,
-  description,
-  children,
-}: {
-  id: string;
-  title: string;
-  icon: typeof DollarSign;
-  description: string;
-  children?: React.ReactNode;
+function MetricCard({ label, value, sub, icon: Icon, color = "text-foreground" }: {
+  label: string; value: string | number; sub?: string; icon: typeof DollarSign; color?: string;
 }) {
   return (
-    <div id={`section-${id}`} className="scroll-mt-20 mb-6">
-      <div className="flex items-center justify-between mb-1">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-primary/8 flex items-center justify-center">
-            <Icon className="w-4 h-4 text-primary" />
-          </div>
-          <div>
-            <h2 className="text-base font-semibold text-foreground">{title}</h2>
-            <p className="text-xs text-muted-foreground">{description}</p>
+    <div className="glass rounded-2xl p-4">
+      <div className="flex items-center gap-2 mb-2">
+        <Icon className={`w-3.5 h-3.5 ${color}`} />
+        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{label}</span>
+      </div>
+      <div className={`text-xl font-semibold ${color}`}>{value}</div>
+      {sub && <div className="text-[10px] text-muted-foreground mt-0.5">{sub}</div>}
+    </div>
+  );
+}
+
+function SignalRow({ signal, type, confidence, source }: {
+  signal: string; type: "risk" | "opportunity"; confidence: string; source: string;
+}) {
+  const isRisk = type === "risk";
+  return (
+    <div className={`rounded-xl border p-3 ${isRisk ? "bg-rose-50/40 border-rose-200/60" : "bg-emerald-50/40 border-emerald-200/60"}`}>
+      <div className="flex items-start gap-2">
+        {isRisk
+          ? <AlertTriangle className="w-3.5 h-3.5 text-rose-500 mt-0.5 shrink-0" />
+          : <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 mt-0.5 shrink-0" />}
+        <div className="min-w-0">
+          <p className="text-xs text-foreground leading-relaxed">{signal}</p>
+          <div className="flex items-center gap-2 mt-1">
+            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+              confidence === "high" ? "bg-foreground/10 text-foreground" :
+              confidence === "medium" ? "bg-muted text-muted-foreground" :
+              "bg-muted/50 text-muted-foreground/70"
+            }`}>{confidence}</span>
+            <span className="text-[10px] text-muted-foreground">{source}</span>
           </div>
         </div>
-        {children}
       </div>
     </div>
   );
 }
 
-function ConfidenceBadge({ level }: { level: "high" | "medium" | "low" }) {
-  const colors = {
-    high: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    medium: "bg-amber-50 text-amber-700 border-amber-200",
-    low: "bg-rose-50 text-rose-700 border-rose-200",
-  };
-  return (
-    <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${colors[level]}`}>
-      {level} confidence
-    </span>
-  );
-}
-
-function SentimentDot({ sentiment }: { sentiment: "positive" | "neutral" | "negative" }) {
-  const colors = {
-    positive: "bg-emerald-500",
-    neutral: "bg-amber-400",
-    negative: "bg-rose-500",
-  };
-  return <span className={`w-2 h-2 rounded-full ${colors[sentiment]} inline-block`} />;
-}
-
-function ProgressRing({ value, max, size = 120, strokeWidth = 10, color = MOLOCO_BLUE }: {
-  value: number; max: number; size?: number; strokeWidth?: number; color?: string;
+function SectionHeader({ id, question, description, icon: Icon }: {
+  id: string; question: string; description?: string; icon: typeof DollarSign;
 }) {
-  const pct = Math.min(100, Math.round((value / max) * 100));
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (pct / 100) * circumference;
-
   return (
-    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="oklch(0 0 0 / 0.06)" strokeWidth={strokeWidth} />
-        <motion.circle
-          cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={color} strokeWidth={strokeWidth}
-          strokeLinecap="round" strokeDasharray={circumference}
-          initial={{ strokeDashoffset: circumference }}
-          animate={{ strokeDashoffset: offset }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-xl font-bold text-foreground">{pct}%</span>
-        <span className="text-[10px] text-muted-foreground">of target</span>
+    <div id={id} className="pt-10 pb-4 scroll-mt-20">
+      <div className="flex items-center gap-3 mb-1">
+        <div className="w-8 h-8 rounded-xl bg-[#0091FF]/8 flex items-center justify-center">
+          <Icon className="w-4 h-4 text-[#0091FF]" />
+        </div>
+        <h2 className="text-lg font-semibold text-foreground tracking-tight">{question}</h2>
       </div>
+      {description && <p className="text-xs text-muted-foreground ml-11">{description}</p>}
     </div>
   );
+}
+
+function ConfidenceDot({ level }: { level: string }) {
+  const color = level === "high" ? "bg-emerald-500" : level === "medium" ? "bg-amber-400" : "bg-rose-400";
+  return <div className={`w-2 h-2 rounded-full ${color}`} />;
 }
 
 // ============================================================================
-// MAIN PAGE
+// MAIN COMPONENT
 // ============================================================================
 
 export default function Reporting() {
-  const [report, setReport] = useState<InsightsReport | null>(null);
+  const [report, setReport] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState("revenue");
-  const [expandedCampaign, setExpandedCampaign] = useState<number | null>(null);
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
-  // Filters
-  const [timeRange, setTimeRange] = useState<"30d" | "60d" | "90d" | "ytd">("ytd");
-  const [regionFilter, setRegionFilter] = useState<string>("all");
-  const [segmentFilter, setSegmentFilter] = useState<string>("all");
-  const [showFilters, setShowFilters] = useState(false);
+  const toggleExpand = (key: string) => {
+    setExpandedItems(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  };
 
-  // Fetch report data
-  const fetchReport = async () => {
+  useEffect(() => {
+    loadReport();
+  }, []);
+
+  async function loadReport() {
     setLoading(true);
     setError(null);
     try {
-      const data = await trpcQuery<InsightsReport>("reporting.insights");
+      const data = await trpcQuery("reporting.insights");
       setReport(data);
-    } catch (e: any) {
-      setError(e.message || "Failed to load report");
+    } catch (err: any) {
+      setError(err.message || "Failed to load report");
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  // Auto-refresh every 5 minutes
-  const [refreshCountdown, setRefreshCountdown] = useState(300);
-  const [isAutoRefresh, setIsAutoRefresh] = useState(true);
-
-  useEffect(() => { fetchReport(); }, []);
-
-  // Auto-refresh timer
+  // Scroll spy
   useEffect(() => {
-    if (!isAutoRefresh) return;
-    const interval = setInterval(() => {
-      setRefreshCountdown(prev => {
-        if (prev <= 1) {
-          fetchReport();
-          return 300;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [isAutoRefresh]);
-
-  // Scroll to section
-  const scrollTo = (id: string) => {
-    setActiveSection(id);
-    document.getElementById(`section-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id);
+          }
+        });
+      },
+      { rootMargin: "-20% 0px -70% 0px" }
+    );
+    SECTIONS.forEach(s => {
+      const el = document.getElementById(s.id);
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, [report]);
 
   if (loading) {
     return (
       <NeuralShell>
-        <div className="flex items-center justify-center h-96">
-          <motion.div className="flex flex-col items-center gap-3" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <div className="relative">
-              <div className="w-10 h-10 border-2 border-primary/20 rounded-full" />
-              <div className="absolute inset-0 w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-            </div>
-            <span className="text-sm font-medium text-muted-foreground">Aggregating live data...</span>
-            <span className="text-xs text-muted-foreground/60">Slack channels, Gong, Salesforce, Speedboat</span>
-          </motion.div>
+        <div className="flex items-center justify-center h-[60vh]">
+          <div className="text-center">
+            <RefreshCw className="w-6 h-6 text-[#0091FF] animate-spin mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground">Loading strategic intelligence...</p>
+          </div>
         </div>
       </NeuralShell>
     );
@@ -295,13 +198,13 @@ export default function Reporting() {
   if (error || !report) {
     return (
       <NeuralShell>
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto mb-3" />
-            <p className="text-sm text-foreground font-medium mb-1">Unable to load report</p>
+        <div className="flex items-center justify-center h-[60vh]">
+          <div className="text-center max-w-md">
+            <AlertTriangle className="w-6 h-6 text-amber-500 mx-auto mb-3" />
+            <p className="text-sm text-foreground mb-2">Unable to load report</p>
             <p className="text-xs text-muted-foreground mb-4">{error}</p>
-            <button onClick={fetchReport} className="text-xs text-primary hover:underline flex items-center gap-1 mx-auto">
-              <RefreshCw className="w-3 h-3" /> Retry
+            <button onClick={loadReport} className="text-xs text-[#0091FF] hover:underline flex items-center gap-1 mx-auto">
+              <RefreshCw className="w-3 h-3" /> Try again
             </button>
           </div>
         </div>
@@ -309,789 +212,270 @@ export default function Reporting() {
     );
   }
 
-  const { revenue, voiceOfCustomer: voc, repPulse, gtmFunnel, campaignHealth } = report;
+  const { revenueTrajectory: rev, customerVoice: voice, winLossPatterns: patterns, marketPosition: market } = report;
 
   return (
     <NeuralShell>
-      <div className="p-4 lg:p-8 max-w-[1400px] mx-auto">
-        {/* ── Page Header ── */}
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight text-foreground">Business Intelligence</h1>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Live reporting across revenue, customer voice, rep pulse, and campaign health
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            {/* Live data source indicators */}
-            {report.liveDataStatus && (
-              <div className="flex items-center gap-1.5">
-                <span className={`w-1.5 h-1.5 rounded-full ${report.liveDataStatus.slackConnected ? "bg-emerald-500 animate-pulse" : "bg-gray-300"}`} />
-                <span className="text-[10px] text-muted-foreground/60">Slack</span>
-                <span className={`w-1.5 h-1.5 rounded-full ${report.liveDataStatus.gongConnected ? "bg-emerald-500" : "bg-gray-300"}`} />
-                <span className="text-[10px] text-muted-foreground/60">Gong</span>
-                <span className={`w-1.5 h-1.5 rounded-full ${report.liveDataStatus.salesforceConnected ? "bg-emerald-500" : "bg-gray-300"}`} />
-                <span className="text-[10px] text-muted-foreground/60">SFDC</span>
-              </div>
-            )}
-            <div className="h-3 w-px bg-border/40" />
-            <span className="text-[10px] text-muted-foreground/60">
-              Updated {new Date(report.generatedAt).toLocaleTimeString()}
-            </span>
-            {isAutoRefresh && (
-              <span className="text-[10px] text-muted-foreground/40">
-                Next in {Math.floor(refreshCountdown / 60)}:{String(refreshCountdown % 60).padStart(2, "0")}
-              </span>
-            )}
-            <button
-              onClick={() => setIsAutoRefresh(!isAutoRefresh)}
-              className={`text-[10px] px-2 py-0.5 rounded-full border transition-all ${
-                isAutoRefresh
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                  : "bg-muted/40 text-muted-foreground border-border/40"
-              }`}
-            >
-              {isAutoRefresh ? "Auto" : "Manual"}
-            </button>
-            <button
-              onClick={() => { fetchReport(); setRefreshCountdown(300); }}
-              className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 transition-colors"
-            >
-              <RefreshCw className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} /> Refresh
-            </button>
-          </div>
+      <div className="p-6 lg:p-8 max-w-[1100px]">
+
+        {/* ── Header ── */}
+        <div className="mb-2">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">CTV Strategic Intelligence</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Four questions that matter — updated {new Date(report.generatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+          </p>
         </div>
 
         {/* ── Executive Summary ── */}
-        <motion.div
-          className="glass rounded-2xl p-5 mb-6"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={spring}
-        >
+        <div className="glass rounded-2xl p-5 mb-6">
           <p className="text-sm text-foreground leading-relaxed">{report.executiveSummary}</p>
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-            {report.keyWins.length > 0 && (
-              <div className="rounded-xl bg-emerald-50/60 border border-emerald-100 p-3">
-                <div className="text-[10px] font-semibold text-emerald-700 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" /> Key Wins
-                </div>
-                {report.keyWins.slice(0, 3).map((w: string, i: number) => (
-                  <p key={i} className="text-xs text-emerald-800 mb-1 leading-snug">{w}</p>
-                ))}
-              </div>
-            )}
-            {report.keyRisks.length > 0 && (
-              <div className="rounded-xl bg-rose-50/60 border border-rose-100 p-3">
-                <div className="text-[10px] font-semibold text-rose-700 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                  <AlertTriangle className="w-3 h-3" /> Key Risks
-                </div>
-                {report.keyRisks.slice(0, 3).map((r: string, i: number) => (
-                  <p key={i} className="text-xs text-rose-800 mb-1 leading-snug">{r}</p>
-                ))}
-              </div>
-            )}
-            {report.recommendations.length > 0 && (
-              <div className="rounded-xl bg-blue-50/60 border border-blue-100 p-3">
-                <div className="text-[10px] font-semibold text-blue-700 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                  <Zap className="w-3 h-3" /> Recommendations
-                </div>
-                {report.recommendations.slice(0, 3).map((r: string, i: number) => (
-                  <p key={i} className="text-xs text-blue-800 mb-1 leading-snug">{r}</p>
-                ))}
-              </div>
-            )}
-          </div>
-        </motion.div>
-
-        {/* ── Section Nav + Filters (sticky) ── */}
-        <div className="sticky top-0 z-20 -mx-4 lg:-mx-8 px-4 lg:px-8 py-3 bg-background/80 backdrop-blur-xl border-b border-border/40 mb-6">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex gap-1 overflow-x-auto scrollbar-hide">
-              {SECTIONS.map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => scrollTo(s.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                    activeSection === s.id
-                      ? "bg-primary text-white shadow-sm"
-                      : "text-muted-foreground hover:bg-muted/60"
-                  }`}
-                >
-                  <s.icon className="w-3 h-3" />
-                  {s.label}
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all shrink-0 ${
-                showFilters || timeRange !== "ytd" || regionFilter !== "all" || segmentFilter !== "all"
-                  ? "bg-primary/10 text-primary border border-primary/20"
-                  : "text-muted-foreground hover:bg-muted/60"
-              }`}
-            >
-              <SlidersHorizontal className="w-3 h-3" />
-              Filters
-              {(timeRange !== "ytd" || regionFilter !== "all" || segmentFilter !== "all") && (
-                <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-              )}
-            </button>
-          </div>
-
-          {/* Filter Panel */}
-          <AnimatePresence>
-            {showFilters && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden"
-              >
-                <div className="flex flex-wrap items-center gap-3 pt-3 mt-3 border-t border-border/30">
-                  {/* Time Range */}
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-muted-foreground/70 uppercase tracking-wider font-semibold">Period</span>
-                    <div className="flex gap-0.5 bg-muted/40 rounded-lg p-0.5">
-                      {(["30d", "60d", "90d", "ytd"] as const).map((t) => (
-                        <button
-                          key={t}
-                          onClick={() => setTimeRange(t)}
-                          className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
-                            timeRange === t
-                              ? "bg-white text-foreground shadow-sm"
-                              : "text-muted-foreground hover:text-foreground"
-                          }`}
-                        >
-                          {t === "ytd" ? "YTD" : t}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Region */}
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-muted-foreground/70 uppercase tracking-wider font-semibold">Region</span>
-                    <select
-                      value={regionFilter}
-                      onChange={(e) => setRegionFilter(e.target.value)}
-                      className="text-[11px] bg-white border border-border/50 rounded-lg px-2.5 py-1 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 appearance-none cursor-pointer"
-                    >
-                      <option value="all">All Regions</option>
-                      <option value="AMER">AMER</option>
-                      <option value="EMEA">EMEA</option>
-                      <option value="APAC">APAC</option>
-                    </select>
-                  </div>
-
-                  {/* Segment / Vertical */}
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-muted-foreground/70 uppercase tracking-wider font-semibold">Segment</span>
-                    <select
-                      value={segmentFilter}
-                      onChange={(e) => setSegmentFilter(e.target.value)}
-                      className="text-[11px] bg-white border border-border/50 rounded-lg px-2.5 py-1 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 appearance-none cursor-pointer"
-                    >
-                      <option value="all">All Segments</option>
-                      <option value="Gaming">Gaming</option>
-                      <option value="E-Commerce">E-Commerce</option>
-                      <option value="Streaming">Streaming</option>
-                      <option value="Fintech">Fintech</option>
-                    </select>
-                  </div>
-
-                  {/* Reset */}
-                  {(timeRange !== "ytd" || regionFilter !== "all" || segmentFilter !== "all") && (
-                    <button
-                      onClick={() => { setTimeRange("ytd"); setRegionFilter("all"); setSegmentFilter("all"); }}
-                      className="text-[11px] text-primary hover:text-primary/80 font-medium transition-colors ml-auto"
-                    >
-                      Reset filters
-                    </button>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
 
-        {/* Active filter context */}
-        {(timeRange !== "ytd" || regionFilter !== "all" || segmentFilter !== "all") && (
-          <div className="flex items-center gap-2 mb-4 text-[11px] text-muted-foreground">
-            <Filter className="w-3 h-3" />
-            <span>Showing:</span>
-            {timeRange !== "ytd" && (
-              <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-md font-medium">
-                Last {timeRange}
-              </span>
-            )}
-            {regionFilter !== "all" && (
-              <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-md font-medium">
-                {regionFilter}
-              </span>
-            )}
-            {segmentFilter !== "all" && (
-              <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-md font-medium">
-                {segmentFilter}
-              </span>
-            )}
-            <span className="text-muted-foreground/50 italic">Filter applied to all sections below</span>
-          </div>
-        )}
+        {/* ── Section Nav ── */}
+        <div className="flex gap-1 mb-2 overflow-x-auto pb-1 -mx-1 px-1">
+          {SECTIONS.map(s => (
+            <button
+              key={s.id}
+              onClick={() => document.getElementById(s.id)?.scrollIntoView({ behavior: "smooth" })}
+              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                activeSection === s.id
+                  ? "bg-[#0091FF] text-white"
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
 
         {/* ════════════════════════════════════════════════════════════════ */}
-        {/* SECTION 1: REVENUE TRACKER                                     */}
+        {/* Q1: ARE WE ON TRACK TO HIT $100M ARR?                         */}
         {/* ════════════════════════════════════════════════════════════════ */}
         <SectionHeader
           id="revenue"
-          title="Revenue Tracker"
+          question="Are we on track to hit $100M ARR?"
+          description={`CTV contribution target: $${(rev.ctvContributionTarget / 1e6).toFixed(0)}M of the $${(rev.annualTarget / 1e6).toFixed(0)}M company goal`}
           icon={DollarSign}
-          description={`$${(revenue.annualTarget / 1_000_000).toFixed(0)}M annual target — tracking closed-won, weighted pipeline, and run rate`}
-        >
-          <ConfidenceBadge level={revenue.confidence} />
-        </SectionHeader>
+        />
 
-        {/* KPI row */}
+        <DataMaturityBadge text={rev.dataMaturity} />
+
+        {/* Revenue KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
           <MetricCard
             label="Closed Won"
-            value={`$${(revenue.closedWon / 1_000_000).toFixed(1)}M`}
-            sub={`${Math.round((revenue.closedWon / revenue.annualTarget) * 100)}% of target`}
-            icon={CheckCircle2}
-            trend="up"
+            value={`$${(rev.closedWon / 1e6).toFixed(1)}M`}
+            sub="CTV revenue confirmed"
+            icon={DollarSign}
             color="text-emerald-600"
           />
           <MetricCard
             label="Weighted Pipeline"
-            value={`$${(revenue.pipelineWeighted / 1_000_000).toFixed(1)}M`}
-            sub={`$${(revenue.pipelineTotal / 1_000_000).toFixed(1)}M total`}
+            value={`$${(rev.pipelineWeighted / 1e6).toFixed(1)}M`}
+            sub="Stage-weighted value"
             icon={TrendingUp}
-            trend="up"
-            color="text-primary"
-          />
-          <MetricCard
-            label="Run Rate"
-            value={`$${(revenue.runRate / 1_000_000).toFixed(1)}M`}
-            sub={revenue.onTrack ? "On track" : "Below pace"}
-            icon={BarChart3}
-            trend={revenue.onTrack ? "up" : "down"}
-            color={revenue.onTrack ? "text-emerald-600" : "text-amber-600"}
+            color="text-[#0091FF]"
           />
           <MetricCard
             label="Gap to Target"
-            value={`$${(revenue.gapToTarget / 1_000_000).toFixed(1)}M`}
-            sub="Remaining to close"
+            value={`$${(rev.gapToTarget / 1e6).toFixed(1)}M`}
+            sub={`${rev.onTrack ? "On pace" : "Acceleration needed"}`}
             icon={Target}
+            color={rev.onTrack ? "text-emerald-600" : "text-amber-600"}
+          />
+          <MetricCard
+            label="Confidence"
+            value={rev.confidence.charAt(0).toUpperCase() + rev.confidence.slice(1)}
+            sub={rev.confidenceRationale.slice(0, 60) + "..."}
+            icon={Shield}
+            color={rev.confidence === "high" ? "text-emerald-600" : rev.confidence === "medium" ? "text-amber-600" : "text-rose-500"}
+          />
+        </div>
+
+        {/* Monthly Trend Chart */}
+        <div className="glass rounded-2xl p-5 mb-6">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Monthly Revenue vs Target</h3>
+          <ResponsiveContainer width="100%" height={220}>
+            <AreaChart data={rev.monthlyTrend}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey="month" tick={{ fontSize: 10, fill: "#94a3b8" }} />
+              <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} tickFormatter={(v: number) => `$${(v / 1e6).toFixed(1)}M`} />
+              <Tooltip formatter={(v: any) => [`$${(Number(v) / 1e6).toFixed(1)}M`, ""]} />
+              <Area type="monotone" dataKey="target" stroke={SLATE} fill={SLATE} fillOpacity={0.08} strokeDasharray="4 4" name="Target" />
+              <Area type="monotone" dataKey="closed" stroke={EMERALD} fill={EMERALD} fillOpacity={0.15} name="Closed" />
+              <Area type="monotone" dataKey="pipeline" stroke={MOLOCO_BLUE} fill={MOLOCO_BLUE} fillOpacity={0.1} name="Pipeline" />
+              <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Pipeline by Stage + Region */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+          <div className="glass rounded-2xl p-5">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Pipeline by Stage</h3>
+            <div className="space-y-2">
+              {(rev.byStage || []).map((s: any, i: number) => (
+                <div key={i} className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${
+                      s.stage === "Scale" ? "bg-emerald-500" : s.stage === "Test" ? "bg-amber-400" : "bg-muted-foreground/40"
+                    }`} />
+                    <span className="text-foreground">{s.stage}</span>
+                    <span className="text-muted-foreground">({s.count})</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-muted-foreground">${(s.value / 1e6).toFixed(2)}M</span>
+                    <span className="font-mono text-foreground">${(s.weightedValue / 1e6).toFixed(2)}M wtd</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="glass rounded-2xl p-5">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Pipeline by Region</h3>
+            <div className="space-y-2">
+              {(rev.byRegion || []).map((r: any, i: number) => (
+                <div key={i} className="flex items-center justify-between text-xs">
+                  <span className="text-foreground font-medium">{r.region}</span>
+                  <div className="flex items-center gap-4">
+                    <div>
+                      <span className="text-muted-foreground">Pipeline: </span>
+                      <span className="font-mono text-foreground">${(r.pipeline / 1e6).toFixed(2)}M</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Closed: </span>
+                      <span className="font-mono text-emerald-600">${(r.closed / 1e6).toFixed(2)}M</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Early Signals */}
+        <div className="glass rounded-2xl p-5 mb-6">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Early Signals</h3>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+            {(rev.earlySignals || []).map((s: any, i: number) => (
+              <SignalRow key={i} signal={s.signal} type={s.type} confidence={s.confidence} source={s.source} />
+            ))}
+          </div>
+        </div>
+
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* Q2: WHAT ARE OUR CUSTOMERS ACTUALLY TELLING US?                */}
+        {/* ════════════════════════════════════════════════════════════════ */}
+        <SectionHeader
+          id="customer"
+          question="What are our customers actually telling us?"
+          description={`${voice.totalCalls} calls analyzed over ${voice.period}`}
+          icon={MessageSquare}
+        />
+
+        <DataMaturityBadge text={voice.dataMaturity} />
+
+        {/* Sentiment Overview */}
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          <MetricCard
+            label="Positive"
+            value={`${Math.round((voice.sentimentBreakdown.positive / (voice.totalCalls || 1)) * 100)}%`}
+            sub={`${voice.sentimentBreakdown.positive} calls`}
+            icon={CheckCircle2}
+            color="text-emerald-600"
+          />
+          <MetricCard
+            label="Neutral"
+            value={`${Math.round((voice.sentimentBreakdown.neutral / (voice.totalCalls || 1)) * 100)}%`}
+            sub={`${voice.sentimentBreakdown.neutral} calls`}
+            icon={Minus}
+            color="text-muted-foreground"
+          />
+          <MetricCard
+            label="Negative"
+            value={`${Math.round((voice.sentimentBreakdown.negative / (voice.totalCalls || 1)) * 100)}%`}
+            sub={`${voice.sentimentBreakdown.negative} calls`}
+            icon={AlertTriangle}
             color="text-rose-500"
           />
         </div>
 
-        {/* Revenue chart + ring */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
-          {/* Monthly trend chart */}
-          <div className="lg:col-span-2 glass rounded-2xl p-5">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Monthly Revenue Trend</h3>
-            <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={revenue.monthlyTrend}>
-                <defs>
-                  <linearGradient id="closedGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={EMERALD} stopOpacity={0.3} />
-                    <stop offset="95%" stopColor={EMERALD} stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="pipeGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={MOLOCO_BLUE} stopOpacity={0.3} />
-                    <stop offset="95%" stopColor={MOLOCO_BLUE} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="oklch(0 0 0 / 0.06)" />
-                <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${(v / 1_000_000).toFixed(1)}M`} />
-                <Tooltip
-                  contentStyle={{ background: "white", border: "1px solid #e2e8f0", borderRadius: 12, fontSize: 12, boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}
-                  formatter={(v: any) => [`$${(Number(v) / 1_000_000).toFixed(2)}M`, ""]}
-                />
-                <Area type="monotone" dataKey="closed" stroke={EMERALD} fill="url(#closedGrad)" strokeWidth={2} name="Closed" />
-                <Area type="monotone" dataKey="pipeline" stroke={MOLOCO_BLUE} fill="url(#pipeGrad)" strokeWidth={2} name="Pipeline" />
-                <Line type="monotone" dataKey="target" stroke={ROSE} strokeWidth={1.5} strokeDasharray="6 3" dot={false} name="Target" />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Progress ring + stage breakdown */}
-          <div className="glass rounded-2xl p-5 flex flex-col items-center">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 self-start">Target Attainment</h3>
-            <ProgressRing value={revenue.closedWon + revenue.pipelineWeighted} max={revenue.annualTarget} />
-            <div className="w-full mt-4 space-y-2">
-              {revenue.byStage.slice(0, 5).map((s: any) => (
-                <div key={s.stage} className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground truncate">{s.stage}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-foreground">{s.count}</span>
-                    <span className="font-mono text-muted-foreground/60">${(s.weightedValue / 1_000_000).toFixed(1)}M</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Region + Vertical breakdown */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
-          <div className="glass rounded-2xl p-5">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">By Region</h3>
-            <ResponsiveContainer width="100%" height={160}>
-              <BarChart data={revenue.byRegion} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="oklch(0 0 0 / 0.06)" />
-                <XAxis type="number" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${(v / 1_000_000).toFixed(1)}M`} />
-                <YAxis dataKey="region" type="category" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} width={50} />
-                <Tooltip contentStyle={{ background: "white", border: "1px solid #e2e8f0", borderRadius: 12, fontSize: 12, boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }} formatter={(v: any) => [`$${(Number(v) / 1_000_000).toFixed(2)}M`, ""]} />
-                <Bar dataKey="pipeline" fill={MOLOCO_BLUE} radius={[0, 6, 6, 0]} name="Pipeline" />
-                <Bar dataKey="closed" fill={EMERALD} radius={[0, 6, 6, 0]} name="Closed" />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="glass rounded-2xl p-5">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">By Vertical</h3>
-            <div className="space-y-3">
-              {revenue.byVertical.map((v: any) => {
-                const pct = revenue.pipelineTotal > 0 ? Math.round((v.pipeline / revenue.pipelineTotal) * 100) : 0;
-                return (
-                  <div key={v.vertical}>
-                    <div className="flex items-center justify-between text-xs mb-1">
-                      <span className="text-foreground font-medium">{v.vertical}</span>
-                      <span className="text-muted-foreground">{v.deals} deals &middot; ${(v.pipeline / 1_000_000).toFixed(1)}M</span>
-                    </div>
-                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                      <motion.div
-                        className="h-full rounded-full bg-primary"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${pct}%` }}
-                        transition={{ duration: 0.8, ease: "easeOut" }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* ════════════════════════════════════════════════════════════════ */}
-        {/* SECTION 2: VOICE OF CUSTOMER                                   */}
-        {/* ════════════════════════════════════════════════════════════════ */}
-        <SectionHeader
-          id="customer"
-          title="Voice of Customer"
-          icon={MessageSquare}
-          description={`${voc.totalCalls} Gong calls analyzed over ${voc.period} — themes, objections, competitor mentions`}
-        />
-
-        {/* Sentiment gauge */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          {[
-            { label: "Positive", value: voc.sentimentBreakdown.positive, color: "text-emerald-600", bg: "bg-emerald-50" },
-            { label: "Neutral", value: voc.sentimentBreakdown.neutral, color: "text-amber-600", bg: "bg-amber-50" },
-            { label: "Negative", value: voc.sentimentBreakdown.negative, color: "text-rose-600", bg: "bg-rose-50" },
-          ].map((s) => {
-            const pct = voc.totalCalls > 0 ? Math.round((s.value / voc.totalCalls) * 100) : 0;
-            return (
-              <motion.div
-                key={s.label}
-                className={`glass rounded-2xl p-4 text-center`}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={spring}
-              >
-                <div className={`text-2xl font-bold ${s.color}`}>{pct}%</div>
-                <div className="text-xs text-muted-foreground mt-0.5">{s.label}</div>
-                <div className="text-[10px] text-muted-foreground/60">{s.value} calls</div>
-              </motion.div>
-            );
-          })}
-        </div>
-
-        {/* Themes + Objections */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div className="glass rounded-2xl p-5">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Top Themes</h3>
-            <div className="space-y-2.5">
-              {voc.topThemes.slice(0, 6).map((t: any, i: number) => (
-                <div key={i} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className={`w-1.5 h-1.5 rounded-full ${
-                      t.trend === "up" ? "bg-emerald-500" : t.trend === "down" ? "bg-rose-500" : "bg-amber-400"
-                    }`} />
-                    <span className="text-xs text-foreground">{t.theme}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono text-muted-foreground">{t.count} calls</span>
-                    {t.trend === "up" ? <ArrowUpRight className="w-3 h-3 text-emerald-500" /> :
-                     t.trend === "down" ? <ArrowDownRight className="w-3 h-3 text-rose-500" /> :
-                     <Minus className="w-3 h-3 text-muted-foreground" />}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="glass rounded-2xl p-5">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Top Objections</h3>
-            <div className="space-y-2.5">
-              {voc.objections.slice(0, 6).map((o: any, i: number) => (
-                <div key={i}>
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="text-foreground">{o.objection}</span>
-                    <span className="font-mono text-muted-foreground">{o.frequency}x</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full rounded-full bg-amber-400" style={{ width: `${o.winRateWhenRaised}%` }} />
-                    </div>
-                    <span className="text-[10px] text-muted-foreground">{o.winRateWhenRaised}% win rate</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Competitor mentions + Pitch learnings */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
-          <div className="glass rounded-2xl p-5">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Competitor Mentions</h3>
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={voc.competitorMentions.slice(0, 5)}>
-                <CartesianGrid strokeDasharray="3 3" stroke="oklch(0 0 0 / 0.06)" />
-                <XAxis dataKey="competitor" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={{ background: "white", border: "1px solid #e2e8f0", borderRadius: 12, fontSize: 12, boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }} />
-                <Bar dataKey="count" fill={VIOLET} radius={[6, 6, 0, 0]} name="Mentions" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="glass rounded-2xl p-5">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Pitch Learnings</h3>
-            <div className="space-y-2.5">
-              {voc.pitchLearnings.map((l: any, i: number) => (
-                <div key={i} className="flex items-start gap-2">
-                  <div className={`mt-1 w-1.5 h-1.5 rounded-full shrink-0 ${l.actionable ? "bg-primary" : "bg-muted-foreground/40"}`} />
-                  <div>
-                    <p className="text-xs text-foreground leading-snug">{l.learning}</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{l.source} &middot; {l.date}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* ════════════════════════════════════════════════════════════════ */}
-        {/* SECTION 3: REP PULSE                                           */}
-        {/* ════════════════════════════════════════════════════════════════ */}
-        <SectionHeader
-          id="reps"
-          title="Rep Pulse"
-          icon={Heart}
-          description={`${repPulse.activeReps}/${repPulse.totalReps} active reps — morale, activity, Slack sentiment, training gaps`}
-        />
-
-        {/* Rep KPIs */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-          <MetricCard label="Active Reps" value={`${repPulse.activeReps}/${repPulse.totalReps}`} icon={Users} color="text-primary" />
-          <MetricCard label="Avg Calls/Week" value={repPulse.avgCallsPerWeek} icon={Radio} color="text-violet-600" />
-          <MetricCard label="Avg Deal Cycle" value={`${repPulse.avgDealCycledays}d`} icon={Clock} color="text-amber-600" />
-          <MetricCard
-            label="Team Morale"
-            value={repPulse.morale.charAt(0).toUpperCase() + repPulse.morale.slice(1)}
-            icon={Heart}
-            color={repPulse.morale === "high" ? "text-emerald-600" : repPulse.morale === "medium" ? "text-amber-600" : "text-rose-500"}
-          />
-        </div>
-
-        {/* Morale signals + Activity trend */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div className="glass rounded-2xl p-5">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Morale Signals</h3>
-            <div className="space-y-3">
-              {repPulse.moraleSignals.map((s: any, i: number) => (
-                <div key={i} className="flex items-start gap-2.5">
-                  <SentimentDot sentiment={s.sentiment} />
-                  <div>
-                    <p className="text-xs text-foreground leading-snug">{s.signal}</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{s.source}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="glass rounded-2xl p-5">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Weekly Activity</h3>
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={repPulse.activityTrend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="oklch(0 0 0 / 0.06)" />
-                <XAxis dataKey="week" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={{ background: "white", border: "1px solid #e2e8f0", borderRadius: 12, fontSize: 12, boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }} />
-                <Bar dataKey="calls" fill={MOLOCO_BLUE} radius={[4, 4, 0, 0]} name="Calls" />
-                <Bar dataKey="meetings" fill={EMERALD} radius={[4, 4, 0, 0]} name="Meetings" />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Slack sentiment + Training gaps */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
-          <div className="glass rounded-2xl p-5">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Slack Channel Sentiment</h3>
-            <div className="space-y-3">
-              {repPulse.slackSentiment.map((s: any, i: number) => (
-                <div key={i} className="rounded-xl border border-border/60 p-3">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs font-mono text-foreground">{s.channel}</span>
-                    <div className="flex items-center gap-1.5">
-                      <SentimentDot sentiment={s.sentiment} />
-                      <span className="text-[10px] text-muted-foreground">{s.messageCount} msgs</span>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {s.topTopics.map((t: string, j: number) => (
-                      <span key={j} className="text-[10px] px-1.5 py-0.5 rounded-md bg-muted/60 text-muted-foreground">{t}</span>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="glass rounded-2xl p-5">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Training Gaps</h3>
-            <div className="space-y-3">
-              {repPulse.trainingGaps.map((g: any, i: number) => (
-                <div key={i} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <span className={`w-2 h-2 rounded-full shrink-0 ${
-                      g.priority === "high" ? "bg-rose-500" : g.priority === "medium" ? "bg-amber-400" : "bg-muted-foreground/40"
-                    }`} />
-                    <span className="text-xs text-foreground truncate">{g.topic}</span>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-xs font-mono text-muted-foreground">{g.repsNeedingTraining} reps</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${
-                      g.priority === "high" ? "bg-rose-50 text-rose-700 border-rose-200" :
-                      g.priority === "medium" ? "bg-amber-50 text-amber-700 border-amber-200" :
-                      "bg-muted text-muted-foreground border-border"
-                    }`}>{g.priority}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* ════════════════════════════════════════════════════════════════ */}
-        {/* SECTION 4: GTM FUNNEL                                          */}
-        {/* ════════════════════════════════════════════════════════════════ */}
-        <SectionHeader
-          id="funnel"
-          title="GTM Funnel"
-          icon={Layers}
-          description="Pre-Pitch → Pitch → Onboarding → Test → Scale — conversion rates and bottlenecks"
-        >
-          <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-            gtmFunnel.funnelHealth === "healthy" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-            gtmFunnel.funnelHealth === "bottleneck" ? "bg-amber-50 text-amber-700 border-amber-200" :
-            "bg-rose-50 text-rose-700 border-rose-200"
-          }`}>
-            {gtmFunnel.funnelHealth}
-          </span>
-        </SectionHeader>
-
-        {/* Funnel visualization */}
+        {/* Sentiment Trend */}
         <div className="glass rounded-2xl p-5 mb-6">
-          <div className="space-y-3">
-            {gtmFunnel.stages.map((s: any, i: number) => {
-              const maxValue = Math.max(...gtmFunnel.stages.map((st: any) => st.value || 1));
-              const widthPct = maxValue > 0 ? Math.max(15, (s.value / maxValue) * 100) : 15;
-              const isBottleneck = s.name === gtmFunnel.bottleneckStage;
-              return (
-                <motion.div
-                  key={s.name}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.1, ...spring }}
-                >
-                  <div className="flex items-center gap-3 mb-1">
-                    <span className="text-xs font-medium text-foreground w-40 shrink-0">{s.name}</span>
-                    <div className="flex-1 h-8 bg-muted/40 rounded-lg overflow-hidden relative">
-                      <motion.div
-                        className={`h-full rounded-lg ${isBottleneck ? "bg-amber-400" : "bg-primary/80"}`}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${widthPct}%` }}
-                        transition={{ duration: 0.8, delay: i * 0.1, ease: "easeOut" }}
-                      />
-                      <div className="absolute inset-0 flex items-center px-3 justify-between">
-                        <span className="text-[11px] font-medium text-white mix-blend-difference">{s.count} deals</span>
-                        <span className="text-[11px] font-mono text-white mix-blend-difference">${(s.value / 1_000_000).toFixed(1)}M</span>
-                      </div>
-                    </div>
-                    <span className="text-xs font-mono text-muted-foreground w-14 text-right">{Math.round(s.conversionRate * 100)}%</span>
-                  </div>
-                  {isBottleneck && (
-                    <div className="ml-40 pl-3 text-[10px] text-amber-600 flex items-center gap-1">
-                      <AlertTriangle className="w-3 h-3" /> Bottleneck — conversion below threshold
-                    </div>
-                  )}
-                </motion.div>
-              );
-            })}
-          </div>
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Sentiment Trend (Weekly)</h3>
+          <ResponsiveContainer width="100%" height={180}>
+            <AreaChart data={voice.sentimentTrend}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey="week" tick={{ fontSize: 10, fill: "#94a3b8" }} />
+              <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} />
+              <Tooltip />
+              <Area type="monotone" dataKey="positive" stackId="1" stroke={EMERALD} fill={EMERALD} fillOpacity={0.3} name="Positive" />
+              <Area type="monotone" dataKey="neutral" stackId="1" stroke={SLATE} fill={SLATE} fillOpacity={0.15} name="Neutral" />
+              <Area type="monotone" dataKey="negative" stackId="1" stroke={ROSE} fill={ROSE} fillOpacity={0.2} name="Negative" />
+              <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
 
-        {/* Funnel metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
-          <div className="glass rounded-2xl p-5 text-center">
-            <div className="text-2xl font-bold text-primary">{Math.round(gtmFunnel.testToScaleRate * 100)}%</div>
-            <div className="text-xs text-muted-foreground mt-1">Test-to-Scale Rate</div>
-            <div className="text-[10px] text-muted-foreground/60 mt-0.5">Avg test: {gtmFunnel.avgTestDuration} days</div>
-          </div>
-          <div className="glass rounded-2xl p-5">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Customer Personas</h3>
-            {gtmFunnel.customerPersonas.map((p: any, i: number) => (
-              <div key={i} className="flex items-center justify-between py-1.5 text-xs">
-                <span className="text-foreground">{p.persona}</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-muted-foreground">{p.count}</span>
-                  <span className="font-mono text-emerald-600">{Math.round(p.winRate * 100)}% win</span>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="glass rounded-2xl p-5">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Funnel Insights</h3>
-            <div className="space-y-2 text-xs text-muted-foreground">
-              <p>CTV-experienced (performance) advertisers convert at <strong className="text-foreground">2.25x</strong> the rate of CTV-new prospects.</p>
-              <p>Average time in Pitch stage: <strong className="text-foreground">21 days</strong> — consider accelerating with standardized global deck.</p>
-              <p>Test-to-scale stall risk: proactively align on evergreen criteria before 4-week test ends.</p>
-            </div>
-          </div>
-        </div>
-
-        {/* ════════════════════════════════════════════════════════════════ */}
-        {/* SECTION 5: CAMPAIGN HEALTH                                     */}
-        {/* ════════════════════════════════════════════════════════════════ */}
-        <SectionHeader
-          id="campaigns"
-          title="Campaign Health"
-          icon={Activity}
-          description={`${campaignHealth.activeCampaigns} active campaigns — health scores, alerts, test-to-scale tracking`}
-        />
-
-        {/* Campaign KPIs */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-          <MetricCard label="Active" value={campaignHealth.activeCampaigns} icon={Activity} color="text-primary" />
-          <MetricCard label="In Test" value={campaignHealth.inTest} icon={Zap} color="text-amber-600" />
-          <MetricCard label="Scaled" value={campaignHealth.scaled} icon={TrendingUp} color="text-emerald-600" />
-          <MetricCard label="Avg Health" value={`${campaignHealth.avgHealthScore}/100`} icon={Shield} color={campaignHealth.avgHealthScore >= 70 ? "text-emerald-600" : "text-amber-600"} />
-        </div>
-
-        {/* Alerts */}
-        {campaignHealth.alerts.length > 0 && (
-          <div className="glass rounded-2xl p-5 mb-6">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Campaign Alerts</h3>
-            <div className="space-y-2">
-              {campaignHealth.alerts.map((a: any, i: number) => (
-                <div
-                  key={i}
-                  className={`rounded-xl border p-3 flex items-start gap-2.5 ${
-                    a.type === "success" ? "bg-emerald-50/60 border-emerald-200" :
-                    a.type === "warning" ? "bg-amber-50/60 border-amber-200" :
-                    "bg-rose-50/60 border-rose-200"
-                  }`}
-                >
-                  {a.type === "success" ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mt-0.5 shrink-0" /> :
-                   a.type === "warning" ? <AlertTriangle className="w-3.5 h-3.5 text-amber-600 mt-0.5 shrink-0" /> :
-                   <AlertTriangle className="w-3.5 h-3.5 text-rose-600 mt-0.5 shrink-0" />}
-                  <div>
-                    <p className="text-xs text-foreground">{a.message}</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{a.date}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Campaign list */}
-        <div className="glass rounded-2xl overflow-hidden mb-10">
-          <div className="px-5 py-3 border-b border-border/40">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">All Campaigns</h3>
-          </div>
-          <div className="divide-y divide-border/40">
-            {campaignHealth.campaigns.map((c: any, i: number) => (
+        {/* Top Themes */}
+        <div className="glass rounded-2xl p-5 mb-6">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Top Themes</h3>
+          <div className="space-y-2">
+            {(voice.topThemes || []).slice(0, 8).map((t: any, i: number) => (
               <div key={i}>
                 <button
-                  onClick={() => setExpandedCampaign(expandedCampaign === i ? null : i)}
-                  className="w-full px-5 py-3 flex items-center justify-between hover:bg-muted/30 transition-colors text-left"
+                  onClick={() => toggleExpand(`theme-${i}`)}
+                  className="w-full flex items-center justify-between py-2 text-left hover:bg-muted/30 rounded-lg px-2 -mx-2 transition-colors"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className={`w-2 h-2 rounded-full shrink-0 ${
-                      c.stage === "scaling" || c.stage === "evergreen" ? "bg-emerald-500" :
-                      c.stage === "test" ? "bg-amber-400" :
-                      c.stage === "at-risk" ? "bg-rose-500" : "bg-muted-foreground/40"
-                    }`} />
-                    <div className="min-w-0">
-                      <div className="text-xs font-medium text-foreground truncate">{c.customer}</div>
-                      <div className="text-[10px] text-muted-foreground">{c.stage} &middot; {c.daysActive}d active</div>
-                    </div>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-xs font-mono text-muted-foreground w-6">{t.count}</span>
+                    <span className="text-xs text-foreground truncate">{t.theme}</span>
                   </div>
-                  <div className="flex items-center gap-4 shrink-0">
-                    <div className="text-right hidden sm:block">
-                      <div className="text-xs font-mono text-foreground">${(c.spend / 1000).toFixed(0)}K</div>
-                      <div className="text-[10px] text-muted-foreground">KPI: {c.kpiPerformance}%</div>
-                    </div>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
-                      c.healthScore >= 80 ? "bg-emerald-100 text-emerald-700" :
-                      c.healthScore >= 60 ? "bg-amber-100 text-amber-700" :
-                      "bg-rose-100 text-rose-700"
-                    }`}>
-                      {c.healthScore}
-                    </div>
-                    {expandedCampaign === i ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
+                  <div className="flex items-center gap-2 shrink-0">
+                    {t.trend === "up" ? <ArrowUpRight className="w-3 h-3 text-emerald-500" /> :
+                     t.trend === "down" ? <ArrowDownRight className="w-3 h-3 text-rose-400" /> :
+                     <Minus className="w-3 h-3 text-muted-foreground" />}
+                    {expandedItems.has(`theme-${i}`) ? <ChevronUp className="w-3 h-3 text-muted-foreground" /> : <ChevronDown className="w-3 h-3 text-muted-foreground" />}
                   </div>
                 </button>
                 <AnimatePresence>
-                  {expandedCampaign === i && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="px-5 pb-4 pt-1 ml-5 border-l-2 border-border/40">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                          <div>
-                            <span className="text-muted-foreground">Spend</span>
-                            <div className="font-mono text-foreground">${c.spend.toLocaleString()}</div>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">KPI Performance</span>
-                            <div className={`font-mono ${c.kpiPerformance >= 100 ? "text-emerald-600" : "text-amber-600"}`}>{c.kpiPerformance}% vs target</div>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Sentiment</span>
-                            <div className="flex items-center gap-1">
-                              <SentimentDot sentiment={c.sentiment} />
-                              <span className="text-foreground capitalize">{c.sentiment}</span>
-                            </div>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Next Step</span>
-                            <div className="text-foreground">{c.nextStep}</div>
-                          </div>
-                        </div>
+                  {expandedItems.has(`theme-${i}`) && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                      <p className="text-xs text-muted-foreground pl-8 pb-2 leading-relaxed">{t.implication}</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Objections */}
+        <div className="glass rounded-2xl p-5 mb-6">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Top Objections & Best Responses</h3>
+          <div className="space-y-2">
+            {(voice.objections || []).slice(0, 6).map((o: any, i: number) => (
+              <div key={i}>
+                <button
+                  onClick={() => toggleExpand(`obj-${i}`)}
+                  className="w-full flex items-center justify-between py-2 text-left hover:bg-muted/30 rounded-lg px-2 -mx-2 transition-colors"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-xs font-mono text-muted-foreground w-6">{o.frequency}x</span>
+                    <span className="text-xs text-foreground truncate">{o.objection}</span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`text-[10px] font-mono ${o.winRateWhenRaised >= 50 ? "text-emerald-600" : "text-amber-600"}`}>
+                      {o.winRateWhenRaised}% win
+                    </span>
+                    {expandedItems.has(`obj-${i}`) ? <ChevronUp className="w-3 h-3 text-muted-foreground" /> : <ChevronDown className="w-3 h-3 text-muted-foreground" />}
+                  </div>
+                </button>
+                <AnimatePresence>
+                  {expandedItems.has(`obj-${i}`) && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                      <div className="pl-8 pb-2">
+                        <p className="text-xs text-muted-foreground leading-relaxed"><strong className="text-foreground">Best response:</strong> {o.bestResponse}</p>
                       </div>
                     </motion.div>
                   )}
@@ -1100,6 +484,435 @@ export default function Reporting() {
             ))}
           </div>
         </div>
+
+        {/* Competitor Mentions */}
+        <div className="glass rounded-2xl p-5 mb-6">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Competitor Mentions in Calls</h3>
+          <div className="space-y-2">
+            {(voice.competitorMentions || []).map((c: any, i: number) => (
+              <div key={i} className="flex items-center justify-between py-1.5 text-xs">
+                <div className="flex items-center gap-2">
+                  <ConfidenceDot level={c.threatLevel} />
+                  <span className="text-foreground font-medium">{c.competitor}</span>
+                  <span className="text-muted-foreground">({c.count} mentions)</span>
+                </div>
+                <span className="text-muted-foreground text-right max-w-[50%] truncate">{c.context}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Customer Quotes */}
+        <div className="glass rounded-2xl p-5 mb-6">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Notable Quotes</h3>
+          <div className="space-y-3">
+            {(voice.topQuotes || []).map((q: any, i: number) => (
+              <div key={i} className={`rounded-xl border p-3 ${
+                q.sentiment === "positive" ? "border-emerald-200/60 bg-emerald-50/30" :
+                q.sentiment === "negative" ? "border-rose-200/60 bg-rose-50/30" :
+                "border-border/40"
+              }`}>
+                <p className="text-xs text-foreground italic leading-relaxed">"{q.quote}"</p>
+                <p className="text-[10px] text-muted-foreground mt-1.5">— {q.customer} · {q.date}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Experimental Insights */}
+        <div className="glass rounded-2xl p-5 mb-6">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">What We're Still Testing</h3>
+          <div className="space-y-2">
+            {(voice.experimentalInsights || []).map((insight: string, i: number) => (
+              <div key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
+                <HelpCircle className="w-3 h-3 text-amber-500 mt-0.5 shrink-0" />
+                <span className="leading-relaxed">{insight}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* Q3: WHAT SEPARATES WINNING FROM LOSING?                        */}
+        {/* ════════════════════════════════════════════════════════════════ */}
+        <SectionHeader
+          id="patterns"
+          question="What separates winning behaviors from losing ones?"
+          description={`${Math.round(patterns.winRate * 100)}% win rate · ${patterns.avgDealCycleDays}d avg cycle · ${Math.round(patterns.testToScaleRate * 100)}% test-to-scale`}
+          icon={Target}
+        />
+
+        <DataMaturityBadge text={patterns.dataMaturity} />
+
+        {/* Win/Loss KPIs */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+          <MetricCard label="Win Rate" value={`${Math.round(patterns.winRate * 100)}%`} icon={Award} color="text-emerald-600" />
+          <MetricCard label="Avg Cycle" value={`${patterns.avgDealCycleDays}d`} icon={BarChart3} color="text-[#0091FF]" />
+          <MetricCard label="Test→Scale" value={`${Math.round(patterns.testToScaleRate * 100)}%`} icon={TrendingUp} color="text-amber-600" />
+          <MetricCard label="Reps Tracked" value={patterns.repLeaderboard?.length || 0} icon={Users} color="text-muted-foreground" />
+        </div>
+
+        {/* Winning Behaviors */}
+        <div className="glass rounded-2xl p-5 mb-6">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Winning Behaviors</h3>
+          <div className="space-y-2">
+            {(patterns.winningBehaviors || []).map((b: any, i: number) => (
+              <div key={i}>
+                <button
+                  onClick={() => toggleExpand(`win-${i}`)}
+                  className="w-full flex items-center justify-between py-2 text-left hover:bg-muted/30 rounded-lg px-2 -mx-2 transition-colors"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    <span className="text-xs text-foreground">{b.behavior}</span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <ConfidenceDot level={b.confidence} />
+                    {expandedItems.has(`win-${i}`) ? <ChevronUp className="w-3 h-3 text-muted-foreground" /> : <ChevronDown className="w-3 h-3 text-muted-foreground" />}
+                  </div>
+                </button>
+                <AnimatePresence>
+                  {expandedItems.has(`win-${i}`) && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                      <div className="pl-8 pb-2 text-xs text-muted-foreground space-y-1">
+                        <p><strong className="text-foreground">Impact:</strong> {b.impact}</p>
+                        <p><strong className="text-foreground">Evidence:</strong> {b.evidence}</p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Losing Patterns */}
+        <div className="glass rounded-2xl p-5 mb-6">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Losing Patterns</h3>
+          <div className="space-y-2">
+            {(patterns.losingPatterns || []).map((p: any, i: number) => (
+              <div key={i}>
+                <button
+                  onClick={() => toggleExpand(`lose-${i}`)}
+                  className="w-full flex items-center justify-between py-2 text-left hover:bg-muted/30 rounded-lg px-2 -mx-2 transition-colors"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <XCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                    <span className="text-xs text-foreground">{p.pattern}</span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-[10px] font-mono text-muted-foreground">{p.frequency}x</span>
+                    {expandedItems.has(`lose-${i}`) ? <ChevronUp className="w-3 h-3 text-muted-foreground" /> : <ChevronDown className="w-3 h-3 text-muted-foreground" />}
+                  </div>
+                </button>
+                <AnimatePresence>
+                  {expandedItems.has(`lose-${i}`) && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                      <div className="pl-8 pb-2 text-xs text-muted-foreground space-y-1">
+                        <p><strong className="text-foreground">Impact:</strong> {p.impact}</p>
+                        <p><strong className="text-foreground">Evidence:</strong> {p.evidence}</p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Test-to-Scale Drivers */}
+        <div className="glass rounded-2xl p-5 mb-6">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Test-to-Scale Drivers</h3>
+          <div className="space-y-2">
+            {(patterns.testToScaleDrivers || []).map((d: any, i: number) => (
+              <div key={i} className="flex items-start gap-2 text-xs py-1">
+                <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
+                  d.correlation === "strong" ? "bg-emerald-500" : d.correlation === "moderate" ? "bg-amber-400" : "bg-muted-foreground/40"
+                }`} />
+                <div>
+                  <span className="text-foreground">{d.driver}</span>
+                  <span className="text-muted-foreground ml-1">({d.correlation})</span>
+                  <p className="text-muted-foreground mt-0.5">{d.evidence}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Rep Leaderboard */}
+        <div className="glass rounded-2xl overflow-hidden mb-6">
+          <div className="px-5 py-3 border-b border-border/40">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Rep Performance</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-border/40 bg-muted/20">
+                  <th className="text-left px-5 py-2.5 font-semibold text-muted-foreground">Rep</th>
+                  <th className="text-right px-3 py-2.5 font-semibold text-muted-foreground">Closed</th>
+                  <th className="text-right px-3 py-2.5 font-semibold text-muted-foreground">Pipeline</th>
+                  <th className="text-right px-3 py-2.5 font-semibold text-muted-foreground">Win %</th>
+                  <th className="text-right px-3 py-2.5 font-semibold text-muted-foreground">Cycle</th>
+                  <th className="text-left px-3 py-2.5 font-semibold text-muted-foreground hidden lg:table-cell">Strength</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(patterns.repLeaderboard || []).map((r: any, i: number) => (
+                  <tr key={i} className="border-b border-border/20 hover:bg-muted/20 transition-colors">
+                    <td className="px-5 py-2.5 font-medium text-foreground">{r.name}</td>
+                    <td className="px-3 py-2.5 text-right font-mono text-emerald-600">${(r.closedValue / 1e3).toFixed(0)}K</td>
+                    <td className="px-3 py-2.5 text-right font-mono text-foreground">${(r.pipelineValue / 1e3).toFixed(0)}K</td>
+                    <td className="px-3 py-2.5 text-right font-mono">{Math.round(r.winRate * 100)}%</td>
+                    <td className="px-3 py-2.5 text-right font-mono text-muted-foreground">{r.avgCycleDays}d</td>
+                    <td className="px-3 py-2.5 text-muted-foreground hidden lg:table-cell truncate max-w-[200px]">{r.topStrength}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Coaching Opportunities */}
+        <div className="glass rounded-2xl p-5 mb-6">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Coaching Opportunities</h3>
+          <div className="space-y-2">
+            {(patterns.coachingOpportunities || []).map((c: any, i: number) => (
+              <div key={i} className={`rounded-xl border p-3 ${
+                c.priority === "high" ? "border-rose-200/60 bg-rose-50/30" :
+                c.priority === "medium" ? "border-amber-200/60 bg-amber-50/30" :
+                "border-border/40"
+              }`}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-foreground">{c.area}</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                    c.priority === "high" ? "bg-rose-100 text-rose-700" :
+                    c.priority === "medium" ? "bg-amber-100 text-amber-700" :
+                    "bg-muted text-muted-foreground"
+                  }`}>{c.priority} · {c.repsAffected} reps</span>
+                </div>
+                <p className="text-xs text-muted-foreground">{c.suggestedAction}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Activity Trend */}
+        <div className="glass rounded-2xl p-5 mb-6">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Activity Trend</h3>
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={patterns.activityTrend}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey="week" tick={{ fontSize: 10, fill: "#94a3b8" }} />
+              <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} />
+              <Tooltip />
+              <Bar dataKey="calls" fill={MOLOCO_BLUE} radius={[4, 4, 0, 0]} name="Calls" />
+              <Bar dataKey="meetings" fill={EMERALD} radius={[4, 4, 0, 0]} name="Meetings" />
+              <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* Q4: HOW ARE WE POSITIONED IN THE MARKET?                       */}
+        {/* ════════════════════════════════════════════════════════════════ */}
+        <SectionHeader
+          id="market"
+          question="How are we positioned in the market?"
+          description="Win/loss dynamics, competitive signals, and TAM"
+          icon={Crosshair}
+        />
+
+        <DataMaturityBadge text={market.dataMaturity} />
+
+        {/* Win/Loss vs Competitors */}
+        <div className="glass rounded-2xl overflow-hidden mb-6">
+          <div className="px-5 py-3 border-b border-border/40">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Win/Loss vs Competitors</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-border/40 bg-muted/20">
+                  <th className="text-left px-5 py-2.5 font-semibold text-muted-foreground">Competitor</th>
+                  <th className="text-center px-3 py-2.5 font-semibold text-emerald-600">Wins</th>
+                  <th className="text-center px-3 py-2.5 font-semibold text-rose-500">Losses</th>
+                  <th className="text-left px-3 py-2.5 font-semibold text-muted-foreground">Position</th>
+                  <th className="text-left px-3 py-2.5 font-semibold text-muted-foreground hidden lg:table-cell">Key Differentiator</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(market.winLossDynamics || []).map((w: any, i: number) => (
+                  <tr key={i} className="border-b border-border/20 hover:bg-muted/20 transition-colors">
+                    <td className="px-5 py-2.5 font-medium text-foreground">{w.competitor}</td>
+                    <td className="px-3 py-2.5 text-center font-mono text-emerald-600">{w.winsAgainst}</td>
+                    <td className="px-3 py-2.5 text-center font-mono text-rose-500">{w.lossesAgainst}</td>
+                    <td className="px-3 py-2.5 text-muted-foreground max-w-[200px]">{w.netPosition}</td>
+                    <td className="px-3 py-2.5 text-muted-foreground hidden lg:table-cell max-w-[250px] truncate">{w.keyDifferentiator}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Competitive Signals */}
+        <div className="glass rounded-2xl p-5 mb-6">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Competitive Signals</h3>
+          <div className="space-y-2">
+            {(market.competitiveSignals || []).map((s: any, i: number) => (
+              <div key={i} className={`rounded-xl border p-3 ${
+                s.urgency === "high" ? "border-rose-200/60 bg-rose-50/30" :
+                s.urgency === "medium" ? "border-amber-200/60 bg-amber-50/30" :
+                "border-border/40"
+              }`}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-foreground">{s.signal}</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                    s.urgency === "high" ? "bg-rose-100 text-rose-700" :
+                    s.urgency === "medium" ? "bg-amber-100 text-amber-700" :
+                    "bg-muted text-muted-foreground"
+                  }`}>{s.urgency}</span>
+                </div>
+                <p className="text-xs text-muted-foreground">{s.implication}</p>
+                <p className="text-[10px] text-muted-foreground/70 mt-1">{s.source} · {s.date}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* TAM */}
+        <div className="glass rounded-2xl p-5 mb-6">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">TAM Estimates</h3>
+          <div className="space-y-3">
+            {(market.tamEstimate || []).map((t: any, i: number) => (
+              <div key={i}>
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span className="text-foreground font-medium">{t.segment}</span>
+                  <span className="font-mono text-muted-foreground">${(t.tam / 1e9).toFixed(0)}B TAM · ${(t.samReachable / 1e9).toFixed(1)}B SAM</span>
+                </div>
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-[#0091FF] rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.max(1, t.currentPenetration * 10000)}%` }}
+                    transition={{ duration: 0.8, delay: i * 0.1 }}
+                  />
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{(t.currentPenetration * 100).toFixed(2)}% penetration</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Advantages & Vulnerabilities */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+          <div className="glass rounded-2xl p-5">
+            <h3 className="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-3">Our Advantages</h3>
+            <div className="space-y-2">
+              {(market.molocoAdvantages || []).map((a: any, i: number) => (
+                <div key={i} className="text-xs">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
+                    <span className="text-foreground font-medium">{a.advantage}</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                      a.durability === "durable" ? "bg-emerald-100 text-emerald-700" :
+                      a.durability === "temporary" ? "bg-amber-100 text-amber-700" :
+                      "bg-rose-100 text-rose-700"
+                    }`}>{a.durability}</span>
+                  </div>
+                  <p className="text-muted-foreground pl-5">{a.evidence}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="glass rounded-2xl p-5">
+            <h3 className="text-xs font-semibold text-rose-500 uppercase tracking-wider mb-3">Our Vulnerabilities</h3>
+            <div className="space-y-2">
+              {(market.molocoVulnerabilities || []).map((v: any, i: number) => (
+                <div key={i} className="text-xs">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <AlertTriangle className="w-3 h-3 text-rose-400 shrink-0" />
+                    <span className="text-foreground font-medium">{v.vulnerability}</span>
+                  </div>
+                  <p className="text-muted-foreground pl-5"><strong>Threat:</strong> {v.threat}</p>
+                  <p className="text-muted-foreground pl-5"><strong>Mitigation:</strong> {v.mitigation}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* SYNTHESIS: RISKS, OPPORTUNITIES, OPEN QUESTIONS                */}
+        {/* ════════════════════════════════════════════════════════════════ */}
+        <div className="pt-10 pb-4">
+          <h2 className="text-lg font-semibold text-foreground tracking-tight">What Should We Do About It?</h2>
+          <p className="text-xs text-muted-foreground mt-1">Synthesis across all 4 questions</p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+          {/* Risks */}
+          <div className="glass rounded-2xl p-5">
+            <h3 className="text-xs font-semibold text-rose-500 uppercase tracking-wider mb-3">Key Risks</h3>
+            <div className="space-y-2">
+              {(report.keyRisks || []).map((r: string, i: number) => (
+                <div key={i} className="flex items-start gap-2 text-xs">
+                  <AlertTriangle className="w-3 h-3 text-rose-400 mt-0.5 shrink-0" />
+                  <span className="text-muted-foreground leading-relaxed">{r}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Opportunities */}
+          <div className="glass rounded-2xl p-5">
+            <h3 className="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-3">Key Opportunities</h3>
+            <div className="space-y-2">
+              {(report.keyOpportunities || []).map((o: string, i: number) => (
+                <div key={i} className="flex items-start gap-2 text-xs">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-500 mt-0.5 shrink-0" />
+                  <span className="text-muted-foreground leading-relaxed">{o}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Open Questions */}
+          <div className="glass rounded-2xl p-5">
+            <h3 className="text-xs font-semibold text-[#0091FF] uppercase tracking-wider mb-3">Open Questions</h3>
+            <div className="space-y-2">
+              {(report.openQuestions || []).map((q: string, i: number) => (
+                <div key={i} className="flex items-start gap-2 text-xs">
+                  <HelpCircle className="w-3 h-3 text-[#0091FF] mt-0.5 shrink-0" />
+                  <span className="text-muted-foreground leading-relaxed">{q}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Data Sources Status */}
+        {report.liveDataStatus && (
+          <div className="glass rounded-2xl p-5 mb-6">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Data Sources</h3>
+            <div className="flex flex-wrap gap-3">
+              {[
+                { name: "Slack", connected: report.liveDataStatus.slackConnected },
+                { name: "Gong", connected: report.liveDataStatus.gongConnected },
+                { name: "Salesforce", connected: report.liveDataStatus.salesforceConnected },
+                { name: "Speedboat", connected: report.liveDataStatus.speedboatConnected },
+              ].map(s => (
+                <div key={s.name} className="flex items-center gap-1.5 text-xs">
+                  <div className={`w-2 h-2 rounded-full ${s.connected ? "bg-emerald-500" : "bg-muted-foreground/30"}`} />
+                  <span className={s.connected ? "text-foreground" : "text-muted-foreground"}>{s.name}</span>
+                </div>
+              ))}
+              <span className="text-[10px] text-muted-foreground ml-auto">
+                Last refreshed: {new Date(report.liveDataStatus.lastRefreshed).toLocaleTimeString()}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* ── Footer spacer ── */}
         <div className="h-16" />

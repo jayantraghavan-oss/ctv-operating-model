@@ -716,3 +716,35 @@
 - [x] Run 5 different agent types and validate output quality (competitor-intel, campaign-monitoring, governance, orchestration, sales-engagement — all producing structured, tactical outputs)
 - [x] Fix any agents producing generic or low-quality outputs (all 5 tested agents produce structured tables, real account data, specific recommendations)
 - [x] Validate structured output templates render correctly in UI (markdown tables render correctly via Streamdown component)
+
+## Phase 53: Reporting Tab Rebuild — 4 Strategic Questions
+
+### Q1: Are we on track to hit $100M ARR?
+- [x] Revenue pacing chart: actual vs. plan vs. forecast line chart
+- [x] Pipeline waterfall: qualified → committed → closed, with conversion rates
+- [x] Early risk/opportunity signals: deals slipping, acceleration indicators
+- [x] Caveat framing: "starting point for conversation, not definitive view"
+
+### Q2: What are customers telling us?
+- [x] Gong sentiment analysis: themes at scale from call data
+- [x] Customer voice summary: top objections, feature requests, praise patterns
+- [x] "Early but promising" framing — experimental, not production-grade
+- [x] Per-account sentiment drill-down when data available
+
+### Q3: What separates winning from losing behaviors?
+- [x] Leading indicators for manager coaching: talk-to-listen ratio, discovery depth
+- [x] Win/loss behavioral patterns: what top reps do differently
+- [x] Caveat: "still testing whether signal is strong enough to act on"
+- [x] Rep-level coaching signals when data supports it
+
+### Q4: How are we positioned in the market?
+- [x] Win/loss dynamics: win rate by competitor, by segment
+- [x] Competitive signals: market share shifts, pricing intelligence
+- [x] TAM analysis: addressable market sizing by segment
+- [x] Caveat: "starting point for conversation, not definitive view"
+
+### Infrastructure
+- [x] Rebuild reporting.ts data model to serve 4-question structure
+- [x] Rebuild Reporting.tsx UI with question-driven sections
+- [x] Each section should have honest caveats about data maturity
+- [x] Make it feel like a strategic briefing, not a dashboard
