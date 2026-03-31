@@ -748,3 +748,20 @@
 - [x] Rebuild Reporting.tsx UI with question-driven sections
 - [x] Each section should have honest caveats about data maturity
 - [x] Make it feel like a strategic briefing, not a dashboard
+
+## Phase 54: Connect Real BQ Revenue Data (Dan's Queries)
+- [x] Find Dan's markdown file with BQ queries (moloco_bigquery_guide.md from moloco/gtm repo)
+- [x] Parse BQ query structure and understand revenue data schema (fact_dsp_core, daily_attainment_table, fraud filtering, vertical classifier)
+- [ ] Connect to BigQuery using Dan's queries to pull real CTV revenue
+- [ ] Replace static/synthetic revenue numbers in reporting.ts with real BQ data
+- [ ] Update reporting tests to reflect real data structure
+- [ ] Verify reporting page shows accurate revenue numbers
+
+## Phase 55: CC CTV Reporting Tab (from moloco_ctv_dashboard.html)
+- [x] Read and parse the uploaded moloco_ctv_dashboard.html
+- [x] Extract all data, charts, and layout from the HTML dashboard
+- [x] Create CCCTVReporting.tsx page component matching the dashboard content
+- [x] Integrate into app design system (dark dashboard aesthetic, recharts)
+- [x] Add sidebar navigation entry for "CC CTV Reporting" (Tv icon)
+- [x] Add route in App.tsx (/cc-ctv-reporting)
+- [x] Test rendering and verify all 4 tabs (Q1-Q4) render correctly with charts, tables, KPIs
