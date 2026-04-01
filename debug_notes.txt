@@ -1,30 +1,23 @@
-Phase 60 Final Verification (2026-04-01)
-=========================================
+Deployed site diagnosis (2026-04-01)
+=====================================
+URL: https://ctvmodel-wr22fcmn.manus.space/ctv-intelligence
 
-Q1 Revenue & Pipeline Tab:
-- BQ Live KPIs: $185K/day, $67.5M ARR, 51 campaigns, 27 advertisers, 5 exchanges, $15.9M total GAS
-- Quantitative Risk Scoring (BQ-Powered): HHI 1795, Ramp -85.9%, Gap $32.5M
-- Early Signals & Risks: 4 cards with BQ Live / Curated tags
+ISSUE: All data sources show "Offline" on deployed site
+- BigQuery: Offline
+- Gong: Offline  
+- Salesforce: Offline
+- 0/4 Live in status bar
 
-Q2 Customer Voice Tab:
-- AI Voice Analysis with Run Analysis button
-- LLM produces themes, objections, verbatims, competitive mentions, recommendations
-- All verbatims have Gong deep links
+KPIs all show $0.0M, $0K/day, $100.0M gap
+Q1-Q4 status pills show "BQ offline" / "Gong offline"
+Only curated data (Top Risks, Top Opportunities) renders correctly
 
-Q3 Win/Loss Patterns Tab:
-- Curated behavior data + Gong Engagement Signals section
-- Engagement tiers: High/Med/Low with multi-threading proxy
-- Top accounts by call volume chart
+ROOT CAUSE HYPOTHESIS:
+The BQ and Gong data fetching happens via tRPC endpoints that call Python scripts.
+On the deployed server, the Python scripts (bq_ctv_revenue.py, gong_helper.py) may not be available
+or the Python environment may not be set up.
 
-Q4 Market Position Tab:
-- Competitive table, TAM penetration, live competitive signals
-
-Synthesis Tab:
-- Dynamic LLM cross-signal synthesis (BQ + Gong + Curated)
-- Run Synthesis button produces analyst-grade output
-
-Data Health Bar:
-- Last refreshed timestamp visible
-- BQ Connected, Gong Connected, SFDC Coming Soon
-
-All 174 tests passing across 11 test files.
+Need to check:
+1. Are the Python scripts included in the deployment?
+2. Are the Python dependencies (google-cloud-bigquery, requests) installed in production?
+3. Is the server-side fetch working? Check the tRPC endpoints on the deployed site.

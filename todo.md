@@ -846,3 +846,8 @@
 - [x] Baseline Assessment section with live BQ data always visible
 - [x] Data Sources & Provenance footer with status indicators
 - [x] Verified end-to-end: synthesis produces analyst-grade output with real BQ numbers
+
+## Phase 61: Bug Fix — CC CTV Reporting blank sections
+- [ ] Fix blank Overview section on CC CTV Reporting page
+- [ ] Fix blank Revenue/Pipeline section on CC CTV Reporting page
+- [x] Fix CTV Intelligence showing zeros — BQ data not flowing to deployed version (rewrote BQ+Gong bridges to pure Node.js, bashrc credential fallback)

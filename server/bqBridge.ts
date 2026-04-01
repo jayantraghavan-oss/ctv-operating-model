@@ -1,20 +1,14 @@
 /**
- * bqBridge.ts — BigQuery Data Bridge
+ * bqBridge.ts — BigQuery Data Bridge (Pure Node.js)
  *
- * Calls the Python BQ fetcher script via child_process and caches results.
- * Falls back gracefully if Python/BQ is unavailable (e.g., in production deployment).
+ * Uses @google-cloud/bigquery directly — no Python dependency.
+ * Works in both sandbox (ADC) and production (service account JSON via env).
  *
  * Data source: moloco-ae-view.athena.fact_dsp_core
  * Filter: campaign.os = 'CTV' AND moloco_product = 'DSP'
  */
 
-import { execFile } from "child_process";
-import { resolve, dirname } from "path";
-import { fileURLToPath } from "url";
-import { existsSync } from "fs";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { BigQuery } from "@google-cloud/bigquery";
 
 // ============================================================================
 // TYPES
@@ -89,64 +83,253 @@ export interface BQAllData {
 }
 
 // ============================================================================
+// BQ CLIENT INITIALIZATION
+// ============================================================================
+
+function createBQClient(): BigQuery | null {
+  try {
+    // Option 1: Service account JSON from env (production)
+    const credJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+    if (credJson) {
+      const credentials = JSON.parse(credJson);
+      return new BigQuery({
+        projectId: "moloco-ae-view",
+        credentials,
+      });
+    }
+
+    // Option 2: ADC file path (sandbox / local dev)
+    if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+      return new BigQuery({ projectId: "moloco-ae-view" });
+    }
+
+    // Option 3: Default ADC (gcloud auth application-default login)
+    return new BigQuery({ projectId: "moloco-ae-view" });
+  } catch (err: any) {
+    console.error("[BQ Bridge] Failed to create BQ client:", err.message);
+    return null;
+  }
+}
+
+let bqClient: BigQuery | null = null;
+
+function getClient(): BigQuery | null {
+  if (!bqClient) {
+    bqClient = createBQClient();
+  }
+  return bqClient;
+}
+
+// ============================================================================
+// QUERY HELPERS
+// ============================================================================
+
+async function runQuery(sql: string): Promise<any[]> {
+  const client = getClient();
+  if (!client) throw new Error("BigQuery client not available");
+
+  const [rows] = await client.query({ query: sql, location: "US" });
+  return rows.map((row: any) => {
+    const d: any = {};
+    for (const key of Object.keys(row)) {
+      const val = row[key];
+      if (val === null || val === undefined) {
+        d[key] = null;
+      } else if (val instanceof Date) {
+        d[key] = val.toISOString().split("T")[0];
+      } else if (typeof val === "object" && val.value !== undefined) {
+        // BigQuery returns some types as {value: ...}
+        d[key] = typeof val.value === "string" ? val.value : Number(val.value);
+      } else {
+        d[key] = typeof val === "bigint" ? Number(val) : val;
+      }
+    }
+    return d;
+  });
+}
+
+// ============================================================================
+// QUERIES (matching the Python script exactly)
+// ============================================================================
+
+async function getSummary(): Promise<BQSummary[]> {
+  const rows = await runQuery(`
+    SELECT 
+      SUM(gross_spend_usd) as total_gas,
+      SUM(gross_spend_usd) / COUNT(DISTINCT date_utc) as avg_daily_gas,
+      COUNT(DISTINCT campaign.title_id) as total_campaigns,
+      COUNT(DISTINCT campaign.tracking_entity) as total_advertisers,
+      MIN(date_utc) as min_date,
+      MAX(date_utc) as max_date,
+      COUNT(DISTINCT date_utc) as total_days
+    FROM \`moloco-ae-view.athena.fact_dsp_core\`
+    WHERE campaign.os = 'CTV'
+      AND moloco_product = 'DSP'
+      AND date_utc >= '2025-10-01'
+  `);
+  return rows.map((r: any) => ({
+    total_gas: Number(r.total_gas) || 0,
+    avg_daily_gas: Number(r.avg_daily_gas) || 0,
+    total_campaigns: Number(r.total_campaigns) || 0,
+    total_advertisers: Number(r.total_advertisers) || 0,
+    min_date: String(r.min_date || ""),
+    max_date: String(r.max_date || ""),
+    total_days: Number(r.total_days) || 0,
+  }));
+}
+
+async function getTrailing7d(): Promise<BQTrailing7d[]> {
+  const rows = await runQuery(`
+    SELECT 
+      SUM(gross_spend_usd) / COUNT(DISTINCT date_utc) as trailing_7d_daily,
+      SUM(gross_spend_usd) as trailing_7d_total,
+      COUNT(DISTINCT campaign.title_id) as active_campaigns_7d,
+      COUNT(DISTINCT campaign.tracking_entity) as active_advertisers_7d,
+      MIN(date_utc) as period_start,
+      MAX(date_utc) as period_end
+    FROM \`moloco-ae-view.athena.fact_dsp_core\`
+    WHERE campaign.os = 'CTV'
+      AND moloco_product = 'DSP'
+      AND date_utc >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
+  `);
+  return rows.map((r: any) => ({
+    trailing_7d_daily: Number(r.trailing_7d_daily) || 0,
+    trailing_7d_total: Number(r.trailing_7d_total) || 0,
+    active_campaigns_7d: Number(r.active_campaigns_7d) || 0,
+    active_advertisers_7d: Number(r.active_advertisers_7d) || 0,
+    period_start: String(r.period_start || ""),
+    period_end: String(r.period_end || ""),
+  }));
+}
+
+async function getMonthly(): Promise<BQMonthly[]> {
+  const rows = await runQuery(`
+    SELECT 
+      FORMAT_DATE('%Y-%m', date_utc) as month,
+      SUM(gross_spend_usd) as monthly_gas,
+      SUM(gross_spend_usd) / COUNT(DISTINCT date_utc) as avg_daily_gas,
+      COUNT(DISTINCT campaign.title_id) as active_campaigns,
+      COUNT(DISTINCT campaign.tracking_entity) as active_advertisers,
+      COUNT(DISTINCT date_utc) as days_in_month
+    FROM \`moloco-ae-view.athena.fact_dsp_core\`
+    WHERE campaign.os = 'CTV'
+      AND moloco_product = 'DSP'
+      AND date_utc >= '2025-10-01'
+    GROUP BY 1
+    ORDER BY 1
+  `);
+  return rows.map((r: any) => ({
+    month: String(r.month || ""),
+    monthly_gas: Number(r.monthly_gas) || 0,
+    avg_daily_gas: Number(r.avg_daily_gas) || 0,
+    active_campaigns: Number(r.active_campaigns) || 0,
+    active_advertisers: Number(r.active_advertisers) || 0,
+    days_in_month: Number(r.days_in_month) || 0,
+  }));
+}
+
+async function getDailyRecent(): Promise<BQDailyRecent[]> {
+  const rows = await runQuery(`
+    SELECT 
+      date_utc,
+      SUM(gross_spend_usd) as daily_gas,
+      COUNT(DISTINCT campaign.title_id) as active_campaigns
+    FROM \`moloco-ae-view.athena.fact_dsp_core\`
+    WHERE campaign.os = 'CTV'
+      AND moloco_product = 'DSP'
+      AND date_utc >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
+    GROUP BY 1
+    ORDER BY 1
+  `);
+  return rows.map((r: any) => ({
+    date_utc: String(r.date_utc || ""),
+    daily_gas: Number(r.daily_gas) || 0,
+    active_campaigns: Number(r.active_campaigns) || 0,
+  }));
+}
+
+async function getTopAdvertisers(): Promise<BQAdvertiser[]> {
+  const rows = await runQuery(`
+    SELECT 
+      campaign.tracking_entity as advertiser,
+      SUM(gross_spend_usd) as total_gas,
+      COUNT(DISTINCT campaign.title_id) as campaigns,
+      MIN(date_utc) as first_active,
+      MAX(date_utc) as last_active
+    FROM \`moloco-ae-view.athena.fact_dsp_core\`
+    WHERE campaign.os = 'CTV'
+      AND moloco_product = 'DSP'
+      AND date_utc >= '2025-10-01'
+    GROUP BY 1
+    ORDER BY 2 DESC
+    LIMIT 15
+  `);
+  return rows.map((r: any) => ({
+    advertiser: String(r.advertiser || ""),
+    total_gas: Number(r.total_gas) || 0,
+    campaigns: Number(r.campaigns) || 0,
+    first_active: String(r.first_active || ""),
+    last_active: String(r.last_active || ""),
+  }));
+}
+
+async function getExchanges(): Promise<BQExchange[]> {
+  const rows = await runQuery(`
+    SELECT 
+      exchange,
+      SUM(gross_spend_usd) as total_gas,
+      COUNT(DISTINCT campaign.title_id) as campaigns
+    FROM \`moloco-ae-view.athena.fact_dsp_core\`
+    WHERE campaign.os = 'CTV'
+      AND moloco_product = 'DSP'
+      AND date_utc >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
+    GROUP BY 1
+    ORDER BY 2 DESC
+    LIMIT 10
+  `);
+  return rows.map((r: any) => ({
+    exchange: String(r.exchange || ""),
+    total_gas: Number(r.total_gas) || 0,
+    campaigns: Number(r.campaigns) || 0,
+  }));
+}
+
+async function getConcentration(): Promise<BQConcentration[]> {
+  const rows = await runQuery(`
+    WITH ranked AS (
+      SELECT 
+        campaign.tracking_entity as advertiser,
+        SUM(gross_spend_usd) as gas
+      FROM \`moloco-ae-view.athena.fact_dsp_core\`
+      WHERE campaign.os = 'CTV'
+        AND moloco_product = 'DSP'
+        AND date_utc >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
+      GROUP BY 1
+      ORDER BY 2 DESC
+    )
+    SELECT 
+      advertiser,
+      gas,
+      gas / SUM(gas) OVER() * 100 as pct_of_total,
+      SUM(gas) OVER(ORDER BY gas DESC) / SUM(gas) OVER() * 100 as cumulative_pct
+    FROM ranked
+    LIMIT 10
+  `);
+  return rows.map((r: any) => ({
+    advertiser: String(r.advertiser || ""),
+    gas: Number(r.gas) || 0,
+    pct_of_total: Number(r.pct_of_total) || 0,
+    cumulative_pct: Number(r.cumulative_pct) || 0,
+  }));
+}
+
+// ============================================================================
 // CACHE
 // ============================================================================
 
 let cachedData: BQAllData | null = null;
 let cacheTimestamp: number = 0;
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
-
-// ============================================================================
-// PYTHON SCRIPT EXECUTOR
-// ============================================================================
-
-// Resolve script path relative to this file's location
-// In dev: server/bqBridge.ts -> server/scripts/bq_fetch_ctv.py
-// In prod: dist/bqBridge.js -> ../server/scripts/bq_fetch_ctv.py
-const SCRIPT_PATH = resolve(__dirname, "scripts/bq_fetch_ctv.py");
-const SCRIPT_PATH_ALT = resolve(process.cwd(), "server/scripts/bq_fetch_ctv.py");
-
-function execPython(queryType: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const scriptPath = existsSync(SCRIPT_PATH)
-      ? SCRIPT_PATH
-      : SCRIPT_PATH_ALT;
-
-    // Use explicit python3.11 path to avoid uv's python3.13 which conflicts with system packages
-    const pythonBin = existsSync("/usr/bin/python3.11") ? "/usr/bin/python3.11" : "python3";
-    execFile(
-      pythonBin,
-      [scriptPath, queryType],
-      {
-        timeout: 120_000, // 2 minutes max
-        maxBuffer: 10 * 1024 * 1024, // 10MB
-        env: {
-          ...process.env,
-          // Ensure HOME is set so gcloud ADC can be found at ~/.config/gcloud/
-          HOME: process.env.HOME || "/home/ubuntu",
-          // Clear Python path contamination from uv/tsx environment
-          PYTHONPATH: "",
-          PYTHONHOME: "",
-          // Force clean PATH that completely excludes uv's Python 3.13
-          PATH: (process.env.PATH || "").split(":").filter(p => !p.includes("uv/python")).join(":") || "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-          // Also pass GOOGLE_APPLICATION_CREDENTIALS if explicitly set
-          ...(process.env.GOOGLE_APPLICATION_CREDENTIALS
-            ? { GOOGLE_APPLICATION_CREDENTIALS: process.env.GOOGLE_APPLICATION_CREDENTIALS }
-            : {}),
-        },
-      },
-      (error, stdout, stderr) => {
-        if (error) {
-          console.error("[BQ Bridge] Python script error:", error.message);
-          if (stderr) console.error("[BQ Bridge] stderr:", stderr);
-          reject(new Error(`BQ script failed: ${error.message}`));
-          return;
-        }
-        resolve(stdout);
-      }
-    );
-  });
-}
 
 // ============================================================================
 // PUBLIC API
@@ -163,20 +346,36 @@ export async function fetchBQData(forceRefresh = false): Promise<BQAllData | nul
   }
 
   try {
-    console.log("[BQ Bridge] Fetching fresh CTV data from BigQuery...");
-    const stdout = await execPython("all");
-    const parsed = JSON.parse(stdout);
+    console.log("[BQ Bridge] Fetching fresh CTV data from BigQuery (Node.js)...");
 
-    if (parsed.error || parsed.fallback) {
-      console.warn("[BQ Bridge] BQ returned fallback:", parsed.error);
-      return null;
-    }
+    // Run all queries in parallel for speed
+    const [summary, trailing_7d, monthly, daily_recent, top_advertisers, exchanges, concentration] =
+      await Promise.all([
+        getSummary(),
+        getTrailing7d(),
+        getMonthly(),
+        getDailyRecent(),
+        getTopAdvertisers(),
+        getExchanges(),
+        getConcentration(),
+      ]);
 
-    // Parse numeric strings back to numbers
-    const data = normalizeData(parsed);
+    const data: BQAllData = {
+      summary,
+      trailing_7d,
+      monthly,
+      daily_recent,
+      top_advertisers,
+      exchanges,
+      concentration,
+      fetched_at: new Date().toISOString(),
+      source: "BigQuery:moloco-ae-view.athena.fact_dsp_core",
+      fallback: false,
+    };
+
     cachedData = data;
     cacheTimestamp = Date.now();
-    console.log("[BQ Bridge] BQ data cached successfully. Source:", data.source);
+    console.log("[BQ Bridge] BQ data cached successfully (Node.js). Source:", data.source);
     return data;
   } catch (err: any) {
     console.error("[BQ Bridge] Failed to fetch BQ data:", err.message);
@@ -216,64 +415,4 @@ export function clearBQCache(): void {
   cachedData = null;
   cacheTimestamp = 0;
   console.log("[BQ Bridge] Cache cleared");
-}
-
-// ============================================================================
-// DATA NORMALIZATION
-// ============================================================================
-
-function normalizeData(raw: any): BQAllData {
-  return {
-    summary: (raw.summary || []).map((r: any) => ({
-      total_gas: parseFloat(r.total_gas) || 0,
-      avg_daily_gas: parseFloat(r.avg_daily_gas) || 0,
-      total_campaigns: parseFloat(r.total_campaigns) || 0,
-      total_advertisers: parseFloat(r.total_advertisers) || 0,
-      min_date: r.min_date || "",
-      max_date: r.max_date || "",
-      total_days: parseFloat(r.total_days) || 0,
-    })),
-    trailing_7d: (raw.trailing_7d || []).map((r: any) => ({
-      trailing_7d_daily: parseFloat(r.trailing_7d_daily) || 0,
-      trailing_7d_total: parseFloat(r.trailing_7d_total) || 0,
-      active_campaigns_7d: parseFloat(r.active_campaigns_7d) || 0,
-      active_advertisers_7d: parseFloat(r.active_advertisers_7d) || 0,
-      period_start: r.period_start || "",
-      period_end: r.period_end || "",
-    })),
-    monthly: (raw.monthly || []).map((r: any) => ({
-      month: r.month || "",
-      monthly_gas: parseFloat(r.monthly_gas) || 0,
-      avg_daily_gas: parseFloat(r.avg_daily_gas) || 0,
-      active_campaigns: parseFloat(r.active_campaigns) || 0,
-      active_advertisers: parseFloat(r.active_advertisers) || 0,
-      days_in_month: parseFloat(r.days_in_month) || 0,
-    })),
-    daily_recent: (raw.daily_recent || []).map((r: any) => ({
-      date_utc: r.date_utc || "",
-      daily_gas: parseFloat(r.daily_gas) || 0,
-      active_campaigns: parseFloat(r.active_campaigns) || 0,
-    })),
-    top_advertisers: (raw.top_advertisers || []).map((r: any) => ({
-      advertiser: r.advertiser || "",
-      total_gas: parseFloat(r.total_gas) || 0,
-      campaigns: parseFloat(r.campaigns) || 0,
-      first_active: r.first_active || "",
-      last_active: r.last_active || "",
-    })),
-    exchanges: (raw.exchanges || []).map((r: any) => ({
-      exchange: r.exchange || "",
-      total_gas: parseFloat(r.total_gas) || 0,
-      campaigns: parseFloat(r.campaigns) || 0,
-    })),
-    concentration: (raw.concentration || []).map((r: any) => ({
-      advertiser: r.advertiser || "",
-      gas: parseFloat(r.gas) || 0,
-      pct_of_total: parseFloat(r.pct_of_total) || 0,
-      cumulative_pct: parseFloat(r.cumulative_pct) || 0,
-    })),
-    fetched_at: raw.fetched_at || new Date().toISOString(),
-    source: raw.source || "BigQuery",
-    fallback: raw.fallback || false,
-  };
 }
