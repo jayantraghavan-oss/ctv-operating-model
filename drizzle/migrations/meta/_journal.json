@@ -50,6 +50,13 @@
       "when": 1775031709973,
       "tag": "0006_short_pepper_potts",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1775033929534,
+      "tag": "0007_legal_sabretooth",
+      "breakpoints": true
     }
   ]
 }

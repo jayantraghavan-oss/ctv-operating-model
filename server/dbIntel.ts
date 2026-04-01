@@ -10,6 +10,7 @@ import {
   bqRevenueSnapshots,
   gongAnalysisCache,
   dataRefreshLog,
+  curatedIntel,
 } from "../drizzle/schema";
 import { eq, desc, and, sql, inArray, like } from "drizzle-orm";
 
@@ -256,6 +257,71 @@ export async function getLastRefresh(source: string) {
     .orderBy(desc(dataRefreshLog.startedAt))
     .limit(1);
   return rows[0] || null;
+}
+
+// ── Curated Intel Helpers ─────────────────────────────────────────────
+
+/**
+ * Get all curated intel records for a given category.
+ * Returns rows sorted by sort_order ascending.
+ */
+export async function getCuratedIntel(category: string) {
+  const db = getDb();
+  const rows = await db
+    .select()
+    .from(curatedIntel)
+    .where(
+      and(
+        eq(curatedIntel.category, category),
+        sql`is_active = 1`,
+      )
+    )
+    .orderBy(curatedIntel.sortOrder);
+  return rows.map((r: any) => ({
+    ...r,
+    metadata: r.metadata ? JSON.parse(r.metadata) : null,
+  }));
+}
+
+/**
+ * Get all curated intel records across all categories.
+ * Returns a map of category → rows.
+ */
+export async function getAllCuratedIntel() {
+  const db = getDb();
+  const rows = await db
+    .select()
+    .from(curatedIntel)
+    .where(sql`is_active = 1`)
+    .orderBy(curatedIntel.sortOrder);
+
+  const result: Record<string, any[]> = {};
+  for (const row of rows) {
+    let parsedMeta = null;
+    if (row.metadata) {
+      try { parsedMeta = JSON.parse(row.metadata); } catch { parsedMeta = row.metadata; }
+    }
+    const r = { ...row, metadata: parsedMeta };
+    if (!result[r.category]) result[r.category] = [];
+    result[r.category].push(r);
+  }
+  return result;
+}
+
+/**
+ * Get curated intel summary — count per category.
+ */
+export async function getCuratedIntelSummary() {
+  const db = getDb();
+  const rows = await db
+    .select({
+      category: curatedIntel.category,
+      count: sql<number>`COUNT(*)`,
+    })
+    .from(curatedIntel)
+    .where(sql`is_active = 1`)
+    .groupBy(curatedIntel.category);
+  return rows;
 }
 
 export async function getAllLastRefreshes() {

@@ -411,6 +411,7 @@ export default function CCCTVReporting() {
   const [activeTab, setActiveTab] = useState("q1");
   const [bqData, setBqData] = useState<BQResponse | null>(null);
   const [bqLoading, setBqLoading] = useState(true);
+  const [curatedData, setCuratedData] = useState<Record<string, any[]>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -425,6 +426,13 @@ export default function CCCTVReporting() {
       }
     })();
     return () => { cancelled = true; };
+  }, []);
+
+  // Fetch curated intel from DB
+  useEffect(() => {
+    trpcQuery<Record<string, any[]>>("reporting.curatedIntel")
+      .then((d) => { if (d) setCuratedData(d); })
+      .catch(() => {});
   }, []);
 
   // Derive live or fallback data
@@ -547,9 +555,9 @@ export default function CCCTVReporting() {
               transition={{ duration: 0.2 }}
             >
               {activeTab === "q1" && <Q1Revenue revenueData={revenueData} campaignData={campaignData} concentrationData={concentrationData} riskSignals={riskSignals} isLive={isLive} bq={bq} trailing7dDailyK={trailing7dDailyK} activeCampaigns7d={activeCampaigns7d} exchangeCount={exchangeCount} exchangeNames={exchangeNames} />}
-              {activeTab === "q2" && <Q2CustomerVoice />}
-              {activeTab === "q3" && <Q3WinLoss />}
-              {activeTab === "q4" && <Q4MarketPosition />}
+              {activeTab === "q2" && <Q2CustomerVoice curatedData={curatedData} />}
+              {activeTab === "q3" && <Q3WinLoss curatedData={curatedData} />}
+              {activeTab === "q4" && <Q4MarketPosition curatedData={curatedData} />}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -725,7 +733,24 @@ function Q1Revenue({ revenueData, campaignData, concentrationData, riskSignals, 
 // ============================================================================
 // Q2: CUSTOMER VOICE
 // ============================================================================
-function Q2CustomerVoice() {
+function Q2CustomerVoice({ curatedData = {} }: { curatedData?: Record<string, any[]> }) {
+  const dbThemeData = useMemo(() => {
+    const db = (curatedData.theme || []).map((t: any) => ({
+      theme: t.label, calls: Number(t.value1) || 0, pct: Number(t.value2) || 0,
+      sentiment: (t.text1 || "mixed") as "positive" | "mixed" | "friction",
+    }));
+    return db.length > 0 ? db : themeData;
+  }, [curatedData]);
+
+  const dbVerbatims = useMemo(() => {
+    const db = (curatedData.quote || []).map((q: any) => ({
+      theme: q.subcategory || "General", sentiment: (q.text2 || "mixed") as "positive" | "mixed" | "friction",
+      quote: q.text1 || q.label, meta: q.text3 || "",
+      status: q.metadata?.status || "Active", statusColor: q.metadata?.statusColor || AMBER,
+    }));
+    return db.length > 0 ? db : verbatims;
+  }, [curatedData]);
+
   return (
     <>
       <QuestionHeader tab={TABS[1]} variant="q2" />
@@ -753,7 +778,7 @@ function Q2CustomerVoice() {
             <SourceTag label="Gong · N=43" variant="gong" />
           </div>
           <div className="space-y-2.5">
-            {themeData.map((t) => {
+            {dbThemeData.map((t) => {
               const barColor = t.sentiment === "positive" ? CTV_PURPLE : t.sentiment === "mixed" ? AMBER : ROSE;
               const sentLabel = t.sentiment === "positive" ? "↑ positive" : t.sentiment === "mixed" ? "↕ mixed" : "↓ friction";
               const sentColor = t.sentiment === "positive" ? EMERALD : t.sentiment === "mixed" ? AMBER : ROSE;
@@ -807,7 +832,7 @@ function Q2CustomerVoice() {
         <SourceTag label="Gong · verbatim" variant="gong" />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
-        {verbatims.map((v, i) => {
+        {dbVerbatims.map((v, i) => {
           const dotColor = v.sentiment === "positive" ? EMERALD : v.sentiment === "mixed" ? AMBER : ROSE;
           const sentLabel = v.sentiment === "positive" ? "Positive signal" : v.sentiment === "mixed" ? "Mixed signal" : "Friction";
           return (
@@ -834,7 +859,31 @@ function Q2CustomerVoice() {
 // ============================================================================
 // Q3: WIN/LOSS PATTERNS
 // ============================================================================
-function Q3WinLoss() {
+function Q3WinLoss({ curatedData = {} }: { curatedData?: Record<string, any[]> }) {
+  const dbBehaviorData = useMemo(() => {
+    const db = (curatedData.behavior || []).map((b: any) => ({
+      behavior: b.label, won: Number(b.value1) || 0, lost: Number(b.value2) || 0,
+      delta: `+${(Number(b.value1) || 0) - (Number(b.value2) || 0)}pp`,
+      signal: (Number(b.value1) || 0) - (Number(b.value2) || 0) >= 40 ? "Strong" : "Medium",
+    }));
+    return db.length > 0 ? db : behaviorData;
+  }, [curatedData]);
+
+  const dbLossReasons = useMemo(() => {
+    const db = (curatedData.loss_reason || []).map((r: any) => ({
+      reason: r.label, pct: Number(r.value1) || 0,
+    }));
+    return db.length > 0 ? db : lossReasons;
+  }, [curatedData]);
+
+  // Derive win rate chart from behavior data
+  const dbWinRateByBehavior = useMemo(() => {
+    return dbBehaviorData.slice(0, 5).map((b: any) => ({
+      behavior: b.behavior.replace(/\s*\(.*\)/, "").split(" ").slice(0, 2).join(" "),
+      rate: b.won,
+    }));
+  }, [dbBehaviorData]);
+
   return (
     <>
       <QuestionHeader tab={TABS[2]} variant="q3" />
@@ -872,7 +921,7 @@ function Q3WinLoss() {
               </tr>
             </thead>
             <tbody>
-              {behaviorData.map((b) => (
+              {dbBehaviorData.map((b) => (
                 <tr key={b.behavior} className="border-b border-slate-800/50 hover:bg-white/[0.02]">
                   <td className="py-2.5 px-2 text-slate-300">{b.behavior}</td>
                   <td className="py-2.5 px-2">
@@ -919,13 +968,13 @@ function Q3WinLoss() {
               <SourceTag label="N=31" variant="gong" />
             </div>
             <ResponsiveContainer width="100%" height={160}>
-              <BarChart data={winRateByBehavior} layout="vertical">
+              <BarChart data={dbWinRateByBehavior} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                 <XAxis type="number" tick={{ fill: "#7A90B8", fontSize: 11 }} tickFormatter={(v) => `${v}%`} />
                 <YAxis type="category" dataKey="behavior" tick={{ fill: "#7A90B8", fontSize: 10 }} width={110} />
                 <Tooltip {...chartTooltipStyle} formatter={(v) => [`${v}%`, "Win Rate"]} />
                 <Bar dataKey="rate" radius={[0, 4, 4, 0]}>
-                  {winRateByBehavior.map((_, i) => (
+                  {dbWinRateByBehavior.map((_: any, i: number) => (
                     <Cell key={i} fill={[EMERALD, EMERALD, CTV_PURPLE, CYAN, AMBER][i]} fillOpacity={0.7} />
                   ))}
                 </Bar>
@@ -942,7 +991,7 @@ function Q3WinLoss() {
               <SourceTag label="Gong + SL" variant="mixed" />
             </div>
             <div className="space-y-2.5">
-              {lossReasons.map((l) => (
+              {dbLossReasons.map((l) => (
                 <div key={l.reason} className="flex items-center gap-3">
                   <div className="text-[11px] text-slate-300 w-44 shrink-0">{l.reason}</div>
                   <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden">
@@ -962,7 +1011,45 @@ function Q3WinLoss() {
 // ============================================================================
 // Q4: MARKET POSITION
 // ============================================================================
-function Q4MarketPosition() {
+function Q4MarketPosition({ curatedData = {} }: { curatedData?: Record<string, any[]> }) {
+  const dbCompetitorData = useMemo(() => {
+    const db = (curatedData.competitor || []).map((c: any) => ({
+      competitor: c.label, deals: Number(c.value2) || 0, winRate: Number(c.value1) || 0,
+      theirEdge: c.text2 || "", ourCounter: c.text3 || "",
+    }));
+    return db.length > 0 ? db : competitorData;
+  }, [curatedData]);
+
+  const dbCompetitiveSignals = useMemo(() => {
+    const db = (curatedData.competitive_signal || []).map((s: any) => ({
+      title: s.label, body: s.text1 || "", source: s.text2 || "",
+      color: s.text3 === "positive" ? EMERALD : s.text3 === "risk" ? ROSE : AMBER,
+    }));
+    return db.length > 0 ? db : competitiveSignals;
+  }, [curatedData]);
+
+  // Derive win rate chart from competitor data
+  const dbWinRateByCompetitor = useMemo(() => {
+    return dbCompetitorData.map((c: any) => ({
+      name: c.competitor,
+      rate: c.winRate,
+      color: c.winRate >= 60 ? EMERALD : c.winRate >= 40 ? AMBER : ROSE,
+    }));
+  }, [dbCompetitorData]);
+
+  // DB-backed TAM data
+  const dbTamData = useMemo(() => {
+    const db = (curatedData.tam_estimate || []).map((t: any) => ({
+      label: t.label,
+      value: `$${Number(t.value1) || 0}B`,
+      width: `${Math.min(((Number(t.value1) || 0) / 21) * 100, 100)}%`,
+      color: t.text2 || "rgba(148,163,184,0.15)",
+      textColor: t.text3 || MUTED,
+      amount: `$${Number(t.value1) || 0}B`,
+    }));
+    return db.length > 0 ? db : tamData;
+  }, [curatedData]);
+
   return (
     <>
       <QuestionHeader tab={TABS[3]} variant="q4" />
@@ -996,7 +1083,7 @@ function Q4MarketPosition() {
               </tr>
             </thead>
             <tbody>
-              {competitorData.map((c) => (
+              {dbCompetitorData.map((c) => (
                 <tr key={c.competitor} className="border-b border-slate-800/50 hover:bg-white/[0.02]">
                   <td className="py-2.5 px-2 font-bold text-slate-200">{c.competitor}</td>
                   <td className="py-2.5 px-2 text-slate-400">N={c.deals} deals</td>
@@ -1026,13 +1113,13 @@ function Q4MarketPosition() {
             <SourceTag label="N=31" variant="mixed" />
           </div>
           <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={winRateByCompetitor} layout="vertical">
+            <BarChart data={dbWinRateByCompetitor} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
               <XAxis type="number" tick={{ fill: "#7A90B8", fontSize: 11 }} tickFormatter={(v) => `${v}%`} />
               <YAxis type="category" dataKey="name" tick={{ fill: "#7A90B8", fontSize: 10 }} width={100} />
               <Tooltip {...chartTooltipStyle} formatter={(v) => [`${v}%`, "Win Rate"]} />
               <Bar dataKey="rate" radius={[0, 4, 4, 0]}>
-                {winRateByCompetitor.map((entry, i) => (
+                {dbWinRateByCompetitor.map((entry: any, i: number) => (
                   <Cell key={i} fill={entry.color} fillOpacity={0.7} />
                 ))}
               </Bar>
@@ -1051,7 +1138,7 @@ function Q4MarketPosition() {
           <SourceTag label="eMarketer + BQ estimated" variant="est" />
         </div>
         <div className="space-y-3">
-          {tamData.map((t) => (
+          {dbTamData.map((t: any) => (
             <div key={t.label} className="flex items-center gap-3">
               <div className="text-[11px] w-48 shrink-0" style={{ color: t.textColor }}>{t.label}</div>
               <div className="flex-1 h-7 bg-white/[0.04] rounded-md overflow-hidden relative">
@@ -1080,8 +1167,8 @@ function Q4MarketPosition() {
         <SourceTag label="Gong + Slack" variant="gong" />
       </div>
       <div className="bg-slate-900/60 border border-slate-700/50 rounded-xl overflow-hidden mb-4">
-        {competitiveSignals.map((s, i) => (
-          <div key={i} className={`flex items-start gap-3 p-3.5 ${i < competitiveSignals.length - 1 ? "border-b border-slate-800/50" : ""}`}>
+        {dbCompetitiveSignals.map((s, i) => (
+          <div key={i} className={`flex items-start gap-3 p-3.5 ${i < dbCompetitiveSignals.length - 1 ? "border-b border-slate-800/50" : ""}`}>
             <div className="w-2.5 h-2.5 rounded-full shrink-0 mt-1" style={{ background: s.color }} />
             <div>
               <div className="text-xs font-bold text-slate-200 mb-1">{s.title}</div>

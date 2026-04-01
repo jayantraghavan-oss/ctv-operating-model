@@ -232,7 +232,8 @@ interface GongData {
 // ============================================================================
 
 // Q3 Win/Loss — curated from deal analysis (not from live source yet)
-const Q3_BEHAVIORS = [
+// Q3 behaviors and loss reasons — fallback defaults, overridden by DB data via curatedData prop
+const DEFAULT_Q3_BEHAVIORS = [
   { behavior: "Multi-threading (3+ contacts)", wonPct: 89, lostPct: 31, delta: "+58pp", signal: "Critical" },
   { behavior: "Technical POC before proposal", wonPct: 83, lostPct: 23, delta: "+60pp", signal: "Critical" },
   { behavior: "CTV-specific case study shared", wonPct: 78, lostPct: 15, delta: "+63pp", signal: "High" },
@@ -241,7 +242,7 @@ const Q3_BEHAVIORS = [
   { behavior: "Competitive displacement framing", wonPct: 67, lostPct: 54, delta: "+13pp", signal: "Medium" },
 ];
 
-const Q3_LOSS_REASONS = [
+const DEFAULT_Q3_LOSS_REASONS = [
   { reason: "No attribution path agreed", pct: 34 },
   { reason: "Budget frozen / reallocated", pct: 23 },
   { reason: "Champion left organization", pct: 15 },
@@ -250,8 +251,8 @@ const Q3_LOSS_REASONS = [
   { reason: "Timing — launched too late in quarter", pct: 7 },
 ];
 
-// Q4 Market — curated competitive intelligence
-const Q4_COMPETITORS = [
+// Q4 Market — fallback defaults, overridden by DB data via curatedData prop
+const DEFAULT_Q4_COMPETITORS = [
   { vendor: "The Trade Desk", headToHead: "12-8", winRate: 60, theirEdge: "Self-serve scale, brand trust", ourCounter: "ML performance, managed service depth" },
   { vendor: "Tatari", headToHead: "7-3", winRate: 70, theirEdge: "Linear+CTV unified, attribution", ourCounter: "Programmatic reach, app-install pedigree" },
   { vendor: "Amazon DSP", headToHead: "5-6", winRate: 45, theirEdge: "1P data, Fire TV inventory", ourCounter: "Cross-exchange reach, transparent pricing" },
@@ -259,7 +260,7 @@ const Q4_COMPETITORS = [
   { vendor: "DV360", headToHead: "3-4", winRate: 43, theirEdge: "Google ecosystem lock-in", ourCounter: "Dedicated CTV focus, better support" },
 ];
 
-const Q4_TAM = [
+const DEFAULT_Q4_TAM = [
   { segment: "Sports Betting & iGaming", tam: 4.2, penetration: 18, takeaway: "Highest density — expand via PMG/agency" },
   { segment: "Streaming & Entertainment", tam: 8.5, penetration: 4, takeaway: "Massive TAM, low penetration — need case studies" },
   { segment: "D2C / Performance", tam: 6.1, penetration: 7, takeaway: "Natural fit — attribution story resonates" },
@@ -381,6 +382,7 @@ export default function CTVIntelligence() {
   const [bqData, setBqData] = useState<BQData | null>(null);
   const [gongData, setGongData] = useState<GongData | null>(null);
   const [sfdcData, setSfdcData] = useState<SfdcPipelineData | null>(null);
+  const [curatedData, setCuratedData] = useState<Record<string, any[]>>({});
   const [bqLoading, setBqLoading] = useState(true);
   const [gongLoading, setGongLoading] = useState(true);
   const [sfdcLoading, setSfdcLoading] = useState(true);
@@ -424,6 +426,13 @@ export default function CTVIntelligence() {
       .then((d) => { if (d) setSfdcData(d); })
       .catch(() => {})
       .finally(() => setSfdcLoading(false));
+  }, []);
+
+  // Fetch curated intel from DB
+  useEffect(() => {
+    trpcQuery<Record<string, any[]>>("reporting.curatedIntel")
+      .then((d) => { if (d) setCuratedData(d); })
+      .catch(() => {});
   }, []);
 
   // Refresh all data
@@ -582,8 +591,8 @@ export default function CTVIntelligence() {
           {activeTab === "q2" && (
             <Q2Tab gongData={gongData} gongVolumeChart={gongVolumeChart} />
           )}
-          {activeTab === "q3" && <Q3Tab gongData={gongData} />}
-          {activeTab === "q4" && <Q4Tab bqData={bqData} gongData={gongData} />}
+          {activeTab === "q3" && <Q3Tab gongData={gongData} curatedData={curatedData} />}
+          {activeTab === "q4" && <Q4Tab bqData={bqData} gongData={gongData} curatedData={curatedData} />}
           {activeTab === "synthesis" && (
             <SynthesisTabComponent bqData={bqData} gongData={gongData} trailing7d={trailing7d} arrRunRate={arrRunRate} gapToTarget={gapToTarget} activeCampaigns={activeCampaigns} activeAdvertisers={activeAdvertisers} />
           )}
@@ -1647,7 +1656,35 @@ function Q2Tab({ gongData, gongVolumeChart }: { gongData: GongData | null; gongV
 // ============================================================================
 // Q3: WIN/LOSS PATTERNS
 // ============================================================================
-function Q3Tab({ gongData }: { gongData: GongData | null }) {
+function Q3Tab({ gongData, curatedData = {} }: { gongData: GongData | null; curatedData?: Record<string, any[]> }) {
+  // DB-backed behaviors with fallback
+  const Q3_BEHAVIORS = useMemo(() => {
+    const dbBehaviors = (curatedData.behavior || []).map((b: any) => ({
+      behavior: b.label,
+      wonPct: Number(b.value1) || 0,
+      lostPct: Number(b.value2) || 0,
+      delta: `+${(Number(b.value1) || 0) - (Number(b.value2) || 0)}pp`,
+      signal: (Number(b.value1) || 0) - (Number(b.value2) || 0) >= 40 ? "Critical" : (Number(b.value1) || 0) - (Number(b.value2) || 0) >= 20 ? "High" : "Medium",
+    }));
+    const dbWinRateByBehavior = (curatedData.win_rate_by_behavior || []).map((b: any) => ({
+      behavior: b.label,
+      wonPct: Number(b.value1) || 0,
+      lostPct: Number(b.value2) || 0,
+      delta: b.text1 || `+${(Number(b.value1) || 0) - (Number(b.value2) || 0)}pp`,
+      signal: b.text2 || "Medium",
+    }));
+    return dbWinRateByBehavior.length > 0 ? dbWinRateByBehavior : dbBehaviors.length > 0 ? dbBehaviors : DEFAULT_Q3_BEHAVIORS;
+  }, [curatedData]);
+
+  // DB-backed loss reasons with fallback
+  const Q3_LOSS_REASONS = useMemo(() => {
+    const dbLoss = (curatedData.loss_reason || []).map((r: any) => ({
+      reason: r.label,
+      pct: Number(r.value1) || 0,
+    }));
+    return dbLoss.length > 0 ? dbLoss : DEFAULT_Q3_LOSS_REASONS;
+  }, [curatedData]);
+
   const gongLive = !!gongData?.available;
 
   // Compute Gong engagement metrics for win/loss enrichment
@@ -1863,7 +1900,30 @@ function Q3Tab({ gongData }: { gongData: GongData | null }) {
 // ============================================================================
 // Q4: MARKET POSITION
 // ============================================================================
-function Q4Tab({ bqData, gongData }: { bqData: BQData | null; gongData: GongData | null }) {
+function Q4Tab({ bqData, gongData, curatedData = {} }: { bqData: BQData | null; gongData: GongData | null; curatedData?: Record<string, any[]> }) {
+  // DB-backed competitors with fallback
+  const Q4_COMPETITORS = useMemo(() => {
+    const dbCompetitors = (curatedData.competitor || []).map((c: any) => ({
+      vendor: c.label,
+      headToHead: c.text1 || "0-0",
+      winRate: Number(c.value1) || 0,
+      theirEdge: c.text2 || "",
+      ourCounter: c.text3 || "",
+    }));
+    return dbCompetitors.length > 0 ? dbCompetitors : DEFAULT_Q4_COMPETITORS;
+  }, [curatedData]);
+
+  // DB-backed TAM with fallback
+  const Q4_TAM = useMemo(() => {
+    const dbTam = (curatedData.tam_estimate || []).map((t: any) => ({
+      segment: t.label,
+      tam: Number(t.value1) || 0,
+      penetration: Number(t.value2) || 0,
+      takeaway: t.text1 || "",
+    }));
+    return dbTam.length > 0 ? dbTam : DEFAULT_Q4_TAM;
+  }, [curatedData]);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 mb-2">

@@ -160,7 +160,7 @@ Aim for 3-5 items in each array. Return ONLY valid JSON.`;
           { role: "user", content: userPrompt },
         ],
         temperature: 0.3,
-        max_tokens: 4000,
+        max_tokens: 8000,
         response_format: { type: "json_object" },
       })
     );
@@ -174,15 +174,31 @@ Aim for 3-5 items in each array. Return ONLY valid JSON.`;
       synthesis = JSON.parse(content);
     } catch (parseErr: any) {
       console.error("[Synthesis] JSON parse error:", parseErr.message);
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        try {
-          synthesis = JSON.parse(jsonMatch[0]);
-        } catch {
+      // Try to repair truncated JSON
+      let repaired = content;
+      const openBraces = (repaired.match(/\{/g) || []).length;
+      const closeBraces = (repaired.match(/\}/g) || []).length;
+      const openBrackets = (repaired.match(/\[/g) || []).length;
+      const closeBrackets = (repaired.match(/\]/g) || []).length;
+      repaired = repaired.replace(/,\s*"[^"]*$/, "");
+      repaired = repaired.replace(/,\s*$/, "");
+      repaired = repaired.replace(/"[^"]*$/, '"');
+      for (let i = 0; i < openBrackets - closeBrackets; i++) repaired += "]";
+      for (let i = 0; i < openBraces - closeBraces; i++) repaired += "}";
+      try {
+        synthesis = JSON.parse(repaired);
+        console.log("[Synthesis] Successfully repaired truncated JSON");
+      } catch {
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try {
+            synthesis = JSON.parse(jsonMatch[0]);
+          } catch {
+            synthesis = { executive_summary: content.slice(0, 500), parse_error: true };
+          }
+        } else {
           synthesis = { executive_summary: content.slice(0, 500), parse_error: true };
         }
-      } else {
-        synthesis = { executive_summary: content.slice(0, 500), parse_error: true };
       }
     }
 

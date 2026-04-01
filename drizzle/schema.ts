@@ -188,6 +188,43 @@ export const gongAnalysisCache = mysqlTable("gong_analysis_cache", {
 ]);
 
 /**
+ * Curated Intelligence — single source of truth for all analyst-curated data.
+ * Replaces 40+ hardcoded arrays across the codebase.
+ * Types: behavior, loss_reason, competitor, tam_segment, competitive_signal,
+ *        theme, objection, quote, risk, opportunity, early_signal, region,
+ *        winning_behavior, losing_pattern, rep_performance, coaching,
+ *        test_to_scale, market_trend, advantage, vulnerability, persona
+ */
+export const curatedIntel = mysqlTable("curated_intel", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  category: varchar("category", { length: 50 }).notNull(), // behavior, competitor, tam_segment, etc.
+  subcategory: varchar("subcategory", { length: 100 }), // optional grouping within category
+  label: varchar("label", { length: 500 }).notNull(), // primary display label
+  // Numeric fields (flexible use per category)
+  value1: decimal("value1", { precision: 14, scale: 2 }), // e.g., won%, win_rate, pct, tam_size
+  value2: decimal("value2", { precision: 14, scale: 2 }), // e.g., lost%, deals_count
+  value3: decimal("value3", { precision: 14, scale: 2 }), // e.g., delta, penetration
+  // Text fields (flexible use per category)
+  text1: text("text1"), // e.g., signal level, their_edge, reason, quote text
+  text2: text("text2"), // e.g., our_counter, source, company, speaker
+  text3: text("text3"), // e.g., takeaway, context, additional detail
+  text4: text("text4"), // e.g., head_to_head record, title, role
+  // Structured data (JSON)
+  metadata: text("metadata"), // JSON blob for complex data (kpis, stakeholders, etc.)
+  // Ordering and status
+  sortOrder: int("sort_order").default(0),
+  isActive: boolean("is_active").default(true),
+  dataSource: varchar("data_source", { length: 100 }).default("curated"), // curated, gong, sfdc, bq
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  index("idx_curated_category").on(table.category),
+  index("idx_curated_subcategory").on(table.subcategory),
+  index("idx_curated_active").on(table.isActive),
+]);
+
+/**
  * Data Refresh Log — tracks when each data source was last refreshed.
  */
 export const dataRefreshLog = mysqlTable("data_refresh_log", {

@@ -31,7 +31,7 @@ import { buildInsightsReport } from "./reporting";
 import { fetchBQData, getBQStatus, clearBQCache } from "./bqBridge";
 import { runSynthesis } from "./synthesize";
 import { fetchGongSummary, fetchGongWithTranscripts, getGongStatus, clearGongCache } from "./gongBridge";
-import { getSfdcPipelineSummary, getGongCallsFromDb, getLatestBqSnapshot, getAllLastRefreshes } from "./dbIntel";
+import { getSfdcPipelineSummary, getGongCallsFromDb, getLatestBqSnapshot, getAllLastRefreshes, getCuratedIntel, getAllCuratedIntel, getCuratedIntelSummary } from "./dbIntel";
 
 /**
  * Retry helper with exponential backoff for rate-limited LLM calls.
@@ -568,7 +568,7 @@ Return ONLY valid JSON. Every quote must be from the actual transcripts above. E
               { role: "user", content: userPrompt },
             ],
             temperature: 0.3,
-            max_tokens: 4000,
+            max_tokens: 8000,
             response_format: { type: "json_object" },
           })
         );
@@ -583,16 +583,35 @@ Return ONLY valid JSON. Every quote must be from the actual transcripts above. E
           analysis = JSON.parse(content);
         } catch (parseErr: any) {
           console.error("[Gong Analysis] JSON parse error:", parseErr.message, "Content preview:", content.slice(0, 200));
-          // Try to extract JSON from the content
-          const jsonMatch = content.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            try {
-              analysis = JSON.parse(jsonMatch[0]);
-            } catch {
+          // Try to repair truncated JSON by closing open structures
+          let repaired = content;
+          // Count open braces/brackets and close them
+          const openBraces = (repaired.match(/\{/g) || []).length;
+          const closeBraces = (repaired.match(/\}/g) || []).length;
+          const openBrackets = (repaired.match(/\[/g) || []).length;
+          const closeBrackets = (repaired.match(/\]/g) || []).length;
+          // Remove trailing incomplete string/value
+          repaired = repaired.replace(/,\s*"[^"]*$/, "");
+          repaired = repaired.replace(/,\s*$/, "");
+          repaired = repaired.replace(/"[^"]*$/, '"');
+          // Close open brackets and braces
+          for (let i = 0; i < openBrackets - closeBrackets; i++) repaired += "]";
+          for (let i = 0; i < openBraces - closeBraces; i++) repaired += "}";
+          try {
+            analysis = JSON.parse(repaired);
+            console.log("[Gong Analysis] Successfully repaired truncated JSON");
+          } catch {
+            // Try to extract JSON from the content
+            const jsonMatch = content.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              try {
+                analysis = JSON.parse(jsonMatch[0]);
+              } catch {
+                analysis = { raw: content.slice(0, 2000), parse_error: true };
+              }
+            } else {
               analysis = { raw: content.slice(0, 2000), parse_error: true };
             }
-          } else {
-            analysis = { raw: content.slice(0, 2000), parse_error: true };
           }
         }
 
@@ -633,6 +652,19 @@ Return ONLY valid JSON. Every quote must be from the actual transcripts above. E
      * SFDC CTV Pipeline — reads from database.
      * Returns stage distribution, top deals, owner distribution, type split, closed won/lost.
      */
+    curatedIntel: publicProcedure
+      .input(z.object({ category: z.string().optional() }).optional())
+      .query(async ({ input }) => {
+        if (input?.category) {
+          return { [input.category]: await getCuratedIntel(input.category) };
+        }
+        return await getAllCuratedIntel();
+      }),
+
+    curatedIntelSummary: publicProcedure.query(async () => {
+      return await getCuratedIntelSummary();
+    }),
+
     sfdcPipeline: publicProcedure.query(async () => {
       try {
         const data = await getSfdcPipelineSummary();
