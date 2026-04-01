@@ -752,10 +752,10 @@
 ## Phase 54: Connect Real BQ Revenue Data (Dan's Queries)
 - [x] Find Dan's markdown file with BQ queries (moloco_bigquery_guide.md from moloco/gtm repo)
 - [x] Parse BQ query structure and understand revenue data schema (fact_dsp_core, daily_attainment_table, fraud filtering, vertical classifier)
-- [ ] Connect to BigQuery using Dan's queries to pull real CTV revenue
-- [ ] Replace static/synthetic revenue numbers in reporting.ts with real BQ data
-- [ ] Update reporting tests to reflect real data structure
-- [ ] Verify reporting page shows accurate revenue numbers
+- [x] Connect to BigQuery using Dan's queries to pull real CTV revenue (bqBridge.ts + bq_fetch_ctv.py)
+- [x] Replace static/synthetic revenue numbers in CC CTV Reporting with real BQ data (CCCTVReporting.tsx fetches via tRPC)
+- [x] Update reporting tests to reflect real data structure (bqBridge.test.ts — 7 tests, all passing)
+- [x] Verify reporting page shows accurate revenue numbers ($208K/day, 51 campaigns, 5 exchanges — all BQ verified)
 
 ## Phase 55: CC CTV Reporting Tab (from moloco_ctv_dashboard.html)
 - [x] Read and parse the uploaded moloco_ctv_dashboard.html

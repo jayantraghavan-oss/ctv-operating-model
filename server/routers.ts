@@ -28,6 +28,7 @@ import {
   deepHealthCheck,
 } from "./liveData";
 import { buildInsightsReport } from "./reporting";
+import { fetchBQData, getBQStatus, clearBQCache } from "./bqBridge";
 
 /**
  * Retry helper with exponential backoff for rate-limited LLM calls.
@@ -400,6 +401,43 @@ export const appRouter = router({
      */
     insights: publicProcedure.query(async () => {
       return buildInsightsReport();
+    }),
+
+    /**
+     * Live BigQuery CTV revenue data.
+     * Returns monthly breakdown, daily recent, top advertisers, exchanges, concentration.
+     * Falls back to null if BQ is unavailable (e.g., no Google ADC in production).
+     */
+    bqRevenue: publicProcedure
+      .query(async () => {
+        const data = await fetchBQData(false);
+        if (!data) {
+          return {
+            available: false,
+            data: null,
+            message: "BigQuery not available — using fallback data",
+          };
+        }
+        return {
+          available: true,
+          data,
+          message: `BQ data fetched at ${data.fetched_at}`,
+        };
+      }),
+
+    /**
+     * BQ connection status for the live data panel.
+     */
+    bqStatus: publicProcedure.query(async () => {
+      return getBQStatus();
+    }),
+
+    /**
+     * Clear BQ cache (force next request to re-fetch).
+     */
+    clearBQCache: publicProcedure.mutation(async () => {
+      clearBQCache();
+      return { cleared: true };
     }),
   }),
 });

@@ -11,7 +11,8 @@
  * Apple-glass UX with dark-mode dashboard aesthetic matching the original HTML dashboard.
  */
 import NeuralShell from "@/components/NeuralShell";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { trpcQuery } from "@/lib/trpcFetch";
 import {
   TrendingUp, MessageSquare, Target, Crosshair,
   AlertTriangle, ArrowUpRight, ArrowDownRight,
@@ -55,24 +56,25 @@ const TABS: Tab[] = [
 ];
 
 // ============================================================================
-// DATA — Q1: Revenue & Pipeline
+// STATIC FALLBACK DATA — Q1: Revenue & Pipeline
+// Used when BQ is unavailable; replaced by live data when connected.
 // ============================================================================
-const MONTHS = ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
+const FALLBACK_MONTHS = ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
 
-const revenueData = MONTHS.map((m, i) => ({
+const FALLBACK_REVENUE = FALLBACK_MONTHS.map((m, i) => ({
   month: m,
   avgDailyGAS: [64.9, 57.9, 79.2, 86.8, 102.7, 140.8][i],
   target: 274,
   trailing7d: i === 5 ? 195.3 : null,
 }));
 
-const campaignData = MONTHS.map((m, i) => ({
+const FALLBACK_CAMPAIGNS = FALLBACK_MONTHS.map((m, i) => ({
   month: m,
   campaigns: [22, 25, 29, 32, 36, 39][i],
   target: 150,
 }));
 
-const concentrationData = [
+const FALLBACK_CONCENTRATION = [
   { name: "PMG/FBG (38%)", value: 38, color: ROSE },
   { name: "Kraken (12.6%)", value: 12.6, color: ORANGE },
   { name: "ARBGaming (7.8%)", value: 7.8, color: AMBER },
@@ -89,7 +91,7 @@ const pipelineStages = [
   { stage: "Close / Active", value: 3.4, deals: 12, pct: 14 },
 ];
 
-const riskSignals = [
+const FALLBACK_RISK_SIGNALS = [
   { title: "Advertiser Concentration", severity: "high" as const, source: "BQ", body: "Top 1 advertiser (PMG/FBG Oppco LLC) = 38% of all CTV GAS ($74K/day). Top 5 = 70.9%. If any top-3 account pauses, daily run-rate could drop below $100K." },
   { title: "Campaign Volume", severity: "high" as const, source: "BQ", body: "39 active campaigns vs 150 EOY target — 3.8× ramp required. BQ count is lower than SearchLight estimate (49) because BQ counts campaigns with actual spend." },
   { title: "Exchange Breadth", severity: "medium" as const, source: "BQ", body: "Only 5 exchanges with active CTV spend. MCTV + INDEX + FreeWheel = 87% of volume. Supply concentration mirrors advertiser concentration." },
@@ -97,9 +99,116 @@ const riskSignals = [
 ];
 
 // ============================================================================
+// BQ DATA TYPES
+// ============================================================================
+interface BQResponse {
+  available: boolean;
+  data: {
+    summary: { total_gas: number; avg_daily_gas: number; total_campaigns: number; total_advertisers: number; min_date: string; max_date: string; total_days: number }[];
+    trailing_7d: { trailing_7d_daily: number; trailing_7d_total: number; active_campaigns_7d: number; active_advertisers_7d: number; period_start: string; period_end: string }[];
+    monthly: { month: string; monthly_gas: number; avg_daily_gas: number; active_campaigns: number; active_advertisers: number; days_in_month: number }[];
+    daily_recent: { date_utc: string; daily_gas: number; active_campaigns: number }[];
+    top_advertisers: { advertiser: string; total_gas: number; campaigns: number; first_active: string; last_active: string }[];
+    exchanges: { exchange: string; total_gas: number; campaigns: number }[];
+    concentration: { advertiser: string; gas: number; pct_of_total: number; cumulative_pct: number }[];
+    fetched_at: string;
+    source: string;
+    fallback: boolean;
+  } | null;
+  message: string;
+}
+
+/** Transform BQ monthly data into chart-ready format */
+function bqToRevenueChart(monthly: NonNullable<BQResponse["data"]>["monthly"]) {
+  const monthNames: Record<string, string> = {
+    "2025-10": "Oct", "2025-11": "Nov", "2025-12": "Dec",
+    "2026-01": "Jan", "2026-02": "Feb", "2026-03": "Mar",
+    "2026-04": "Apr", "2026-05": "May", "2026-06": "Jun",
+  };
+  return monthly.map((m) => ({
+    month: monthNames[m.month] || m.month,
+    avgDailyGAS: Math.round(m.avg_daily_gas / 1000 * 10) / 10,
+    target: 274,
+    trailing7d: null as number | null,
+  }));
+}
+
+function bqToCampaignChart(monthly: NonNullable<BQResponse["data"]>["monthly"]) {
+  const monthNames: Record<string, string> = {
+    "2025-10": "Oct", "2025-11": "Nov", "2025-12": "Dec",
+    "2026-01": "Jan", "2026-02": "Feb", "2026-03": "Mar",
+    "2026-04": "Apr", "2026-05": "May", "2026-06": "Jun",
+  };
+  return monthly.map((m) => ({
+    month: monthNames[m.month] || m.month,
+    campaigns: Math.round(m.active_campaigns),
+    target: 150,
+  }));
+}
+
+function bqToConcentration(conc: NonNullable<BQResponse["data"]>["concentration"]) {
+  const colors = [ROSE, ORANGE, AMBER, CTV_PURPLE, CYAN, "#334155", "#1e293b", "#0f172a"];
+  const top5 = conc.slice(0, 5);
+  const restPct = Math.max(0, 100 - top5.reduce((s, c) => s + c.pct_of_total, 0));
+  const result = top5.map((c, i) => ({
+    name: `${c.advertiser.split(" - ")[0]} (${c.pct_of_total.toFixed(1)}%)`,
+    value: Math.round(c.pct_of_total * 10) / 10,
+    color: colors[i] || colors[colors.length - 1],
+  }));
+  if (restPct > 0.5) {
+    result.push({ name: `Rest (${restPct.toFixed(1)}%)`, value: Math.round(restPct * 10) / 10, color: "#334155" });
+  }
+  return result;
+}
+
+function bqToRiskSignals(bq: NonNullable<BQResponse["data"]>) {
+  const s = bq.summary[0];
+  const t7 = bq.trailing_7d[0];
+  const topConc = bq.concentration[0];
+  const top5Pct = bq.concentration.slice(0, 5).reduce((sum, c) => sum + c.pct_of_total, 0);
+  const latestMonth = bq.monthly[bq.monthly.length - 1];
+  const exchangeCount = bq.exchanges.length;
+  const topExchanges = bq.exchanges.slice(0, 3).map(e => e.exchange).join(" + ");
+  const topExchangePct = bq.exchanges.length > 0
+    ? Math.round(bq.exchanges.slice(0, 3).reduce((s, e) => s + e.total_gas, 0) / bq.exchanges.reduce((s, e) => s + e.total_gas, 0) * 100)
+    : 0;
+
+  return [
+    {
+      title: "Advertiser Concentration",
+      severity: topConc && topConc.pct_of_total > 30 ? "high" as const : "medium" as const,
+      source: "BQ",
+      body: topConc
+        ? `Top 1 advertiser (${topConc.advertiser}) = ${topConc.pct_of_total.toFixed(1)}% of all CTV GAS ($${Math.round(topConc.gas / (latestMonth?.days_in_month || 30) / 1000)}K/day). Top 5 = ${top5Pct.toFixed(1)}%.`
+        : "Concentration data unavailable.",
+    },
+    {
+      title: "Campaign Volume",
+      severity: (t7?.active_campaigns_7d || 0) < 60 ? "high" as const : "medium" as const,
+      source: "BQ",
+      body: `${Math.round(t7?.active_campaigns_7d || s?.total_campaigns || 0)} active campaigns (7d) vs 150 EOY target — ${(150 / Math.max(1, t7?.active_campaigns_7d || 0)).toFixed(1)}× ramp required.`,
+    },
+    {
+      title: "Exchange Breadth",
+      severity: exchangeCount <= 5 ? "medium" as const : "high" as const,
+      source: "BQ",
+      body: `${exchangeCount} exchanges with active CTV spend. ${topExchanges} = ${topExchangePct}% of volume.`,
+    },
+    {
+      title: "Monthly Momentum",
+      severity: "opportunity" as const,
+      source: "BQ",
+      body: latestMonth
+        ? `${latestMonth.month} GAS ($${(latestMonth.monthly_gas / 1e6).toFixed(1)}M) — avg daily $${Math.round(latestMonth.avg_daily_gas / 1000)}K. 7d trailing: $${Math.round((t7?.trailing_7d_daily || 0) / 1000)}K/day.`
+        : "Monthly data unavailable.",
+    },
+  ];
+}
+
+// ============================================================================
 // DATA — Q2: Customer Voice
 // ============================================================================
-const sentimentData = MONTHS.map((m, i) => ({
+const sentimentData = FALLBACK_MONTHS.map((m, i) => ({
   month: m,
   positive: [5, 6, 7, 7, 8, 9][i],
   mixed: [4, 3, 4, 4, 4, 5][i],
@@ -300,6 +409,52 @@ const chartTooltipStyle = {
 
 export default function CCCTVReporting() {
   const [activeTab, setActiveTab] = useState("q1");
+  const [bqData, setBqData] = useState<BQResponse | null>(null);
+  const [bqLoading, setBqLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const result = await trpcQuery("reporting.bqRevenue");
+        if (!cancelled && result) setBqData(result as BQResponse);
+      } catch (err) {
+        console.warn("[CC CTV] BQ fetch failed, using fallback data", err);
+      } finally {
+        if (!cancelled) setBqLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Derive live or fallback data
+  const bq = bqData?.available && bqData.data ? bqData.data : null;
+  const isLive = bq !== null;
+
+  const revenueData = useMemo(() => {
+    if (!bq) return FALLBACK_REVENUE;
+    const chart = bqToRevenueChart(bq.monthly);
+    // Add trailing 7d to the last month
+    if (chart.length > 0 && bq.trailing_7d[0]) {
+      chart[chart.length - 1].trailing7d = Math.round(bq.trailing_7d[0].trailing_7d_daily / 1000 * 10) / 10;
+    }
+    return chart;
+  }, [bq]);
+
+  const campaignData = useMemo(() => bq ? bqToCampaignChart(bq.monthly) : FALLBACK_CAMPAIGNS, [bq]);
+  const concentrationData = useMemo(() => bq ? bqToConcentration(bq.concentration) : FALLBACK_CONCENTRATION, [bq]);
+  const riskSignals = useMemo(() => bq ? bqToRiskSignals(bq) : FALLBACK_RISK_SIGNALS, [bq]);
+
+  // Derived KPI values
+  const trailing7dDaily = bq?.trailing_7d[0]?.trailing_7d_daily || 195_000;
+  const trailing7dDailyK = Math.round(trailing7dDaily / 1000);
+  const arrRunRate = trailing7dDaily * 365;
+  const arrPct = Math.round(arrRunRate / 100_000_000 * 1000) / 10;
+  const arrGap = Math.round((100_000_000 - arrRunRate) / 1_000_000 * 10) / 10;
+  const dailyTarget = 274; // $274K/day needed for $100M ARR
+  const activeCampaigns7d = Math.round(bq?.trailing_7d[0]?.active_campaigns_7d || 39);
+  const exchangeCount = bq?.exchanges.length || 5;
+  const exchangeNames = bq?.exchanges.map(e => e.exchange).join(" · ") || "MCTV · INDEX · FW · NEXXEN · IS";
 
   return (
     <NeuralShell>
@@ -309,15 +464,27 @@ export default function CCCTVReporting() {
           <div className="flex items-center gap-6 flex-wrap max-w-[1400px] mx-auto">
             <div>
               <div className="text-xl font-extrabold text-amber-400 tracking-tight">$100M ARR</div>
-              <div className="text-[10px] text-slate-500 mt-0.5">Beth's mandate · CTV · EOY 2026</div>
+              <div className="text-[10px] text-slate-500 mt-0.5 flex items-center gap-2">
+                Beth's mandate · CTV · EOY 2026
+                {isLive && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[9px] font-bold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> BQ Live
+                  </span>
+                )}
+                {bqLoading && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 text-[9px] font-bold">
+                    Loading BQ...
+                  </span>
+                )}
+              </div>
             </div>
             <div className="flex-1 min-w-[200px]">
               <div className="flex justify-between text-[11px] text-slate-500 mb-1.5">
-                <span>Current run-rate: ~$71.3M ARR ($195K/day × 365) · BQ verified 7-day trailing avg</span>
-                <span className="text-amber-400 font-bold">71.3% of goal — $28.7M gap</span>
+                <span>Current run-rate: ~${(arrRunRate / 1e6).toFixed(1)}M ARR (${trailing7dDailyK > 0 ? `$${trailing7dDailyK}K` : "$195K"}/day × 365) · {isLive ? "BQ verified" : "estimated"} 7-day trailing avg</span>
+                <span className="text-amber-400 font-bold">{arrPct}% of goal — ${arrGap > 0 ? `$${arrGap}M gap` : "On track!"}</span>
               </div>
               <div className="h-2.5 bg-white/5 rounded-full overflow-hidden">
-                <div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-amber-400" style={{ width: "71.3%" }} />
+                <div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-amber-400" style={{ width: `${Math.min(arrPct, 100)}%` }} />
               </div>
               <div className="flex justify-between text-[9px] text-slate-600 mt-1">
                 <span>$0</span><span>$25M · Q1</span><span>$50M · Q2</span><span>$75M · Q3</span><span className="text-amber-400">$100M · EOY</span>
@@ -325,15 +492,15 @@ export default function CCCTVReporting() {
             </div>
             <div className="flex gap-5 flex-wrap">
               <div className="text-center">
-                <div className="text-base font-extrabold text-violet-400">$195K</div>
-                <div className="text-[9px] text-slate-500 leading-tight">CTV GAS/day<br />BQ · 7d trailing</div>
+                <div className="text-base font-extrabold text-violet-400">${trailing7dDailyK}K</div>
+                <div className="text-[9px] text-slate-500 leading-tight">CTV GAS/day<br />{isLive ? "BQ · 7d trailing" : "est · 7d trailing"}</div>
               </div>
               <div className="text-center">
-                <div className="text-base font-extrabold text-amber-400">$274K</div>
+                <div className="text-base font-extrabold text-amber-400">${dailyTarget}K</div>
                 <div className="text-[9px] text-slate-500 leading-tight">Daily target<br />needed</div>
               </div>
               <div className="text-center">
-                <div className="text-base font-extrabold text-amber-400">39</div>
+                <div className="text-base font-extrabold text-amber-400">{activeCampaigns7d}</div>
                 <div className="text-[9px] text-slate-500 leading-tight">Active<br />campaigns</div>
               </div>
               <div className="text-center">
@@ -376,7 +543,7 @@ export default function CCCTVReporting() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
             >
-              {activeTab === "q1" && <Q1Revenue />}
+              {activeTab === "q1" && <Q1Revenue revenueData={revenueData} campaignData={campaignData} concentrationData={concentrationData} riskSignals={riskSignals} isLive={isLive} bq={bq} trailing7dDailyK={trailing7dDailyK} activeCampaigns7d={activeCampaigns7d} exchangeCount={exchangeCount} exchangeNames={exchangeNames} />}
               {activeTab === "q2" && <Q2CustomerVoice />}
               {activeTab === "q3" && <Q3WinLoss />}
               {activeTab === "q4" && <Q4MarketPosition />}
@@ -391,18 +558,31 @@ export default function CCCTVReporting() {
 // ============================================================================
 // Q1: REVENUE & PIPELINE
 // ============================================================================
-function Q1Revenue() {
+function Q1Revenue({ revenueData, campaignData, concentrationData, riskSignals, isLive, bq, trailing7dDailyK, activeCampaigns7d, exchangeCount, exchangeNames }: {
+  revenueData: { month: string; avgDailyGAS: number; target: number; trailing7d: number | null }[];
+  campaignData: { month: string; campaigns: number; target: number }[];
+  concentrationData: { name: string; value: number; color: string }[];
+  riskSignals: { title: string; severity: "high" | "medium" | "opportunity"; source: string; body: string }[];
+  isLive: boolean;
+  bq: BQResponse["data"] | null;
+  trailing7dDailyK: number;
+  activeCampaigns7d: number;
+  exchangeCount: number;
+  exchangeNames: string;
+}) {
+  const dailyPct = Math.round(trailing7dDailyK / 274 * 1000) / 10;
+  const campPct = Math.round(activeCampaigns7d / 150 * 100);
   return (
     <>
       <QuestionHeader tab={TABS[0]} variant="q1" />
 
       {/* KPI Row */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
-        <KpiCard label="CTV GAS / Day" value="$195K" sub="BQ · fact_dsp_core · 7d avg Mar 23–29" pill="71.2% of $274K/day target" pillColor="yellow" color={CTV_PURPLE} trackPct={71.2} />
-        <KpiCard label="Active Campaigns" value="39" sub="BQ · distinct campaign_ids · last 30d" pill="26% of 150 target" pillColor="red" color={AMBER} trackPct={26} />
+        <KpiCard label="CTV GAS / Day" value={`$${trailing7dDailyK}K`} sub={isLive ? `BQ · fact_dsp_core · 7d trailing` : "est · 7d trailing"} pill={`${dailyPct}% of $274K/day target`} pillColor={dailyPct >= 80 ? "green" : dailyPct >= 60 ? "yellow" : "red"} color={CTV_PURPLE} trackPct={Math.min(dailyPct, 100)} />
+        <KpiCard label="Active Campaigns" value={String(activeCampaigns7d)} sub={isLive ? "BQ · distinct campaigns · 7d" : "est · last 30d"} pill={`${campPct}% of 150 target`} pillColor={campPct >= 50 ? "yellow" : "red"} color={AMBER} trackPct={Math.min(campPct, 100)} />
         <KpiCard label="Win Rate (AMER)" value="22.7%" sub="SearchLight · 90-day trailing" pill="12.3pp below 35% target" pillColor="red" color={ROSE} trackPct={65} />
         <KpiCard label="CTV Pipeline" value="$8.2M" sub="SearchLight · CRM est" pill="Coverage: est. 1.2× target" pillColor="yellow" color={CYAN} trackPct={42} />
-        <KpiCard label="Exchanges Live" value="5" sub="BQ · last 7d spend > $0" pill="MCTV · INDEX · FW · NEXXEN · IS" pillColor="green" color={EMERALD} trackPct={63} />
+        <KpiCard label="Exchanges Live" value={String(exchangeCount)} sub={isLive ? "BQ · last 7d spend > $0" : "est"} pill={exchangeNames.length > 40 ? exchangeNames.substring(0, 40) + "..." : exchangeNames} pillColor="green" color={EMERALD} trackPct={Math.round(exchangeCount / 8 * 100)} />
       </div>
 
       {/* Charts Row */}
