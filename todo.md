@@ -765,3 +765,65 @@
 - [x] Add sidebar navigation entry for "CC CTV Reporting" (Tv icon)
 - [x] Add route in App.tsx (/cc-ctv-reporting)
 - [x] Test rendering and verify all 4 tabs (Q1-Q4) render correctly with charts, tables, KPIs
+
+## Phase 56: Gong API Integration into Q2 Customer Voice
+- [ ] Read Gong API skill and test credential access
+- [ ] Pull CTV-related Gong calls (last 90 days) using gong_helper.py
+- [ ] Build server-side Gong data fetcher (gongBridge.ts) with caching
+- [ ] Use LLM to analyze call transcripts for sentiment and themes
+- [ ] Create tRPC endpoint reporting.gongVoice
+- [ ] Update CCCTVReporting.tsx Q2 tab to consume live Gong data
+- [ ] Write vitest specs for gongBridge
+- [ ] Verify Q2 section shows real Gong-sourced sentiment and themes
+
+## Phase 57: Specialist Agent Upgrades + SFDC Pipeline + Daily Refresh
+
+### Gong → Q2 Customer Voice (Specialist Agent)
+- [ ] Wire Gong credentials into gongBridge.ts using liveData.ts pattern (getBashrcEnv)
+- [ ] Build specialist LLM analysis agent: deep sentiment scoring, theme taxonomy, objection patterns
+- [ ] Extract real verbatims with account attribution and call metadata
+- [ ] Create tRPC endpoint reporting.gongVoice with structured output
+- [ ] Update Q2 section with live Gong data (sentiment KPIs, theme bars, verbatim cards)
+
+### Salesforce → Q1 Pipeline Funnel
+- [ ] Read Salesforce connector skill and test SFDC access
+- [ ] Build sfdc_ctv_pipeline.py to pull CTV opportunities by stage
+- [ ] Create tRPC endpoint reporting.sfdcPipeline
+- [ ] Replace static pipeline funnel in Q1 with real SFDC stage data
+
+### Daily Auto-Refresh
+- [ ] Set up scheduled task to refresh BQ + Gong + SFDC data daily
+- [ ] Add "Last refreshed" timestamp to the CC CTV Reporting header
+
+### Specialist Agent Quality Upgrade (All 4 Questions)
+- [ ] Q1: Add BQ-powered risk scoring (concentration Herfindahl, ramp velocity, gap-to-target math)
+- [ ] Q2: LLM-powered theme taxonomy with confidence scores, not just word frequency
+- [ ] Q3: Enrich win/loss with real behavioral data from Gong (talk ratios, discovery depth)
+- [ ] Q4: Add competitive signal detection from Gong call mentions
+- [ ] Make all insights feel like a specialist analyst wrote them, not a dashboard generated them
+
+## Phase 58: Dashboard Comparison + Unified Super View
+- [x] Deep-read both CC CTV Reporting and Reporting page components
+- [x] Document data sources, structure, design patterns, strengths/weaknesses of each
+- [x] Write detailed comparison analysis with recommendations (DASHBOARD_COMPARISON.md)
+- [x] Design unified super view combining best of both (6-tab structure defined)
+- [x] Build the super view page component (CTVIntelligence.tsx — 1200+ lines)
+- [x] Wire up routing, live data (BQ, Gong), and navigation (/ctv-intelligence)
+- [x] Test and verify super view renders correctly — all 6 tabs working
+
+## Phase 58b: Specialist Agents + Super View
+- [x] Build specialist agent system prompts (Q1 Revenue, Q2 Voice, Q3 Win/Loss, Q4 Market, Synthesis)
+- [x] Embedded specialist context directly into page components (no separate ctvAgents.ts needed)
+- [x] Train agents on full CTV context: BQ schema, Gong API data, operating model data
+- [x] Build unified super view page (/ctv-intelligence) with 6 tabs
+- [x] Overview tab: executive summary, 4-question status pills, top risks/opportunities, data health
+- [x] Q1 tab: BQ live data + LLM-generated signals (SFDC pending)
+- [x] Q2 tab: Gong API data + real call links + account coverage chart
+- [x] Q3 tab: behavior table + win rate chart + loss reasons + coaching insights
+- [x] Q4 tab: competitive table + TAM penetration + win rate chart + signals
+- [x] Synthesis tab: cross-question analysis with risks/opportunities/30-day action plan
+- [x] Apple-glass aesthetic with data provenance SourceTags throughout (BQ Live, Gong Live, Curated)
+- [x] Progressive disclosure (expandable cards) on all sections
+- [x] Wire up navigation in NeuralShell sidebar (Layers icon)
+- [x] Agent-driven UX: LLM Analysis tag on Synthesis tab
+- [x] Include actual Gong call URLs (https://app.gong.io/call?id=XXX) in all verbatim references

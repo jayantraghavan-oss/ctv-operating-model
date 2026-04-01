@@ -127,8 +127,8 @@ function execPython(queryType: string): Promise<string> {
           // Clear Python path contamination from uv/tsx environment
           PYTHONPATH: "",
           PYTHONHOME: "",
-          // Force clean PATH that prioritizes system Python
-          PATH: `/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${process.env.PATH || ""}`,
+          // Force clean PATH that completely excludes uv's Python 3.13
+          PATH: (process.env.PATH || "").split(":").filter(p => !p.includes("uv/python")).join(":") || "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
           // Also pass GOOGLE_APPLICATION_CREDENTIALS if explicitly set
           ...(process.env.GOOGLE_APPLICATION_CREDENTIALS
             ? { GOOGLE_APPLICATION_CREDENTIALS: process.env.GOOGLE_APPLICATION_CREDENTIALS }

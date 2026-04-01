@@ -29,6 +29,7 @@ import {
 } from "./liveData";
 import { buildInsightsReport } from "./reporting";
 import { fetchBQData, getBQStatus, clearBQCache } from "./bqBridge";
+import { fetchGongSummary, fetchGongWithTranscripts, getGongStatus, clearGongCache } from "./gongBridge";
 
 /**
  * Retry helper with exponential backoff for rate-limited LLM calls.
@@ -437,6 +438,39 @@ export const appRouter = router({
      */
     clearBQCache: publicProcedure.mutation(async () => {
       clearBQCache();
+      return { cleared: true };
+    }),
+
+    /**
+     * Gong CTV intelligence — call metadata, volume, advertiser coverage.
+     * Fast endpoint (no transcripts).
+     */
+    gongIntel: publicProcedure.query(async () => {
+      const data = await fetchGongSummary();
+      return data;
+    }),
+
+    /**
+     * Gong CTV intelligence with transcript samples for LLM analysis.
+     * Slower endpoint — pulls transcripts from top recent calls.
+     */
+    gongTranscripts: publicProcedure.query(async () => {
+      const data = await fetchGongWithTranscripts();
+      return data;
+    }),
+
+    /**
+     * Gong connection status.
+     */
+    gongStatus: publicProcedure.query(async () => {
+      return getGongStatus();
+    }),
+
+    /**
+     * Clear Gong cache.
+     */
+    clearGongCache: publicProcedure.mutation(async () => {
+      clearGongCache();
       return { cleared: true };
     }),
   }),
