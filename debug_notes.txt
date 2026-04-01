@@ -1,0 +1,7 @@
+CTV Intelligence page observations (2026-04-01):
+- BQ: Connected, $15.9M total GAS, $184K/day, 51 campaigns, 27 advertisers
+- Gong: Connected, 250 CTV calls, 23 accounts, 118h
+- Tab switching: All 6 tabs work correctly
+- Q2 Customer Voice: AI Voice Analysis panel renders with Run Analysis button
+- LLM analysis endpoint fixed (JSON parse issue resolved)
+- Need to test: Run Analysis button click in browser

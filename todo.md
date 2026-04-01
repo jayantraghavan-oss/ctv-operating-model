@@ -779,11 +779,11 @@
 ## Phase 57: Specialist Agent Upgrades + SFDC Pipeline + Daily Refresh
 
 ### Gong → Q2 Customer Voice (Specialist Agent)
-- [ ] Wire Gong credentials into gongBridge.ts using liveData.ts pattern (getBashrcEnv)
+- [x] Wire Gong credentials into gongBridge.ts using liveData.ts pattern (getBashrcEnv) — already done in gongBridge.ts
 - [ ] Build specialist LLM analysis agent: deep sentiment scoring, theme taxonomy, objection patterns
 - [ ] Extract real verbatims with account attribution and call metadata
-- [ ] Create tRPC endpoint reporting.gongVoice with structured output
-- [ ] Update Q2 section with live Gong data (sentiment KPIs, theme bars, verbatim cards)
+- [x] Create tRPC endpoint reporting.gongVoice with structured output — reporting.gongIntel in routers.ts
+- [x] Update Q2 section with live Gong data (call volume chart, account coverage, recent calls with deep links)
 
 ### Salesforce → Q1 Pipeline Funnel
 - [ ] Read Salesforce connector skill and test SFDC access
@@ -827,3 +827,11 @@
 - [x] Wire up navigation in NeuralShell sidebar (Layers icon)
 - [x] Agent-driven UX: LLM Analysis tag on Synthesis tab
 - [x] Include actual Gong call URLs (https://app.gong.io/call?id=XXX) in all verbatim references
+
+## Phase 59: LLM Gong Analysis Agent + Customer Voice Enhancement
+- [x] Fix gongAnalysis endpoint JSON parse error (switched to json_object format, added fallback parsing)
+- [x] Build LLM Analysis panel in Q2 Customer Voice tab (themes, objections, verbatims, competitive mentions)
+- [x] Add "Run Analysis" button to trigger LLM analysis on demand
+- [x] Display analysis results with real Gong call attribution links
+- [ ] Add LLM analysis insights to Synthesis tab (dynamic, not static)
+- [x] Write vitest tests for gongAnalysis endpoint shape validation

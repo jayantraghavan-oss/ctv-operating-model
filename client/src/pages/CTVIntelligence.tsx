@@ -19,6 +19,7 @@ import {
   CheckCircle2, XCircle, Clock, BarChart3, Users,
   Lightbulb, ChevronDown, ChevronRight as ChevronRightIcon,
   Phone, Globe, Database, Radio, Eye, Layers,
+  Sparkles, Brain, Quote, Swords,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -796,8 +797,98 @@ function SignalCard({ type, title, detail, source }: { type: "risk" | "opportuni
 // ============================================================================
 // Q2: CUSTOMER VOICE
 // ============================================================================
+
+// Types for LLM Gong analysis
+interface GongAnalysisEvidence {
+  advertiser: string;
+  quote?: string;
+  context?: string;
+  call_url: string;
+}
+
+interface GongAnalysisTheme {
+  name: string;
+  frequency: string;
+  sentiment: string;
+  description: string;
+  evidence: GongAnalysisEvidence[];
+}
+
+interface GongAnalysisObjection {
+  objection: string;
+  frequency: string;
+  typical_response: string;
+  evidence: GongAnalysisEvidence[];
+}
+
+interface GongCompetitiveMention {
+  competitor: string;
+  context: string;
+  sentiment: string;
+  call_url: string;
+  advertiser: string;
+}
+
+interface GongVerbatim {
+  quote: string;
+  advertiser: string;
+  context: string;
+  sentiment: string;
+  call_url: string;
+  date?: string;
+}
+
+interface GongAnalysis {
+  overall_sentiment: { score: number; label: string; justification: string };
+  themes: GongAnalysisTheme[];
+  objections: GongAnalysisObjection[];
+  competitive_mentions: GongCompetitiveMention[];
+  verbatims: GongVerbatim[];
+  recommendations: string[];
+  parse_error?: boolean;
+}
+
+interface GongAnalysisResult {
+  available: boolean;
+  analysis: GongAnalysis | null;
+  source_calls?: { advertiser: string; title: string; url: string; date: string; duration_min: number }[];
+  analyzed_at?: string;
+  call_count?: number;
+  transcript_count?: number;
+  error?: string;
+}
+
 function Q2Tab({ gongData, gongVolumeChart }: { gongData: GongData | null; gongVolumeChart: { month: string; label: string; calls: number }[] }) {
   const gongLive = !!gongData?.available;
+  const [analysis, setAnalysis] = useState<GongAnalysisResult | null>(null);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+
+  const runAnalysis = async () => {
+    setAnalysisLoading(true);
+    setAnalysisError(null);
+    try {
+      const result = await trpcQuery<GongAnalysisResult>("reporting.gongAnalysis");
+      setAnalysis(result);
+    } catch (err: any) {
+      setAnalysisError(err.message || "Analysis failed");
+    } finally {
+      setAnalysisLoading(false);
+    }
+  };
+
+  const sentimentColor = (s: string) => {
+    if (s === "positive") return "text-emerald-600 bg-emerald-50 border-emerald-200";
+    if (s === "negative") return "text-rose-600 bg-rose-50 border-rose-200";
+    if (s === "mixed") return "text-amber-600 bg-amber-50 border-amber-200";
+    return "text-slate-600 bg-slate-50 border-slate-200";
+  };
+
+  const frequencyBadge = (f: string) => {
+    if (f === "high") return "bg-rose-100 text-rose-700";
+    if (f === "medium") return "bg-amber-100 text-amber-700";
+    return "bg-slate-100 text-slate-600";
+  };
 
   return (
     <div className="space-y-6">
@@ -839,6 +930,271 @@ function Q2Tab({ gongData, gongVolumeChart }: { gongData: GongData | null; gongV
           color="bg-cyan-50"
           source={gongLive ? "Gong Live" : "Curated"}
         />
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════════════ */}
+      {/* LLM ANALYSIS SECTION — The specialist agent */}
+      {/* ═══════════════════════════════════════════════════════════════════════ */}
+      <div className="border border-indigo-200/60 rounded-2xl bg-gradient-to-br from-indigo-50/30 via-white to-violet-50/20 backdrop-blur-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-indigo-100/60">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center">
+                <Brain className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-foreground">AI Voice Analysis</h3>
+                <p className="text-[11px] text-muted-foreground">LLM-powered analysis of {gongData?.ctv_matched_calls || 0} CTV call transcripts</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {analysis?.analyzed_at && (
+                <span className="text-[10px] text-muted-foreground">
+                  Analyzed {new Date(analysis.analyzed_at).toLocaleTimeString()}
+                </span>
+              )}
+              <button
+                onClick={runAnalysis}
+                disabled={analysisLoading || !gongLive}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-gradient-to-r from-indigo-500 to-violet-600 text-white hover:from-indigo-600 hover:to-violet-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              >
+                {analysisLoading ? (
+                  <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Analyzing...</>
+                ) : (
+                  <><Sparkles className="w-3.5 h-3.5" /> {analysis ? "Re-analyze" : "Run Analysis"}</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Analysis Loading State */}
+        {analysisLoading && (
+          <div className="p-8 text-center">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              className="w-10 h-10 mx-auto mb-3 rounded-full border-2 border-indigo-200 border-t-indigo-600"
+            />
+            <p className="text-sm font-medium text-foreground">Analyzing call transcripts...</p>
+            <p className="text-xs text-muted-foreground mt-1">Reading {gongData?.transcript_samples?.length || 15} transcripts, extracting themes, objections, and competitive signals</p>
+          </div>
+        )}
+
+        {/* Analysis Error */}
+        {analysisError && !analysisLoading && (
+          <div className="p-5">
+            <div className="flex items-center gap-2 text-rose-600 text-sm">
+              <XCircle className="w-4 h-4" />
+              <span>Analysis failed: {analysisError}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Analysis Not Run Yet */}
+        {!analysis && !analysisLoading && !analysisError && (
+          <div className="p-8 text-center">
+            <Sparkles className="w-8 h-8 mx-auto mb-2 text-indigo-300" />
+            <p className="text-sm text-muted-foreground">Click <strong>Run Analysis</strong> to have the AI agent analyze {gongData?.ctv_matched_calls || 0} CTV call transcripts</p>
+            <p className="text-[11px] text-muted-foreground/60 mt-1">Extracts themes, objections, competitive mentions, and verbatims with real Gong call attribution</p>
+          </div>
+        )}
+
+        {/* Analysis Results */}
+        {analysis?.available && analysis.analysis && !analysis.analysis.parse_error && !analysisLoading && (
+          <div className="p-5 space-y-5">
+            {/* Overall Sentiment */}
+            <div className="flex items-center gap-4 p-3 rounded-xl bg-white/60 border border-border/30">
+              <div className="flex items-center gap-2">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold ${
+                  analysis.analysis.overall_sentiment.score >= 4 ? "bg-emerald-100 text-emerald-700" :
+                  analysis.analysis.overall_sentiment.score >= 3 ? "bg-amber-100 text-amber-700" :
+                  "bg-rose-100 text-rose-700"
+                }`}>
+                  {analysis.analysis.overall_sentiment.score}
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-foreground">{analysis.analysis.overall_sentiment.label}</div>
+                  <div className="text-[11px] text-muted-foreground">Overall sentiment (1-5 scale)</div>
+                </div>
+              </div>
+              <p className="flex-1 text-xs text-muted-foreground leading-relaxed">{analysis.analysis.overall_sentiment.justification}</p>
+            </div>
+
+            {/* Themes */}
+            {analysis.analysis.themes.length > 0 && (
+              <div>
+                <h4 className="text-xs font-bold text-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5 text-indigo-500" /> Key Themes
+                  <span className="text-[10px] font-normal text-muted-foreground normal-case">({analysis.analysis.themes.length} detected)</span>
+                </h4>
+                <div className="space-y-2">
+                  {analysis.analysis.themes.map((theme, i) => (
+                    <Expandable key={i} title={theme.name} badge={theme.frequency}>
+                      <div className="mt-2 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded border ${sentimentColor(theme.sentiment)}`}>{theme.sentiment}</span>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded ${frequencyBadge(theme.frequency)}`}>{theme.frequency} frequency</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">{theme.description}</p>
+                        {theme.evidence.length > 0 && (
+                          <div className="space-y-1.5 mt-2">
+                            {theme.evidence.map((e, j) => (
+                              <div key={j} className="flex items-start gap-2 text-xs border-l-2 border-indigo-200 pl-2">
+                                <span className="font-medium text-foreground shrink-0">{e.advertiser}:</span>
+                                <span className="text-muted-foreground italic">"{e.quote || e.context}"</span>
+                                {e.call_url && (
+                                  <a href={e.call_url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700 shrink-0">
+                                    <ExternalLink className="w-3 h-3" />
+                                  </a>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </Expandable>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Objections */}
+            {analysis.analysis.objections.length > 0 && (
+              <div>
+                <h4 className="text-xs font-bold text-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                  <Shield className="w-3.5 h-3.5 text-rose-500" /> Objection Patterns
+                  <span className="text-[10px] font-normal text-muted-foreground normal-case">({analysis.analysis.objections.length} identified)</span>
+                </h4>
+                <div className="space-y-2">
+                  {analysis.analysis.objections.map((obj, i) => (
+                    <Expandable key={i} title={obj.objection} badge={obj.frequency}>
+                      <div className="mt-2 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded ${frequencyBadge(obj.frequency)}`}>{obj.frequency} frequency</span>
+                        </div>
+                        {obj.typical_response && (
+                          <div className="text-xs text-muted-foreground">
+                            <span className="font-medium text-foreground">Typical response:</span> {obj.typical_response}
+                          </div>
+                        )}
+                        {obj.evidence.length > 0 && (
+                          <div className="space-y-1.5 mt-2">
+                            {obj.evidence.map((e, j) => (
+                              <div key={j} className="flex items-start gap-2 text-xs border-l-2 border-rose-200 pl-2">
+                                <span className="font-medium text-foreground shrink-0">{e.advertiser}:</span>
+                                <span className="text-muted-foreground">{e.context || e.quote}</span>
+                                {e.call_url && (
+                                  <a href={e.call_url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700 shrink-0">
+                                    <ExternalLink className="w-3 h-3" />
+                                  </a>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </Expandable>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Verbatims */}
+            {analysis.analysis.verbatims.length > 0 && (
+              <div>
+                <h4 className="text-xs font-bold text-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                  <Quote className="w-3.5 h-3.5 text-violet-500" /> Key Verbatims
+                  <span className="text-[10px] font-normal text-muted-foreground normal-case">({analysis.analysis.verbatims.length} extracted)</span>
+                </h4>
+                <div className="space-y-2">
+                  {analysis.analysis.verbatims.map((v, i) => (
+                    <div key={i} className={`border rounded-lg p-3 ${sentimentColor(v.sentiment)} bg-opacity-30`}>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <p className="text-xs italic text-foreground leading-relaxed">"{v.quote}"</p>
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <span className="text-[10px] font-semibold text-foreground">{v.advertiser}</span>
+                            {v.date && <span className="text-[10px] text-muted-foreground">{v.date}</span>}
+                            <span className={`text-[10px] px-1 py-0.5 rounded ${sentimentColor(v.sentiment)}`}>{v.sentiment}</span>
+                          </div>
+                          {v.context && <p className="text-[11px] text-muted-foreground mt-1">{v.context}</p>}
+                        </div>
+                        {v.call_url && (
+                          <a href={v.call_url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700 shrink-0 mt-1">
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Competitive Mentions */}
+            {analysis.analysis.competitive_mentions.length > 0 && (
+              <div>
+                <h4 className="text-xs font-bold text-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                  <Swords className="w-3.5 h-3.5 text-amber-500" /> Competitive Mentions
+                  <span className="text-[10px] font-normal text-muted-foreground normal-case">({analysis.analysis.competitive_mentions.length} found)</span>
+                </h4>
+                <div className="space-y-2">
+                  {analysis.analysis.competitive_mentions.map((cm, i) => (
+                    <div key={i} className="flex items-start gap-3 border border-border/40 rounded-lg p-3 bg-white/50">
+                      <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-[10px] font-bold text-amber-700 shrink-0">
+                        {cm.competitor.slice(0, 2).toUpperCase()}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold text-foreground">{cm.competitor}</span>
+                          <span className={`text-[10px] px-1 py-0.5 rounded border ${sentimentColor(cm.sentiment)}`}>{cm.sentiment}</span>
+                          <span className="text-[10px] text-muted-foreground">via {cm.advertiser}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">{cm.context}</p>
+                      </div>
+                      {cm.call_url && (
+                        <a href={cm.call_url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700 shrink-0">
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Recommendations */}
+            {analysis.analysis.recommendations.length > 0 && (
+              <div>
+                <h4 className="text-xs font-bold text-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                  <Lightbulb className="w-3.5 h-3.5 text-emerald-500" /> AI Recommendations
+                </h4>
+                <div className="space-y-1.5">
+                  {analysis.analysis.recommendations.map((rec, i) => (
+                    <div key={i} className="flex items-start gap-2 text-xs">
+                      <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center text-[10px] font-bold text-emerald-700 shrink-0 mt-0.5">
+                        {i + 1}
+                      </div>
+                      <p className="text-muted-foreground leading-relaxed">{rec}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Source Attribution */}
+            {analysis.source_calls && analysis.source_calls.length > 0 && (
+              <div className="border-t border-border/30 pt-3">
+                <div className="text-[10px] text-muted-foreground/60">
+                  Analysis based on {analysis.transcript_count} transcripts from {analysis.call_count} CTV calls.
+                  Analyzed at {analysis.analyzed_at ? new Date(analysis.analyzed_at).toLocaleString() : "unknown"}.
+                  Every insight is grounded in real call data — click any <ExternalLink className="w-2.5 h-2.5 inline" /> link to verify in Gong.
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Call Volume Trend */}

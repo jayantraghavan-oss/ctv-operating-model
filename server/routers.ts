@@ -473,6 +473,150 @@ export const appRouter = router({
       clearGongCache();
       return { cleared: true };
     }),
+
+    /**
+     * LLM-powered specialist analysis of Gong CTV call transcripts.
+     * Produces: sentiment scoring, theme taxonomy, objection patterns, verbatim extraction.
+     * Every insight is grounded in real transcript data with call attribution.
+     */
+    gongAnalysis: publicProcedure.query(async () => {
+      try {
+        const gongData = await fetchGongWithTranscripts(false);
+        if (!gongData.available || !gongData.transcript_samples?.length) {
+          return {
+            available: false,
+            error: "No Gong transcript data available for analysis",
+            analysis: null,
+          };
+        }
+
+        // Build transcript context for the LLM
+        const transcriptContext = gongData.transcript_samples
+          .slice(0, 10) // Limit to 10 transcripts to stay within token limits
+          .map((t) => {
+            return `--- CALL: ${t.title} ---\nAdvertiser: ${t.advertiser}\nDate: ${t.date}\nDuration: ${t.duration_min} min\nGong URL: ${t.url}\nTranscript (excerpt):\n${t.transcript_excerpt.slice(0, 3000)}\n`;
+          })
+          .join("\n");
+
+        const coverageSummary = gongData.advertiser_coverage
+          .slice(0, 15)
+          .map((a) => `${a.advertiser}: ${a.call_count} calls`)
+          .join(", ");
+
+        const systemPrompt = `You are a specialist CTV advertising analyst at Moloco, a performance advertising DSP expanding into Connected TV (CTV). You have deep expertise in:
+- CTV buyer psychology (media buyers at agencies like PMG, GroupM, and direct advertisers like DraftKings, FanDuel, Tubi)
+- CTV advertising metrics (CPM, CPCV, completion rates, attribution, incrementality)
+- Competitive dynamics (Tatari, The Trade Desk, Amazon DSP, MNTN, Roku OneView)
+- Common CTV objections (attribution gaps, CPM premiums, measurement complexity, audience targeting)
+- Moloco's CTV value proposition (ML-optimized bidding, cross-screen attribution, performance-first approach)
+
+You are analyzing REAL Gong call transcripts from Moloco's CTV sales conversations. Your job is to produce analyst-grade insights that a Head of GTM would present to leadership.
+
+RULES:
+1. Every insight MUST cite the specific call it came from (advertiser name + Gong URL)
+2. NEVER fabricate quotes — only extract actual phrases from the transcripts
+3. If you can't find evidence for a theme, say so explicitly
+4. Score sentiment on a 1-5 scale with specific justification
+5. Identify patterns across multiple calls, not just individual anecdotes
+6. Flag competitive mentions with exact context`;
+
+        const userPrompt = `Analyze these ${gongData.transcript_samples.length} CTV call transcripts from the last 18 months.
+
+Coverage: ${gongData.ctv_matched_calls} total CTV calls across ${gongData.unique_advertisers} advertisers (${coverageSummary})
+Total hours: ${gongData.duration_stats.total_hours}h
+
+TRANSCRIPTS:
+${transcriptContext}
+
+Produce a structured JSON analysis with these fields:
+{
+  "overall_sentiment": { "score": 1-5, "label": "string", "justification": "string" },
+  "themes": [
+    {
+      "name": "string",
+      "frequency": "high|medium|low",
+      "sentiment": "positive|neutral|negative|mixed",
+      "description": "string",
+      "evidence": [{ "advertiser": "string", "quote": "string", "call_url": "string" }]
+    }
+  ],
+  "objections": [
+    {
+      "objection": "string",
+      "frequency": "high|medium|low",
+      "typical_response": "string",
+      "evidence": [{ "advertiser": "string", "context": "string", "call_url": "string" }]
+    }
+  ],
+  "competitive_mentions": [
+    { "competitor": "string", "context": "string", "sentiment": "positive|neutral|negative", "call_url": "string", "advertiser": "string" }
+  ],
+  "verbatims": [
+    { "quote": "string", "advertiser": "string", "context": "string", "sentiment": "positive|neutral|negative", "call_url": "string", "date": "string" }
+  ],
+  "recommendations": ["string"]
+}
+
+Return ONLY valid JSON. Every quote must be from the actual transcripts above. Every call_url must be a real Gong URL from the data.`;
+
+        const response = await retryWithBackoff(() =>
+          invokeLLM({
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userPrompt },
+            ],
+            temperature: 0.3,
+            max_tokens: 4000,
+            response_format: { type: "json_object" },
+          })
+        );
+
+        let content = response.choices?.[0]?.message?.content || "{}";
+        // Clean up malformed scientific notation that some LLMs produce
+        content = content.replace(/\b(\d+\.\d+)E0{5,}\b/gi, (_, num) => num);
+        // Strip markdown code fences if present
+        content = content.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
+        let analysis;
+        try {
+          analysis = JSON.parse(content);
+        } catch (parseErr: any) {
+          console.error("[Gong Analysis] JSON parse error:", parseErr.message, "Content preview:", content.slice(0, 200));
+          // Try to extract JSON from the content
+          const jsonMatch = content.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            try {
+              analysis = JSON.parse(jsonMatch[0]);
+            } catch {
+              analysis = { raw: content.slice(0, 2000), parse_error: true };
+            }
+          } else {
+            analysis = { raw: content.slice(0, 2000), parse_error: true };
+          }
+        }
+
+        return {
+          available: true,
+          analysis,
+          source_calls: gongData.transcript_samples.map((t) => ({
+            advertiser: t.advertiser,
+            title: t.title,
+            url: t.url,
+            date: t.date,
+            duration_min: t.duration_min,
+          })),
+          analyzed_at: new Date().toISOString(),
+          call_count: gongData.ctv_matched_calls,
+          transcript_count: gongData.transcript_samples.length,
+        };
+      } catch (err: any) {
+        console.error("[Gong Analysis] Error:", err.message);
+        return {
+          available: false,
+          error: err.message,
+          analysis: null,
+        };
+      }
+    }),
   }),
 });
 
