@@ -29,6 +29,7 @@ import {
 } from "./liveData";
 import { buildInsightsReport } from "./reporting";
 import { fetchBQData, getBQStatus, clearBQCache } from "./bqBridge";
+import { runSynthesis } from "./synthesize";
 import { fetchGongSummary, fetchGongWithTranscripts, getGongStatus, clearGongCache } from "./gongBridge";
 
 /**
@@ -616,6 +617,15 @@ Return ONLY valid JSON. Every quote must be from the actual transcripts above. E
           analysis: null,
         };
       }
+    }),
+
+    /**
+     * LLM-powered cross-signal synthesis.
+     * Combines BQ revenue + Gong voice + deal patterns + competitive intelligence
+     * into a unified strategic assessment with risks, opportunities, and action items.
+     */
+    synthesize: publicProcedure.query(async () => {
+      return runSynthesis();
     }),
   }),
 });

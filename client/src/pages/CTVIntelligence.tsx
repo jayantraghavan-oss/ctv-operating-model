@@ -10,6 +10,7 @@
  * the actual call. No hallucinated numbers.
  */
 import NeuralShell from "@/components/NeuralShell";
+import SynthesisTabComponent from "@/pages/SynthesisTab";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { trpcQuery, trpcMutation } from "@/lib/trpcFetch";
 import {
@@ -503,7 +504,7 @@ export default function CTVIntelligence() {
           {activeTab === "q3" && <Q3Tab gongData={gongData} />}
           {activeTab === "q4" && <Q4Tab bqData={bqData} gongData={gongData} />}
           {activeTab === "synthesis" && (
-            <SynthesisTab bqData={bqData} gongData={gongData} trailing7d={trailing7d} arrRunRate={arrRunRate} />
+            <SynthesisTabComponent bqData={bqData} gongData={gongData} trailing7d={trailing7d} arrRunRate={arrRunRate} gapToTarget={gapToTarget} activeCampaigns={activeCampaigns} activeAdvertisers={activeAdvertisers} />
           )}
         </div>
       </div>
@@ -1523,10 +1524,15 @@ function Q4Tab({ bqData, gongData }: { bqData: BQData | null; gongData: GongData
 }
 
 // ============================================================================
-// SYNTHESIS TAB
+// SYNTHESIS TAB — moved to SynthesisTab.tsx
 // ============================================================================
-function SynthesisTab({ bqData, gongData, trailing7d, arrRunRate }: {
+// Old inline SynthesisTab removed — now imported from @/pages/SynthesisTab
+
+// Keep SynthesisItem for backward compatibility if referenced elsewhere
+function _OldSynthesisTab_REMOVED() { return null; }
+function _OldSynthesisTabPlaceholder({ bqData, gongData, trailing7d, arrRunRate, gapToTarget, activeCampaigns, activeAdvertisers }: {
   bqData: BQData | null; gongData: GongData | null; trailing7d: number; arrRunRate: number;
+  gapToTarget: number; activeCampaigns: number; activeAdvertisers: number;
 }) {
   const bqLive = !!bqData?.available;
   const gongLive = !!gongData?.available;

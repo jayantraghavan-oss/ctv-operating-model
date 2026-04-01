@@ -767,21 +767,21 @@
 - [x] Test rendering and verify all 4 tabs (Q1-Q4) render correctly with charts, tables, KPIs
 
 ## Phase 56: Gong API Integration into Q2 Customer Voice
-- [ ] Read Gong API skill and test credential access
-- [ ] Pull CTV-related Gong calls (last 90 days) using gong_helper.py
-- [ ] Build server-side Gong data fetcher (gongBridge.ts) with caching
-- [ ] Use LLM to analyze call transcripts for sentiment and themes
-- [ ] Create tRPC endpoint reporting.gongVoice
-- [ ] Update CCCTVReporting.tsx Q2 tab to consume live Gong data
-- [ ] Write vitest specs for gongBridge
-- [ ] Verify Q2 section shows real Gong-sourced sentiment and themes
+- [x] Read Gong API skill and test credential access (done in Phase 58)
+- [x] Pull CTV-related Gong calls (last 90 days) using gong_helper.py (done via gongBridge.ts)
+- [x] Build server-side Gong data fetcher (gongBridge.ts) with caching (done in Phase 58)
+- [x] Use LLM to analyze call transcripts for sentiment and themes (done in Phase 59 via gongAnalysis)
+- [x] Create tRPC endpoint reporting.gongVoice (done as reporting.gongIntel + reporting.gongAnalysis)
+- [x] Update CCCTVReporting.tsx Q2 tab to consume live Gong data (done in CTVIntelligence.tsx)
+- [x] Write vitest specs for gongBridge (gongBridge.test.ts + gongAnalysis.test.ts)
+- [x] Verify Q2 section shows real Gong-sourced sentiment and themes (verified in browser)
 
 ## Phase 57: Specialist Agent Upgrades + SFDC Pipeline + Daily Refresh
 
 ### Gong → Q2 Customer Voice (Specialist Agent)
 - [x] Wire Gong credentials into gongBridge.ts using liveData.ts pattern (getBashrcEnv) — already done in gongBridge.ts
-- [ ] Build specialist LLM analysis agent: deep sentiment scoring, theme taxonomy, objection patterns
-- [ ] Extract real verbatims with account attribution and call metadata
+- [x] Build specialist LLM analysis agent: deep sentiment scoring, theme taxonomy, objection patterns (done in Phase 59)
+- [x] Extract real verbatims with account attribution and call metadata (done in Phase 59)
 - [x] Create tRPC endpoint reporting.gongVoice with structured output — reporting.gongIntel in routers.ts
 - [x] Update Q2 section with live Gong data (call volume chart, account coverage, recent calls with deep links)
 
@@ -797,9 +797,9 @@
 
 ### Specialist Agent Quality Upgrade (All 4 Questions)
 - [ ] Q1: Add BQ-powered risk scoring (concentration Herfindahl, ramp velocity, gap-to-target math)
-- [ ] Q2: LLM-powered theme taxonomy with confidence scores, not just word frequency
+- [x] Q2: LLM-powered theme taxonomy with confidence scores, not just word frequency (done in Phase 59 gongAnalysis)
 - [ ] Q3: Enrich win/loss with real behavioral data from Gong (talk ratios, discovery depth)
-- [ ] Q4: Add competitive signal detection from Gong call mentions
+- [x] Q4: Add competitive signal detection from Gong call mentions (done in Phase 59 gongAnalysis competitive_mentions)
 - [ ] Make all insights feel like a specialist analyst wrote them, not a dashboard generated them
 
 ## Phase 58: Dashboard Comparison + Unified Super View
@@ -833,5 +833,16 @@
 - [x] Build LLM Analysis panel in Q2 Customer Voice tab (themes, objections, verbatims, competitive mentions)
 - [x] Add "Run Analysis" button to trigger LLM analysis on demand
 - [x] Display analysis results with real Gong call attribution links
-- [ ] Add LLM analysis insights to Synthesis tab (dynamic, not static)
+- [x] Add LLM analysis insights to Synthesis tab (dynamic, not static) — full cross-signal synthesis with BQ+Gong+Curated
 - [x] Write vitest tests for gongAnalysis endpoint shape validation
+
+## Phase 60: Cross-Signal Synthesis Engine
+- [x] Build server/synthesize.ts with cross-signal LLM synthesis (BQ + Gong + Curated)
+- [x] Add reporting.synthesize tRPC endpoint
+- [x] Build SynthesisTab.tsx as separate component with Run Synthesis button
+- [x] Display: executive summary, confidence, risks, opportunities, open questions, cross-signal patterns, action plan
+- [x] Each item shows data source attribution (BQ, Gong, Curated, Cross-signal)
+- [x] Severity/impact badges on risks and opportunities
+- [x] Baseline Assessment section with live BQ data always visible
+- [x] Data Sources & Provenance footer with status indicators
+- [x] Verified end-to-end: synthesis produces analyst-grade output with real BQ numbers

@@ -5,3 +5,10 @@ CTV Intelligence page observations (2026-04-01):
 - Q2 Customer Voice: AI Voice Analysis panel renders with Run Analysis button
 - LLM analysis endpoint fixed (JSON parse issue resolved)
 - Need to test: Run Analysis button click in browser
+
+Synthesis Tab - Working End-to-End (Phase 59)
+===================================
+- Dynamic LLM synthesis produces: exec summary, confidence, risks, opportunities, open questions, cross-signal patterns, action plan
+- All data sources used: BigQuery, Gong, Curated
+- Re-synthesize button works
+- Baseline Assessment shows live BQ data
