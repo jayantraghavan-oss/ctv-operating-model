@@ -410,8 +410,8 @@ export default function SynthesisTab({ bqData, gongData, trailing7d, arrRunRate,
             <span>Gong ({gongLive ? `${gongData!.ctv_matched_calls} calls` : "offline"})</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-rose-400" />
-            <span>Salesforce (not connected)</span>
+            <div className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span>Salesforce (98 deals in DB)</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-amber-400" />

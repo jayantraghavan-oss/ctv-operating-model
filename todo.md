@@ -851,3 +851,22 @@
 - [ ] Fix blank Overview section on CC CTV Reporting page
 - [ ] Fix blank Revenue/Pipeline section on CC CTV Reporting page
 - [x] Fix CTV Intelligence showing zeros — BQ data not flowing to deployed version (rewrote BQ+Gong bridges to pure Node.js, bashrc credential fallback)
+
+## Phase 62: Database-Backed SFDC Pipeline
+- [x] Design database schema for CTV opportunities (sfdc_opportunities table)
+- [x] Import 200 scraped SFDC opportunities into database (98 opps seeded)
+- [x] Build tRPC endpoints for pipeline queries (reporting.sfdcPipeline)
+- [x] Build SFDC pipeline UI in CTV Intelligence Q1 Revenue tab
+- [x] Show pipeline funnel, stage distribution, top deals, win/loss analysis
+- [x] Connect SFDC data source indicator in health bar
+- [x] Add SFDC refresh to data refresh flow
+
+## Phase 63: Pressure Test & Polish for Investor Meeting
+- [x] Test all 6 tab transitions work correctly
+- [x] Verify all data loads and renders correctly
+- [x] Fix rendering bugs (Recharts width -1 warning, SynthesisTab SFDC status)
+- [x] Verify Gong deep links work
+- [x] Validate BQ metrics accuracy ($69.4M ARR, $190K/day, 51 campaigns)
+- [x] Test LLM analysis buttons (Customer Voice + Synthesis)
+- [x] Polish Jonathan Ive design aesthetic (glass system, OKLCH colors, Inter font)
+- [x] Final checkpoint for investor meeting — 178 tests passing, 0 failures

@@ -20,7 +20,8 @@ import {
   CheckCircle2, XCircle, Clock, BarChart3, Users,
   Lightbulb, ChevronDown, ChevronRight as ChevronRightIcon,
   Phone, Globe, Database, Radio, Eye, Layers,
-  Sparkles, Brain, Quote, Swords,
+  Sparkles, Brain, Quote, Swords, DollarSign, Briefcase,
+  FileText, Crown, TrendingDown,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -155,6 +156,61 @@ interface GongTranscript {
   has_full_transcript: boolean;
 }
 
+// SFDC Pipeline types
+interface SfdcDeal {
+  id: string;
+  name: string;
+  accountName: string | null;
+  stageName: string;
+  amount: string;
+  closeDate: string | null;
+  probability: number;
+  ownerName: string | null;
+  oppType: string | null;
+  lossReason: string | null;
+}
+
+interface SfdcStage {
+  stageName: string;
+  count: number;
+  totalAmount: string;
+  avgAmount: string;
+}
+
+interface SfdcOwner {
+  ownerName: string | null;
+  count: number;
+  totalAmount: string;
+}
+
+interface SfdcTypeSplit {
+  oppType: string | null;
+  count: number;
+  totalAmount: string;
+}
+
+interface SfdcPipelineData {
+  available: boolean;
+  data: {
+    summary: {
+      openPipelineCount: number;
+      openPipelineTotal: number;
+      closedWonCount: number;
+      closedWonTotal: number;
+      closedLostCount: number;
+      closedLostTotal: number;
+      winRate: number;
+    };
+    stageDistribution: SfdcStage[];
+    topDeals: SfdcDeal[];
+    ownerDistribution: SfdcOwner[];
+    typeSplit: SfdcTypeSplit[];
+    closedWon: SfdcDeal[];
+    closedLost: SfdcDeal[];
+    openPipeline: SfdcDeal[];
+  } | null;
+}
+
 interface GongData {
   available: boolean;
   fetched_at?: string;
@@ -258,6 +314,7 @@ function Expandable({ title, badge, children, defaultOpen = false }: {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
+            className="overflow-hidden"
           >
             <div className="px-4 pb-4 border-t border-border/40">{children}</div>
           </motion.div>
@@ -323,8 +380,10 @@ export default function CTVIntelligence() {
   const [activeTab, setActiveTab] = useState("overview");
   const [bqData, setBqData] = useState<BQData | null>(null);
   const [gongData, setGongData] = useState<GongData | null>(null);
+  const [sfdcData, setSfdcData] = useState<SfdcPipelineData | null>(null);
   const [bqLoading, setBqLoading] = useState(true);
   const [gongLoading, setGongLoading] = useState(true);
+  const [sfdcLoading, setSfdcLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -358,18 +417,29 @@ export default function CTVIntelligence() {
       .finally(() => setGongLoading(false));
   }, []);
 
+  // Fetch SFDC pipeline data
+  useEffect(() => {
+    setSfdcLoading(true);
+    trpcQuery<SfdcPipelineData>("reporting.sfdcPipeline")
+      .then((d) => { if (d) setSfdcData(d); })
+      .catch(() => {})
+      .finally(() => setSfdcLoading(false));
+  }, []);
+
   // Refresh all data
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
       await trpcMutation("reporting.clearBQCache");
       await trpcMutation("reporting.clearGongCache");
-      const [bqRaw, gong] = await Promise.all([
+      const [bqRaw, gong, sfdc] = await Promise.all([
         trpcQuery<BQRaw>("reporting.bqRevenue"),
         trpcQuery<GongData>("reporting.gongIntel"),
+        trpcQuery<SfdcPipelineData>("reporting.sfdcPipeline"),
       ]);
       if (bqRaw) setBqData(normalizeBQ(bqRaw));
       if (gong) setGongData(gong);
+      if (sfdc) setSfdcData(sfdc);
     } catch {}
     setRefreshing(false);
   };
@@ -443,10 +513,10 @@ export default function CTVIntelligence() {
         <div className="flex flex-wrap items-center gap-4 mb-6 px-4 py-2.5 rounded-xl border border-border/40 bg-white/50 backdrop-blur-sm">
           <DataHealth label="BigQuery" connected={!!bqData?.available} detail={bqData?.available ? `$${(totalGAS / 1e6).toFixed(1)}M total GAS` : undefined} />
           <DataHealth label="Gong" connected={!!gongData?.available} detail={gongData?.available ? `${gongData.ctv_matched_calls} CTV calls` : undefined} />
-          <DataHealth label="Salesforce" connected={false} detail="Coming soon" />
+          <DataHealth label="Salesforce" connected={!!sfdcData?.available} detail={sfdcData?.available && sfdcData.data ? `${sfdcData.data.summary.openPipelineCount} open deals` : sfdcLoading ? "Loading..." : "Offline"} />
           <div className="ml-auto text-right">
             <div className="text-[10px] text-muted-foreground/60">
-              {bqLoading || gongLoading ? "Loading..." : "All sources checked"}
+              {bqLoading || gongLoading || sfdcLoading ? "Loading..." : "All sources checked"}
             </div>
             {(bqData?.fetched_at || gongData?.fetched_at) && (
               <div className="text-[9px] text-muted-foreground/40 mt-0.5">
@@ -484,6 +554,7 @@ export default function CTVIntelligence() {
             <OverviewTab
               bqData={bqData}
               gongData={gongData}
+              sfdcData={sfdcData}
               trailing7d={trailing7d}
               arrRunRate={arrRunRate}
               arrProgress={arrProgress}
@@ -495,6 +566,7 @@ export default function CTVIntelligence() {
           {activeTab === "q1" && (
             <Q1Tab
               bqData={bqData}
+              sfdcData={sfdcData}
               trailing7d={trailing7d}
               arrRunRate={arrRunRate}
               arrProgress={arrProgress}
@@ -524,8 +596,8 @@ export default function CTVIntelligence() {
 // ============================================================================
 // OVERVIEW TAB
 // ============================================================================
-function OverviewTab({ bqData, gongData, trailing7d, arrRunRate, arrProgress, gapToTarget, activeCampaigns, activeAdvertisers }: {
-  bqData: BQData | null; gongData: GongData | null;
+function OverviewTab({ bqData, gongData, sfdcData, trailing7d, arrRunRate, arrProgress, gapToTarget, activeCampaigns, activeAdvertisers }: {
+  bqData: BQData | null; gongData: GongData | null; sfdcData: SfdcPipelineData | null;
   trailing7d: number; arrRunRate: number; arrProgress: number; gapToTarget: number;
   activeCampaigns: number; activeAdvertisers: number;
 }) {
@@ -579,7 +651,7 @@ function OverviewTab({ bqData, gongData, trailing7d, arrRunRate, arrProgress, ga
           title="Revenue & Pipeline"
           status={bqLive ? "live" : "offline"}
           headline={bqLive ? `$${(trailing7d / 1000).toFixed(0)}K/day · ${activeCampaigns} campaigns` : "BQ offline"}
-          detail={bqLive ? `${activeAdvertisers} advertisers active` : "Connect BQ for live data"}
+          detail={sfdcData?.available && sfdcData.data ? `$${(sfdcData.data.summary.openPipelineTotal / 1e6).toFixed(1)}M pipeline · ${sfdcData.data.summary.winRate}% win rate` : bqLive ? `${activeAdvertisers} advertisers active` : "Connect BQ for live data"}
           icon={<TrendingUp className="w-4 h-4" />}
         />
         <QuestionCard
@@ -593,9 +665,9 @@ function OverviewTab({ bqData, gongData, trailing7d, arrRunRate, arrProgress, ga
         <QuestionCard
           q="Q3"
           title="Win/Loss Patterns"
-          status="curated"
-          headline="N=31 deals analyzed"
-          detail="6 key behaviors identified"
+          status={sfdcData?.available ? "live" : "curated"}
+          headline={sfdcData?.available && sfdcData.data ? `${sfdcData.data.summary.closedWonCount + sfdcData.data.summary.closedLostCount} deals analyzed` : "N=31 deals analyzed"}
+          detail={sfdcData?.available && sfdcData.data ? `${sfdcData.data.summary.winRate}% win rate · 6 key behaviors` : "6 key behaviors identified"}
           icon={<Target className="w-4 h-4" />}
         />
         <QuestionCard
@@ -678,8 +750,8 @@ function QuestionCard({ q, title, status, headline, detail, icon }: {
 // ============================================================================
 // Q1: REVENUE & PIPELINE
 // ============================================================================
-function Q1Tab({ bqData, trailing7d, arrRunRate, arrProgress, gapToTarget, activeCampaigns, activeAdvertisers, exchangeCount, totalGAS, monthlyChart, concentrationChart }: {
-  bqData: BQData | null; trailing7d: number; arrRunRate: number; arrProgress: number;
+function Q1Tab({ bqData, sfdcData, trailing7d, arrRunRate, arrProgress, gapToTarget, activeCampaigns, activeAdvertisers, exchangeCount, totalGAS, monthlyChart, concentrationChart }: {
+  bqData: BQData | null; sfdcData: SfdcPipelineData | null; trailing7d: number; arrRunRate: number; arrProgress: number;
   gapToTarget: number; activeCampaigns: number; activeAdvertisers: number;
   exchangeCount: number; totalGAS: number;
   monthlyChart: { month: string; label: string; dailyAvg: number; campaigns: number }[];
@@ -861,6 +933,194 @@ function Q1Tab({ bqData, trailing7d, arrRunRate, arrProgress, gapToTarget, activ
         </Expandable>
       )}
 
+      {/* ── SFDC Pipeline Section ── */}
+      {sfdcData?.available && sfdcData.data && (() => {
+        const s = sfdcData.data!.summary;
+        const stages = sfdcData.data!.stageDistribution.filter(st => st.stageName !== 'Closed Won' && st.stageName !== 'Closed Lost');
+        const stageOrder = ['Contact Qualified', 'Sales Qualified', 'Pitched', 'Planned', 'DPA and Contract(I/O) Negotiation', 'In Legal'];
+        const sortedStages = [...stages].sort((a, b) => {
+          const ai = stageOrder.indexOf(a.stageName);
+          const bi = stageOrder.indexOf(b.stageName);
+          return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+        });
+        const maxStageAmount = Math.max(...sortedStages.map(st => Number(st.totalAmount)), 1);
+        return (
+          <>
+            {/* Pipeline Summary KPIs */}
+            <div className="flex items-center gap-2 mt-4 mb-2">
+              <h3 className="text-base font-bold text-foreground">Salesforce Pipeline</h3>
+              <SourceTag source="SFDC DB" verified />
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+              <KPI label="Open Pipeline" value={`$${(s.openPipelineTotal / 1e6).toFixed(1)}M`} icon={<Briefcase className="w-4 h-4 text-blue-600" />} color="bg-blue-50" source="SFDC DB" sub={`${s.openPipelineCount} deals`} />
+              <KPI label="Closed Won" value={`$${(s.closedWonTotal / 1e6).toFixed(1)}M`} icon={<CheckCircle2 className="w-4 h-4 text-emerald-600" />} color="bg-emerald-50" source="SFDC DB" sub={`${s.closedWonCount} deals`} />
+              <KPI label="Closed Lost" value={`$${(s.closedLostTotal / 1e6).toFixed(1)}M`} icon={<XCircle className="w-4 h-4 text-rose-600" />} color="bg-rose-50" source="SFDC DB" sub={`${s.closedLostCount} deals`} />
+              <KPI label="Win Rate" value={`${s.winRate}%`} icon={<Target className="w-4 h-4 text-violet-600" />} color="bg-violet-50" source="SFDC DB" />
+              <KPI label="Avg Deal Size" value={`$${s.openPipelineCount > 0 ? (s.openPipelineTotal / s.openPipelineCount / 1000).toFixed(0) : 0}K`} icon={<DollarSign className="w-4 h-4 text-amber-600" />} color="bg-amber-50" source="SFDC DB" />
+              <KPI label="Total Pipeline" value={`$${((s.openPipelineTotal + s.closedWonTotal + s.closedLostTotal) / 1e6).toFixed(1)}M`} icon={<Database className="w-4 h-4 text-cyan-600" />} color="bg-cyan-50" source="SFDC DB" sub={`${s.openPipelineCount + s.closedWonCount + s.closedLostCount} total deals`} />
+            </div>
+
+            {/* Pipeline Funnel */}
+            <Expandable title="Pipeline by Stage" badge={`${sortedStages.length} active stages`} defaultOpen>
+              <div className="mt-3 space-y-2">
+                {sortedStages.map((stage, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <span className="text-xs font-medium text-foreground w-44 truncate">{stage.stageName}</span>
+                    <div className="flex-1 h-3 bg-muted/30 rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full rounded-full"
+                        style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(Number(stage.totalAmount) / maxStageAmount) * 100}%` }}
+                        transition={{ duration: 0.6, delay: i * 0.08 }}
+                      />
+                    </div>
+                    <span className="text-xs font-mono text-muted-foreground w-20 text-right">${(Number(stage.totalAmount) / 1000).toFixed(0)}K</span>
+                    <span className="text-[10px] text-muted-foreground w-12 text-right">{stage.count} deals</span>
+                  </div>
+                ))}
+              </div>
+            </Expandable>
+
+            {/* Top Deals */}
+            <Expandable title="Top Open Deals" badge={`${sfdcData.data!.topDeals.length} deals`} defaultOpen>
+              <div className="mt-3 overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border/60">
+                      <th className="text-left py-2 px-3 text-xs font-semibold text-muted-foreground">Opportunity</th>
+                      <th className="text-left py-2 px-3 text-xs font-semibold text-muted-foreground">Account</th>
+                      <th className="text-right py-2 px-3 text-xs font-semibold text-muted-foreground">Amount</th>
+                      <th className="text-left py-2 px-3 text-xs font-semibold text-muted-foreground">Stage</th>
+                      <th className="text-left py-2 px-3 text-xs font-semibold text-muted-foreground">Owner</th>
+                      <th className="text-left py-2 px-3 text-xs font-semibold text-muted-foreground">Type</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sfdcData.data!.topDeals.map((deal, i) => (
+                      <tr key={i} className="border-b border-border/30 hover:bg-muted/20 transition-colors">
+                        <td className="py-2.5 px-3 text-xs font-medium text-foreground max-w-[200px] truncate">{deal.name}</td>
+                        <td className="py-2.5 px-3 text-xs text-muted-foreground max-w-[140px] truncate">{deal.accountName || '—'}</td>
+                        <td className="py-2.5 px-3 text-xs font-mono text-right font-medium text-foreground">${(Number(deal.amount) / 1000).toFixed(0)}K</td>
+                        <td className="py-2.5 px-3">
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium">{deal.stageName}</span>
+                        </td>
+                        <td className="py-2.5 px-3 text-xs text-muted-foreground">{deal.ownerName || '—'}</td>
+                        <td className="py-2.5 px-3">
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                            deal.oppType === 'CTV-to-App' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'
+                          }`}>{deal.oppType || '—'}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Expandable>
+
+            {/* Two columns: Owner Distribution + Type Split */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Owner Distribution */}
+              <Expandable title="Pipeline by Owner" badge={`${sfdcData.data!.ownerDistribution.length} reps`} defaultOpen>
+                <div className="mt-3 space-y-2">
+                  {sfdcData.data!.ownerDistribution.slice(0, 10).map((owner, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <span className="text-xs font-medium text-foreground w-28 truncate">{owner.ownerName || 'Unassigned'}</span>
+                      <div className="flex-1 h-2 bg-muted/40 rounded-full overflow-hidden">
+                        <div className="h-full rounded-full" style={{
+                          width: `${(Number(owner.totalAmount) / Number(sfdcData.data!.ownerDistribution[0]?.totalAmount || 1)) * 100}%`,
+                          backgroundColor: CHART_COLORS[i % CHART_COLORS.length],
+                        }} />
+                      </div>
+                      <span className="text-xs font-mono text-muted-foreground w-16 text-right">${(Number(owner.totalAmount) / 1000).toFixed(0)}K</span>
+                      <span className="text-[10px] text-muted-foreground w-10 text-right">{owner.count}</span>
+                    </div>
+                  ))}
+                </div>
+              </Expandable>
+
+              {/* Type Split */}
+              <Expandable title="CTV-to-App vs CTV2Web" badge="Type Split" defaultOpen>
+                <div className="mt-3">
+                  {sfdcData.data!.typeSplit.length > 0 && (
+                    <div className="space-y-4">
+                      {sfdcData.data!.typeSplit.map((t, i) => {
+                        const totalOpen = sfdcData.data!.typeSplit.reduce((sum, ts) => sum + Number(ts.totalAmount), 0);
+                        const pct = totalOpen > 0 ? (Number(t.totalAmount) / totalOpen) * 100 : 0;
+                        return (
+                          <div key={i} className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className={`text-xs font-semibold ${t.oppType === 'CTV-to-App' ? 'text-blue-700' : 'text-emerald-700'}`}>
+                                {t.oppType || 'Unknown'}
+                              </span>
+                              <span className="text-xs font-mono text-muted-foreground">
+                                ${(Number(t.totalAmount) / 1000).toFixed(0)}K · {t.count} deals · {pct.toFixed(0)}%
+                              </span>
+                            </div>
+                            <div className="w-full h-3 bg-muted/30 rounded-full overflow-hidden">
+                              <motion.div
+                                className={`h-full rounded-full ${t.oppType === 'CTV-to-App' ? 'bg-blue-500' : 'bg-emerald-500'}`}
+                                initial={{ width: 0 }}
+                                animate={{ width: `${pct}%` }}
+                                transition={{ duration: 0.6, delay: i * 0.1 }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </Expandable>
+            </div>
+
+            {/* Closed Won Highlights */}
+            <Expandable title="Recent Closed Won" badge={`${sfdcData.data!.closedWon.length} deals · $${(s.closedWonTotal / 1e6).toFixed(1)}M`}>
+              <div className="mt-3 space-y-2">
+                {sfdcData.data!.closedWon.slice(0, 8).map((deal, i) => (
+                  <div key={i} className="flex items-center gap-3 py-1.5 border-b border-border/30 last:border-0">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    <span className="text-xs font-medium text-foreground flex-1 truncate">{deal.name}</span>
+                    <span className="text-[10px] text-muted-foreground truncate max-w-[100px]">{deal.accountName}</span>
+                    <span className="text-xs font-mono text-emerald-600 font-medium">${(Number(deal.amount) / 1000).toFixed(0)}K</span>
+                  </div>
+                ))}
+              </div>
+            </Expandable>
+
+            {/* Closed Lost Analysis */}
+            <Expandable title="Recent Closed Lost" badge={`${sfdcData.data!.closedLost.length} deals · $${(s.closedLostTotal / 1e6).toFixed(1)}M`}>
+              <div className="mt-3 space-y-2">
+                {sfdcData.data!.closedLost.slice(0, 8).map((deal, i) => (
+                  <div key={i} className="flex items-start gap-3 py-2 border-b border-border/30 last:border-0">
+                    <XCircle className="w-3.5 h-3.5 text-rose-500 shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-foreground truncate">{deal.name}</span>
+                        <span className="text-xs font-mono text-rose-600 font-medium shrink-0">${(Number(deal.amount) / 1000).toFixed(0)}K</span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[10px] text-muted-foreground">{deal.accountName || '—'}</span>
+                        {deal.lossReason && <span className="text-[10px] text-rose-500 italic">— {deal.lossReason}</span>}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Expandable>
+          </>
+        );
+      })()}
+
+      {/* SFDC Loading State */}
+      {!sfdcData?.available && (
+        <div className="border border-dashed border-border/60 rounded-xl p-6 text-center">
+          <Briefcase className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
+          <div className="text-sm font-medium text-muted-foreground">Salesforce Pipeline</div>
+          <div className="text-xs text-muted-foreground/60 mt-1">Loading pipeline data from database...</div>
+        </div>
+      )}
+
       {/* Early Signals & Risks */}
       <Expandable title="Early Signals & Risks" defaultOpen>
         <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -870,6 +1130,12 @@ function Q1Tab({ bqData, trailing7d, arrRunRate, arrProgress, gapToTarget, activ
           <SignalCard type="opportunity" title="Exchange Expansion" detail={`${exchangeCount} exchanges live. Each new exchange adds ~5-10% incremental reach.`} source={bqLive ? "BQ Live" : "Curated"} />
           <SignalCard type="risk" title="Attribution Gap" detail="34% of lost deals cite 'no attribution path agreed' — measurement framework is the #1 unlock." source="Curated" />
           <SignalCard type="opportunity" title="Campaign Velocity" detail={`${activeCampaigns} active campaigns in last 7d. Campaign ramp correlates with revenue acceleration.`} source={bqLive ? "BQ Live" : "Curated"} />
+          {sfdcData?.available && sfdcData.data && sfdcData.data.summary.closedLostTotal > sfdcData.data.summary.closedWonTotal && (
+            <SignalCard type="risk" title="Lost > Won" detail={`$${(sfdcData.data.summary.closedLostTotal / 1e6).toFixed(1)}M lost vs $${(sfdcData.data.summary.closedWonTotal / 1e6).toFixed(1)}M won. Focus on deal qualification and measurement framework adoption.`} source="SFDC DB" />
+          )}
+          {sfdcData?.available && sfdcData.data && sfdcData.data.summary.openPipelineTotal > 0 && (
+            <SignalCard type="opportunity" title="Active Pipeline" detail={`$${(sfdcData.data.summary.openPipelineTotal / 1e6).toFixed(1)}M across ${sfdcData.data.summary.openPipelineCount} open deals. ${sfdcData.data.summary.winRate}% historical win rate suggests $${(sfdcData.data.summary.openPipelineTotal * sfdcData.data.summary.winRate / 100 / 1e6).toFixed(1)}M weighted pipeline.`} source="SFDC DB" />
+          )}
         </div>
       </Expandable>
     </div>
@@ -1856,8 +2122,8 @@ function _OldSynthesisTabPlaceholder({ bqData, gongData, trailing7d, arrRunRate,
             <span>Gong ({gongLive ? `${gongData!.ctv_matched_calls} calls` : "offline"})</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-rose-400" />
-            <span>Salesforce (not connected)</span>
+            <div className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span>Salesforce (98 deals in DB)</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-amber-400" />

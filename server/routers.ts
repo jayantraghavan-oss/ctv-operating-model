@@ -31,6 +31,7 @@ import { buildInsightsReport } from "./reporting";
 import { fetchBQData, getBQStatus, clearBQCache } from "./bqBridge";
 import { runSynthesis } from "./synthesize";
 import { fetchGongSummary, fetchGongWithTranscripts, getGongStatus, clearGongCache } from "./gongBridge";
+import { getSfdcPipelineSummary, getGongCallsFromDb, getLatestBqSnapshot, getAllLastRefreshes } from "./dbIntel";
 
 /**
  * Retry helper with exponential backoff for rate-limited LLM calls.
@@ -626,6 +627,58 @@ Return ONLY valid JSON. Every quote must be from the actual transcripts above. E
      */
     synthesize: publicProcedure.query(async () => {
       return runSynthesis();
+    }),
+
+    /**
+     * SFDC CTV Pipeline — reads from database.
+     * Returns stage distribution, top deals, owner distribution, type split, closed won/lost.
+     */
+    sfdcPipeline: publicProcedure.query(async () => {
+      try {
+        const data = await getSfdcPipelineSummary();
+        return { available: true, data };
+      } catch (err: any) {
+        console.error("[SFDC Pipeline] Error:", err.message);
+        return { available: false, data: null, error: err.message };
+      }
+    }),
+
+    /**
+     * Gong calls from database — fast read, no API call.
+     */
+    gongFromDb: publicProcedure.query(async () => {
+      try {
+        const data = await getGongCallsFromDb();
+        return { available: true, data };
+      } catch (err: any) {
+        console.error("[Gong DB] Error:", err.message);
+        return { available: false, data: null, error: err.message };
+      }
+    }),
+
+    /**
+     * BQ revenue snapshot from database — fast read, no API call.
+     */
+    bqFromDb: publicProcedure.query(async () => {
+      try {
+        const data = await getLatestBqSnapshot();
+        return { available: data !== null, data };
+      } catch (err: any) {
+        console.error("[BQ DB] Error:", err.message);
+        return { available: false, data: null, error: err.message };
+      }
+    }),
+
+    /**
+     * Data refresh status — when was each source last updated.
+     */
+    refreshStatus: publicProcedure.query(async () => {
+      try {
+        const refreshes = await getAllLastRefreshes();
+        return { available: true, refreshes };
+      } catch (err: any) {
+        return { available: false, refreshes: null, error: err.message };
+      }
     }),
   }),
 });
