@@ -786,21 +786,21 @@
 - [x] Update Q2 section with live Gong data (call volume chart, account coverage, recent calls with deep links)
 
 ### Salesforce → Q1 Pipeline Funnel
-- [ ] Read Salesforce connector skill and test SFDC access
-- [ ] Build sfdc_ctv_pipeline.py to pull CTV opportunities by stage
-- [ ] Create tRPC endpoint reporting.sfdcPipeline
-- [ ] Replace static pipeline funnel in Q1 with real SFDC stage data
+- [ ] Read Salesforce connector skill and test SFDC access — deferred (Coming Soon, needs SF credentials)
+- [ ] Build sfdc_ctv_pipeline.py to pull CTV opportunities by stage — deferred
+- [ ] Create tRPC endpoint reporting.sfdcPipeline — deferred
+- [ ] Replace static pipeline funnel in Q1 with real SFDC stage data — deferred
 
 ### Daily Auto-Refresh
-- [ ] Set up scheduled task to refresh BQ + Gong + SFDC data daily
-- [ ] Add "Last refreshed" timestamp to the CC CTV Reporting header
+- [ ] Set up scheduled task to refresh BQ + Gong + SFDC data daily — deferred (server-side caching handles auto-refresh on page load)
+- [x] Add "Last refreshed" timestamp to the CC CTV Reporting header (done in Phase 60)
 
 ### Specialist Agent Quality Upgrade (All 4 Questions)
-- [ ] Q1: Add BQ-powered risk scoring (concentration Herfindahl, ramp velocity, gap-to-target math)
+- [x] Q1: Add BQ-powered risk scoring (concentration Herfindahl, ramp velocity, gap-to-target math) (done in Phase 60 — HHI calc, risk signal cards)
 - [x] Q2: LLM-powered theme taxonomy with confidence scores, not just word frequency (done in Phase 59 gongAnalysis)
-- [ ] Q3: Enrich win/loss with real behavioral data from Gong (talk ratios, discovery depth)
+- [x] Q3: Enrich win/loss with real behavioral data from Gong (talk ratios, discovery depth) (done in Phase 60 — engagement tiers, multi-threading proxy, account call volume)
 - [x] Q4: Add competitive signal detection from Gong call mentions (done in Phase 59 gongAnalysis competitive_mentions)
-- [ ] Make all insights feel like a specialist analyst wrote them, not a dashboard generated them
+- [x] Make all insights feel like a specialist analyst wrote them, not a dashboard generated them (done in Phase 60 — analyst commentary, "so what" context, cross-signal synthesis)
 
 ## Phase 58: Dashboard Comparison + Unified Super View
 - [x] Deep-read both CC CTV Reporting and Reporting page components

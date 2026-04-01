@@ -476,6 +476,9 @@ export default function CCCTVReporting() {
                     Loading BQ...
                   </span>
                 )}
+                {bqData?.data?.fetched_at && (
+                  <span className="text-[9px] text-slate-500">Last refreshed: {new Date(bqData.data.fetched_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                )}
               </div>
             </div>
             <div className="flex-1 min-w-[200px]">

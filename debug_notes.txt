@@ -1,14 +1,30 @@
-CTV Intelligence page observations (2026-04-01):
-- BQ: Connected, $15.9M total GAS, $184K/day, 51 campaigns, 27 advertisers
-- Gong: Connected, 250 CTV calls, 23 accounts, 118h
-- Tab switching: All 6 tabs work correctly
-- Q2 Customer Voice: AI Voice Analysis panel renders with Run Analysis button
-- LLM analysis endpoint fixed (JSON parse issue resolved)
-- Need to test: Run Analysis button click in browser
+Phase 60 Final Verification (2026-04-01)
+=========================================
 
-Synthesis Tab - Working End-to-End (Phase 59)
-===================================
-- Dynamic LLM synthesis produces: exec summary, confidence, risks, opportunities, open questions, cross-signal patterns, action plan
-- All data sources used: BigQuery, Gong, Curated
-- Re-synthesize button works
-- Baseline Assessment shows live BQ data
+Q1 Revenue & Pipeline Tab:
+- BQ Live KPIs: $185K/day, $67.5M ARR, 51 campaigns, 27 advertisers, 5 exchanges, $15.9M total GAS
+- Quantitative Risk Scoring (BQ-Powered): HHI 1795, Ramp -85.9%, Gap $32.5M
+- Early Signals & Risks: 4 cards with BQ Live / Curated tags
+
+Q2 Customer Voice Tab:
+- AI Voice Analysis with Run Analysis button
+- LLM produces themes, objections, verbatims, competitive mentions, recommendations
+- All verbatims have Gong deep links
+
+Q3 Win/Loss Patterns Tab:
+- Curated behavior data + Gong Engagement Signals section
+- Engagement tiers: High/Med/Low with multi-threading proxy
+- Top accounts by call volume chart
+
+Q4 Market Position Tab:
+- Competitive table, TAM penetration, live competitive signals
+
+Synthesis Tab:
+- Dynamic LLM cross-signal synthesis (BQ + Gong + Curated)
+- Run Synthesis button produces analyst-grade output
+
+Data Health Bar:
+- Last refreshed timestamp visible
+- BQ Connected, Gong Connected, SFDC Coming Soon
+
+All 174 tests passing across 11 test files.

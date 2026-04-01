@@ -82,6 +82,7 @@ interface BQRaw {
 // Normalized shape used by the component
 interface BQData {
   available: boolean;
+  fetched_at?: string;
   summary?: { total_gas: number; trailing_7d_daily: number; active_campaigns_7d: number; active_advertisers_7d: number };
   monthly?: { month: string; total_gas: number; daily_avg: number; campaigns: number; advertisers: number }[];
   recent_daily?: { date: string; daily_gas: number; campaigns: number }[];
@@ -127,7 +128,7 @@ function normalizeBQ(raw: BQRaw): BQData {
       total_gas: e.total_gas,
       pct_of_total: totalGas > 0 ? (e.total_gas / totalGas) * 100 : 0,
     })),
-    concentration: { top1_pct: top1, top5_pct: top5, top10_pct: top10, hhi: 0 },
+    concentration: { top1_pct: top1, top5_pct: top5, top10_pct: top10, hhi: conc.reduce((sum, c) => sum + Math.pow(c.pct_of_total, 2), 0) },
   };
 }
 
@@ -156,6 +157,7 @@ interface GongTranscript {
 
 interface GongData {
   available: boolean;
+  fetched_at?: string;
   total_calls_scanned: number;
   ctv_matched_calls: number;
   matched_calls: GongCall[];
@@ -442,8 +444,15 @@ export default function CTVIntelligence() {
           <DataHealth label="BigQuery" connected={!!bqData?.available} detail={bqData?.available ? `$${(totalGAS / 1e6).toFixed(1)}M total GAS` : undefined} />
           <DataHealth label="Gong" connected={!!gongData?.available} detail={gongData?.available ? `${gongData.ctv_matched_calls} CTV calls` : undefined} />
           <DataHealth label="Salesforce" connected={false} detail="Coming soon" />
-          <div className="ml-auto text-[10px] text-muted-foreground/60">
-            {bqLoading || gongLoading ? "Loading..." : "All sources checked"}
+          <div className="ml-auto text-right">
+            <div className="text-[10px] text-muted-foreground/60">
+              {bqLoading || gongLoading ? "Loading..." : "All sources checked"}
+            </div>
+            {(bqData?.fetched_at || gongData?.fetched_at) && (
+              <div className="text-[9px] text-muted-foreground/40 mt-0.5">
+                Last refreshed: {new Date(bqData?.fetched_at || gongData?.fetched_at || '').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </div>
+            )}
           </div>
         </div>
 
@@ -765,11 +774,98 @@ function Q1Tab({ bqData, trailing7d, arrRunRate, arrProgress, gapToTarget, activ
         )}
       </div>
 
-      {/* Risk Signals */}
+      {/* BQ-Powered Risk Scoring */}
+      {bqLive && bqData?.concentration && (
+        <Expandable title="Quantitative Risk Scoring" badge="BQ-Powered" defaultOpen>
+          <div className="mt-3 space-y-4">
+            {/* Risk Score Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {/* Herfindahl Concentration Index */}
+              {(() => {
+                const hhi = bqData.concentration.hhi;
+                const hhiRisk = hhi > 2500 ? "critical" : hhi > 1500 ? "high" : hhi > 1000 ? "medium" : "low";
+                const hhiColor = hhiRisk === "critical" ? "border-rose-300 bg-rose-50" : hhiRisk === "high" ? "border-amber-300 bg-amber-50" : "border-emerald-300 bg-emerald-50";
+                return (
+                  <div className={`border rounded-xl p-4 ${hhiColor}`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Herfindahl Index</span>
+                      <SourceTag source="BQ Live" verified />
+                    </div>
+                    <div className="text-2xl font-bold text-foreground">{hhi.toFixed(0)}</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {hhiRisk === "critical" ? "Highly concentrated — monopolistic risk" :
+                       hhiRisk === "high" ? "Moderately concentrated — diversification needed" :
+                       hhiRisk === "medium" ? "Mildly concentrated — monitor closely" :
+                       "Competitive — healthy diversification"}
+                    </div>
+                    <div className="mt-2 text-[10px] text-muted-foreground/60">
+                      Top 5 = {bqData.concentration.top5_pct.toFixed(0)}% · Top 10 = {bqData.concentration.top10_pct.toFixed(0)}%
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Ramp Velocity */}
+              {(() => {
+                const monthly = monthlyChart;
+                let rampVelocity = 0;
+                let rampLabel = "Insufficient data";
+                let rampColor = "border-slate-200 bg-slate-50";
+                if (monthly.length >= 2) {
+                  const recent = monthly[monthly.length - 1].dailyAvg;
+                  const prev = monthly[monthly.length - 2].dailyAvg;
+                  rampVelocity = prev > 0 ? ((recent - prev) / prev) * 100 : 0;
+                  rampLabel = rampVelocity > 20 ? "Strong acceleration" : rampVelocity > 0 ? "Positive momentum" : rampVelocity > -10 ? "Flat / slight decline" : "Revenue deceleration";
+                  rampColor = rampVelocity > 20 ? "border-emerald-300 bg-emerald-50" : rampVelocity > 0 ? "border-blue-300 bg-blue-50" : rampVelocity > -10 ? "border-amber-300 bg-amber-50" : "border-rose-300 bg-rose-50";
+                }
+                return (
+                  <div className={`border rounded-xl p-4 ${rampColor}`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Ramp Velocity</span>
+                      <SourceTag source="BQ Live" verified />
+                    </div>
+                    <div className="text-2xl font-bold text-foreground">{rampVelocity > 0 ? "+" : ""}{rampVelocity.toFixed(1)}%</div>
+                    <div className="text-xs text-muted-foreground mt-1">{rampLabel}</div>
+                    <div className="mt-2 text-[10px] text-muted-foreground/60">
+                      MoM daily GAS change ({monthly.length >= 2 ? `${monthly[monthly.length - 2].label} → ${monthly[monthly.length - 1].label}` : "N/A"})
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Gap-to-Target Math */}
+              {(() => {
+                const dailyNeeded = gapToTarget / 365;
+                const dailyGrowthNeeded = trailing7d > 0 ? ((dailyNeeded - trailing7d) / trailing7d) * 100 : 0;
+                const gapRisk = dailyGrowthNeeded > 100 ? "critical" : dailyGrowthNeeded > 50 ? "high" : dailyGrowthNeeded > 0 ? "medium" : "on-track";
+                const gapColor = gapRisk === "critical" ? "border-rose-300 bg-rose-50" : gapRisk === "high" ? "border-amber-300 bg-amber-50" : gapRisk === "on-track" ? "border-emerald-300 bg-emerald-50" : "border-blue-300 bg-blue-50";
+                return (
+                  <div className={`border rounded-xl p-4 ${gapColor}`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Gap-to-Target</span>
+                      <SourceTag source="BQ Live" verified />
+                    </div>
+                    <div className="text-2xl font-bold text-foreground">${(gapToTarget / 1e6).toFixed(1)}M</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {gapRisk === "on-track" ? "On track at current run rate" :
+                       `Need $${(dailyNeeded / 1000).toFixed(0)}K/day to close gap (${dailyGrowthNeeded > 0 ? "+" : ""}${dailyGrowthNeeded.toFixed(0)}% growth needed)`}
+                    </div>
+                    <div className="mt-2 text-[10px] text-muted-foreground/60">
+                      Current: ${(trailing7d / 1000).toFixed(0)}K/day · Target: $274K/day ($100M/365)
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </Expandable>
+      )}
+
+      {/* Early Signals & Risks */}
       <Expandable title="Early Signals & Risks" defaultOpen>
         <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
           {bqData?.concentration && bqData.concentration.top5_pct > 65 && (
-            <SignalCard type="risk" title="Concentration Risk" detail={`Top 5 advertisers = ${bqData.concentration.top5_pct.toFixed(0)}% of GAS. Losing any one could materially impact trajectory.`} source="BQ Live" />
+            <SignalCard type="risk" title="Concentration Risk" detail={`Top 5 advertisers = ${bqData.concentration.top5_pct.toFixed(0)}% of GAS (HHI: ${bqData.concentration.hhi.toFixed(0)}). Losing any one could materially impact trajectory.`} source="BQ Live" />
           )}
           <SignalCard type="opportunity" title="Exchange Expansion" detail={`${exchangeCount} exchanges live. Each new exchange adds ~5-10% incremental reach.`} source={bqLive ? "BQ Live" : "Curated"} />
           <SignalCard type="risk" title="Attribution Gap" detail="34% of lost deals cite 'no attribution path agreed' — measurement framework is the #1 unlock." source="Curated" />
@@ -1286,11 +1382,33 @@ function Q2Tab({ gongData, gongVolumeChart }: { gongData: GongData | null; gongV
 // Q3: WIN/LOSS PATTERNS
 // ============================================================================
 function Q3Tab({ gongData }: { gongData: GongData | null }) {
+  const gongLive = !!gongData?.available;
+
+  // Compute Gong engagement metrics for win/loss enrichment
+  const avgCallDuration = gongData?.duration_stats?.avg_min ?? 0;
+  const totalCalls = gongData?.ctv_matched_calls ?? 0;
+  const uniqueAccounts = gongData?.unique_advertisers ?? 0;
+  const callsPerAccount = uniqueAccounts > 0 ? (totalCalls / uniqueAccounts).toFixed(1) : "N/A";
+  const monthlyVolume = gongData?.monthly_volume ?? {};
+  const months = Object.keys(monthlyVolume).sort();
+  const recentMonth = months.length > 0 ? months[months.length - 1] : null;
+  const recentVolume = recentMonth ? monthlyVolume[recentMonth] : 0;
+  const prevMonth = months.length > 1 ? months[months.length - 2] : null;
+  const prevVolume = prevMonth ? monthlyVolume[prevMonth] : 0;
+  const volumeTrend = prevVolume > 0 ? ((recentVolume - prevVolume) / prevVolume * 100) : 0;
+
+  // Advertiser engagement tiers
+  const coverage = gongData?.advertiser_coverage ?? [];
+  const highEngagement = coverage.filter((a: any) => a.call_count >= 20).length;
+  const medEngagement = coverage.filter((a: any) => a.call_count >= 10 && a.call_count < 20).length;
+  const lowEngagement = coverage.filter((a: any) => a.call_count < 10).length;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 mb-2">
         <h2 className="text-lg font-bold text-foreground">Win/Loss Patterns</h2>
         <SourceTag source="Curated" />
+        {gongLive && <SourceTag source="Gong Live" verified />}
       </div>
 
       {/* KPIs */}
@@ -1300,6 +1418,82 @@ function Q3Tab({ gongData }: { gongData: GongData | null }) {
         <KPI label="Key Behaviors" value="6" icon={<Eye className="w-4 h-4 text-violet-600" />} color="bg-violet-50" source="Curated" sub="3 critical, 2 high, 1 medium" />
         <KPI label="Top Loss Reason" value="Attribution" icon={<XCircle className="w-4 h-4 text-rose-600" />} color="bg-rose-50" source="Curated" sub="34% of losses" />
       </div>
+
+      {/* Gong Engagement Enrichment */}
+      {gongLive && (
+        <Expandable title="Gong Engagement Signals" badge="Behavioral Data" defaultOpen>
+          <div className="mt-3 space-y-4">
+            {/* Engagement KPIs */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="border rounded-xl p-3 bg-blue-50/40">
+                <div className="text-xs text-muted-foreground">Avg Call Duration</div>
+                <div className="text-lg font-bold text-foreground">{avgCallDuration.toFixed(0)} min</div>
+                <div className="text-[10px] text-muted-foreground">{avgCallDuration > 30 ? "Deep engagement (>30m)" : avgCallDuration > 15 ? "Standard engagement" : "Short calls — may indicate surface-level"}</div>
+              </div>
+              <div className="border rounded-xl p-3 bg-violet-50/40">
+                <div className="text-xs text-muted-foreground">Calls per Account</div>
+                <div className="text-lg font-bold text-foreground">{callsPerAccount}</div>
+                <div className="text-[10px] text-muted-foreground">{Number(callsPerAccount) > 8 ? "Multi-touch (strong signal)" : Number(callsPerAccount) > 4 ? "Moderate touch" : "Low touch — risk"}</div>
+              </div>
+              <div className="border rounded-xl p-3 bg-emerald-50/40">
+                <div className="text-xs text-muted-foreground">Recent Volume Trend</div>
+                <div className="text-lg font-bold text-foreground">{volumeTrend > 0 ? "+" : ""}{volumeTrend.toFixed(0)}%</div>
+                <div className="text-[10px] text-muted-foreground">{recentMonth} vs {prevMonth || "N/A"}</div>
+              </div>
+              <div className="border rounded-xl p-3 bg-amber-50/40">
+                <div className="text-xs text-muted-foreground">Engagement Tiers</div>
+                <div className="text-lg font-bold text-foreground">{highEngagement}H / {medEngagement}M / {lowEngagement}L</div>
+                <div className="text-[10px] text-muted-foreground">High (20+) · Med (10-19) · Low (&lt;10)</div>
+              </div>
+            </div>
+
+            {/* Multi-Threading Signal from Gong */}
+            <div className="border border-blue-200/60 rounded-lg p-4 bg-blue-50/20">
+              <div className="flex items-center gap-2 mb-2">
+                <Users className="w-4 h-4 text-blue-600" />
+                <span className="text-xs font-semibold text-blue-700">Multi-Threading Signal</span>
+                <SourceTag source="Gong Live" verified />
+              </div>
+              <p className="text-xs text-muted-foreground mb-2">
+                Curated data shows 89% of won deals had 3+ contacts engaged. Gong engagement tiers can proxy for multi-threading depth:
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="text-center p-2 rounded-lg bg-emerald-50 border border-emerald-200/60">
+                  <div className="text-sm font-bold text-emerald-700">{highEngagement}</div>
+                  <div className="text-[10px] text-emerald-600">Deep (20+ calls)</div>
+                  <div className="text-[10px] text-muted-foreground">Likely multi-threaded</div>
+                </div>
+                <div className="text-center p-2 rounded-lg bg-amber-50 border border-amber-200/60">
+                  <div className="text-sm font-bold text-amber-700">{medEngagement}</div>
+                  <div className="text-[10px] text-amber-600">Moderate (10-19)</div>
+                  <div className="text-[10px] text-muted-foreground">Needs assessment</div>
+                </div>
+                <div className="text-center p-2 rounded-lg bg-rose-50 border border-rose-200/60">
+                  <div className="text-sm font-bold text-rose-700">{lowEngagement}</div>
+                  <div className="text-[10px] text-rose-600">Light (&lt;10 calls)</div>
+                  <div className="text-[10px] text-muted-foreground">Single-thread risk</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Top Accounts by Engagement */}
+            {coverage.length > 0 && (
+              <div className="space-y-1.5">
+                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Top Accounts by Call Volume</div>
+                {coverage.slice(0, 8).map((a: any, i: number) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <span className="text-xs font-medium text-foreground w-28 truncate">{a.advertiser}</span>
+                    <div className="flex-1 h-2 bg-muted/40 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full" style={{ width: `${(a.call_count / (coverage[0]?.call_count || 1)) * 100}%`, backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
+                    </div>
+                    <span className="text-xs font-mono text-muted-foreground w-16 text-right">{a.call_count} calls</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </Expandable>
+      )}
 
       {/* Behavior Comparison Table */}
       <Expandable title="Won vs. Lost Behaviors" badge="N=31 deals" defaultOpen>
