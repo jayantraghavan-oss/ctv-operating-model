@@ -28,6 +28,7 @@ import {
   deepHealthCheck,
 } from "./liveData";
 import { buildInsightsReport } from "./reporting";
+import { buildBusinessInsightsReport } from "./businessInsights";
 import { fetchBQData, getBQStatus, clearBQCache } from "./bqBridge";
 import { runSynthesis } from "./synthesize";
 import { fetchGongSummary, fetchGongWithTranscripts, getGongStatus, clearGongCache } from "./gongBridge";
@@ -711,6 +712,17 @@ Return ONLY valid JSON. Every quote must be from the actual transcripts above. E
       } catch (err: any) {
         return { available: false, refreshes: null, error: err.message };
       }
+    }),
+
+    /**
+     * CTV Business Insights — comprehensive 4-section report for sales leadership.
+     * Section 1: Revenue & ARR Pacing ($100M target, BQ + SFDC pipeline)
+     * Section 2: Customer Intelligence (Gong + Slack, sentiment, verifiable links)
+     * Section 3: Sales Coaching (Gong patterns, rep performance, coaching recs)
+     * Section 4: Market & Competitive (landscape, signals, trends)
+     */
+    businessInsights: publicProcedure.query(async () => {
+      return buildBusinessInsightsReport();
     }),
   }),
 });

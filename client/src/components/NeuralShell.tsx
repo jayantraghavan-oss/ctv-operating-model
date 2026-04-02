@@ -49,6 +49,7 @@ const primaryNav: NavItem[] = [
   { path: "/data-explorer", label: "Data Explorer", shortLabel: "Data", icon: Database },
   { path: "/super-dashboard", label: "Super Dashboard", shortLabel: "Super", icon: Layers },
   { path: "/ctv-intelligence-claude", label: "CTV Intelligence (Claude)", shortLabel: "Claude", icon: Tv },
+  { path: "/ctv-business-insights", label: "CTV Business Insights", shortLabel: "Insights", icon: BarChart3 },
 ];
 
 // Bottom nav items for mobile

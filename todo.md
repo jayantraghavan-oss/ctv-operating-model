@@ -942,4 +942,31 @@
 - [x] Add route /ctv-intelligence-claude in App.tsx
 - [x] Add nav link in NeuralShell.tsx sidebar
 - [x] Verified rendering — all tabs, charts, filters, KPIs working in embedded view
+- [x] Save checkpoint (version b05e5f91)
+
+## Phase 73: CTV Business Insights Report
+
+### Backend
+- [x] Create server/businessInsights.ts — unified report builder with 4 sections
+- [x] Section 1: Revenue & ARR Pacing (BQ live + SFDC pipeline forecasting + confidence + risks/opps)
+- [x] Section 2: Customer Intelligence (Gong calls + Slack signals + sentiment + verifiable links + week vs overall trends)
+- [x] Section 3: Sales Coaching Insights (Gong patterns + rep performance + coaching recommendations)
+- [x] Section 4: Market & Competitive Landscape (curated DB + Gong competitive mentions + market trends)
+- [x] Add tRPC endpoint reporting.businessInsights in routers.ts
+
+### Frontend
+- [x] Create CTVBusinessInsights.tsx page with 4 tabbed sections
+- [x] Revenue tab: ARR pacing chart, monthly trends, pipeline forecast, confidence meter, risks/opportunities
+- [x] Customer Intelligence tab: sentiment themes, verifiable Gong/Slack links, week-over-week trends
+- [x] Sales Coaching tab: rep performance, coaching insights, winning/losing behaviors
+- [x] Market tab: competitive landscape, market trends, competitive signals
+- [x] Add filtering capabilities (search, impact, sentiment, source, priority, urgency)
+- [x] Add CSV/JSON export/download functionality
+- [x] Add route /ctv-business-insights in App.tsx
+- [x] Add nav link in NeuralShell.tsx sidebar
+- [x] Vitest: 27 tests passing for businessInsights endpoint
+
+### Testing & Polish
+- [x] Write vitest tests for businessInsights.ts (27 tests, all passing)
+- [x] Verify all data sources are live (BQ, SFDC, Gong, Slack, curated DB)
 - [ ] Save checkpoint
