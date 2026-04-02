@@ -80,68 +80,7 @@ function dbToPersonas(rows: CuratedRow[]): Persona[] {
   });
 }
 
-const _FALLBACK_PERSONAS: Persona[] = [
-  {
-    id: "gaming-vp",
-    name: "Sarah Chen",
-    title: "VP Growth",
-    company: "TopPlay Games",
-    vertical: "Mobile Gaming",
-    budget: "$500K test → $2M annual",
-    priority: "ROAS at scale with incrementality proof",
-    currentStack: "TTD + DV360 for CTV, AppsFlyer MMP",
-    kpis: ["ROAS > 3.0x", "Incremental lift > 15%", "CPI < $8", "Day-7 retention > 25%"],
-    objections: ["TTD has years of CTV data", "Need GARM brand safety", "Incrementality methodology unclear", "ML black box concern"],
-    dealComplexity: "high",
-    stakeholders: ["VP Growth (decision maker)", "Head of UA (influencer)", "CFO (budget approval)", "Data Science (validation)"],
-    timeline: "4-week evaluation → 8-week test → scale decision",
-  },
-  {
-    id: "dtc-cmo",
-    name: "Marcus Rivera",
-    title: "CMO",
-    company: "GlowUp Skincare",
-    vertical: "DTC E-commerce",
-    budget: "$150K test budget",
-    priority: "Customer acquisition cost + brand lift",
-    currentStack: "Meta + Google primary, no CTV experience",
-    kpis: ["CAC < $45", "Brand lift > 8%", "Site visit rate > 0.5%", "ROAS > 2.0x"],
-    objections: ["CTV is new for us", "Attribution is unclear", "Budget is tight", "Board wants proven channels"],
-    dealComplexity: "high",
-    stakeholders: ["CMO (champion)", "VP Marketing (influencer)", "CEO (final sign-off)", "Agency partner (advisor)"],
-    timeline: "2-week education → 6-week pilot → board review",
-  },
-  {
-    id: "agency-dir",
-    name: "Priya Patel",
-    title: "Director of Programmatic",
-    company: "MediaForce Agency",
-    vertical: "Agency (multi-vertical)",
-    budget: "$2M across 12 clients",
-    priority: "Platform capabilities, self-serve, unified reporting",
-    currentStack: "TTD primary, Roku OneView, Amazon DSP",
-    kpis: ["Client retention > 95%", "Campaign setup < 2hrs", "Cross-client reporting", "Margin preservation"],
-    objections: ["Need full self-serve", "12 verticals need different optimization", "Reporting must match TTD", "Managed service doesn't scale"],
-    dealComplexity: "very-high",
-    stakeholders: ["Director Programmatic (champion)", "SVP Media (approver)", "Client leads x12 (influencers)", "Tech team (integration)"],
-    timeline: "Platform evaluation → 2 client pilots → agency-wide rollout",
-  },
-  {
-    id: "retail-svp",
-    name: "David Kim",
-    title: "SVP Digital Commerce",
-    company: "ShopStream Retail Media",
-    vertical: "Retail Media Network",
-    budget: "$1M+ for off-site CTV activation",
-    priority: "First-party data activation on CTV, complement Amazon",
-    currentStack: "Amazon DSP for on-site, building off-site capability",
-    kpis: ["Advertiser adoption > 40%", "ROAS for advertisers > 4x", "Incremental reach > 30%", "Data match rate > 70%"],
-    objections: ["How do you complement Amazon?", "First-party data integration complexity", "Measurement standards for RMN", "Need white-label capability"],
-    dealComplexity: "extreme",
-    stakeholders: ["SVP Digital (champion)", "CTO (tech validation)", "VP Advertiser Sales (revenue)", "Legal (data governance)", "CPO (product roadmap)"],
-    timeline: "Technical POC → 3-month pilot with 5 advertisers → platform decision",
-  },
-];
+// Persona data comes from DB via useCuratedData(["buyer_persona"])
 
 // ── Deep CTV Technical Conversation Scripts ────────────────────────────
 // Each persona gets 20+ turns of real technical back-and-forth
@@ -452,7 +391,7 @@ export default function BuyerSim() {
   const PERSONAS = useMemo(() => {
     const rows = curatedData.buyer_persona;
     if (rows?.length) return dbToPersonas(rows);
-    return _FALLBACK_PERSONAS;
+    return [];
   }, [curatedData]);
   const [persona, setPersona] = useState<string | null>(null);
   const [messages, setMessages] = useState<SimMessage[]>([]);

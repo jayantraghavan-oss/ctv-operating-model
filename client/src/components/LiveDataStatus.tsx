@@ -28,12 +28,14 @@ export default function LiveDataStatus() {
   const [open, setOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
 
-  const checkStatus = useCallback(async () => {
+  const checkStatus = useCallback(async (forceRefresh = false) => {
     setLoading(true);
     setError(null);
     try {
+      // Use cachedStatus for instant load, full status for manual refresh
+      const endpoint = forceRefresh ? "liveData.status" : "liveData.cachedStatus";
       const res = await fetch(
-        `/api/trpc/liveData.status?batch=1&input=${encodeURIComponent(JSON.stringify({ "0": { json: null } }))}`,
+        `/api/trpc/${endpoint}?batch=1&input=${encodeURIComponent(JSON.stringify({ "0": { json: null } }))}`,
         { credentials: "include" },
       );
       if (!res.ok) {
@@ -54,14 +56,15 @@ export default function LiveDataStatus() {
     }
   }, []);
 
-  // Check on mount and every 5 minutes, but pause when tab is hidden
+  // Check on mount (cached for speed) and every 5 minutes (full refresh), pause when tab is hidden
   useEffect(() => {
-    checkStatus();
+    // First load: try cached for instant render, then background refresh
+    checkStatus(false).then(() => checkStatus(true));
     let interval: ReturnType<typeof setInterval> | null = null;
 
     const startPolling = () => {
       if (interval) clearInterval(interval);
-      interval = setInterval(checkStatus, 5 * 60 * 1000);
+      interval = setInterval(() => checkStatus(true), 5 * 60 * 1000);
     };
 
     const stopPolling = () => {
@@ -75,7 +78,7 @@ export default function LiveDataStatus() {
       if (document.hidden) {
         stopPolling();
       } else {
-        checkStatus(); // Refresh immediately when tab becomes visible
+        checkStatus(true); // Refresh immediately when tab becomes visible
         startPolling();
       }
     };
@@ -157,7 +160,7 @@ export default function LiveDataStatus() {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  checkStatus();
+                  checkStatus(true);
                 }}
                 className="p-1 rounded hover:bg-foreground/5 transition-colors"
                 aria-label="Refresh status"

@@ -125,148 +125,7 @@ export interface InsightsReport {
   liveDataStatus: LiveDataStatus;
 }
 
-// ============================================================================
-// REAL CTV ADVERTISER DATA (sourced from Slack channels, Mar 2026)
-// ============================================================================
-
-const REAL_CTV_CAMPAIGNS = [
-  {
-    name: "Tang Luck CTV",
-    customer: "Tang Luck",
-    region: "APAC",
-    vertical: "Gaming",
-    dailySpend: 57_000,
-    totalSpend: 570_000,
-    d1Roas: 14.1,
-    d7Roas: 52,
-    stage: "scaling" as const,
-    healthScore: 92,
-    daysActive: 10,
-    kpiPerformance: 118,
-    nextStep: "Continue scaling — model delivering above KPIs at $57K/day",
-    sentiment: "positive" as const,
-    source: "#ctv-vip-winnerstudio",
-  },
-  {
-    name: "Experian CTV (via PMG)",
-    customer: "Experian / PMG",
-    region: "AMER",
-    vertical: "Fintech",
-    dailySpend: 5_000,
-    totalSpend: 100_000,
-    d1Roas: 0,
-    d7Roas: 0,
-    stage: "scaling" as const,
-    healthScore: 85,
-    daysActive: 45,
-    kpiPerformance: 110,
-    nextStep: "Internal case study for PMG to shop Moloco CTV to more clients",
-    sentiment: "positive" as const,
-    source: "#amer-win-wire",
-  },
-  {
-    name: "Fanatics CTV (via PMG)",
-    customer: "Fanatics / PMG",
-    region: "AMER",
-    vertical: "E-Commerce",
-    dailySpend: 10_000,
-    totalSpend: 200_000,
-    d1Roas: 0,
-    d7Roas: 0,
-    stage: "test" as const,
-    healthScore: 78,
-    daysActive: 42,
-    kpiPerformance: 95,
-    nextStep: "Layers of performance, brand, and Tubi — close $200K commit",
-    sentiment: "positive" as const,
-    source: "#amer-win-wire",
-  },
-  {
-    name: "CHAI Research CTV",
-    customer: "CHAI Research Corp",
-    region: "AMER",
-    vertical: "Gaming",
-    dailySpend: 24_000,
-    totalSpend: 720_000,
-    d1Roas: 0,
-    d7Roas: 0,
-    stage: "scaling" as const,
-    healthScore: 95,
-    daysActive: 90,
-    kpiPerformance: 130,
-    nextStep: "Finalize Net 45 terms — scaling UA from $30M to $50M+ in 2026",
-    sentiment: "positive" as const,
-    source: "#external-chai-research",
-  },
-  {
-    name: "CTV2Web Training Phase",
-    customer: "CTV2Web (Internal)",
-    region: "Global",
-    vertical: "Platform",
-    dailySpend: 4_200,
-    totalSpend: 127_000,
-    d1Roas: 0,
-    d7Roas: 0,
-    stage: "test" as const,
-    healthScore: 72,
-    daysActive: 30,
-    kpiPerformance: 85,
-    nextStep: "Transition from Training to Test Phase — positive CPPV uplift observed",
-    sentiment: "neutral" as const,
-    source: "#ctv-all",
-  },
-  {
-    name: "Novig CTV",
-    customer: "Novig",
-    region: "AMER",
-    vertical: "Gaming",
-    dailySpend: 3_000,
-    totalSpend: 45_000,
-    d1Roas: 0,
-    d7Roas: 0,
-    stage: "test" as const,
-    healthScore: 70,
-    daysActive: 15,
-    kpiPerformance: 80,
-    nextStep: "Updated CTV assets — monitor performance post-creative refresh",
-    sentiment: "neutral" as const,
-    source: "#external-novig-moloco",
-  },
-  {
-    name: "APAC CTV Activation (H1 Fund)",
-    customer: "APAC CTV Fund",
-    region: "APAC",
-    vertical: "Multi-Vertical",
-    dailySpend: 2_000,
-    totalSpend: 120_000,
-    d1Roas: 0,
-    d7Roas: 0,
-    stage: "test" as const,
-    healthScore: 68,
-    daysActive: 21,
-    kpiPerformance: 75,
-    nextStep: "Target 20 new activations — 20% of 1K DRR for 4 weeks each",
-    sentiment: "neutral" as const,
-    source: "#ctv-chn-activation",
-  },
-  {
-    name: "CTV Web Activation (H1 Fund)",
-    customer: "Web CTV Fund",
-    region: "Global",
-    vertical: "Multi-Vertical",
-    dailySpend: 5_800,
-    totalSpend: 350_000,
-    d1Roas: 0,
-    d7Roas: 0,
-    stage: "test" as const,
-    healthScore: 65,
-    daysActive: 14,
-    kpiPerformance: 70,
-    nextStep: "10 new activations — each customer ~$30K allocation",
-    sentiment: "neutral" as const,
-    source: "#ctv-chn-activation",
-  },
-];
+// Campaign data now comes from DB via curated_intel (category: 'campaign')
 
 // ============================================================================
 // CONSTANTS
@@ -295,7 +154,7 @@ const STAGE_WEIGHTS: Record<string, number> = {
 // ============================================================================
 
 function buildRevenueTrajectory(sf: SalesforceContext | null, sb: SpeedboatContext | null, slackLive: SlackLiveMetrics | null, curated: Record<string, any[]>): RevenueTrajectory {
-  // Use DB-backed campaigns if available, fall back to hardcoded
+  // All campaign data sourced from DB (curated_intel category: 'campaign')
   const campaigns = (curated.campaign || []).map((c: any) => {
     const meta = c.metadata || {};
     return {
@@ -316,7 +175,7 @@ function buildRevenueTrajectory(sf: SalesforceContext | null, sb: SpeedboatConte
       source: c.text2 || "",
     };
   });
-  const activeCampaigns = campaigns.length > 0 ? campaigns : REAL_CTV_CAMPAIGNS;
+  const activeCampaigns = campaigns;
 
   const realClosed = activeCampaigns
     .filter((c: any) => c.stage === "scaling")
@@ -381,7 +240,9 @@ function buildRevenueTrajectory(sf: SalesforceContext | null, sb: SpeedboatConte
   // Monthly trend
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const monthlyTarget = CTV_CONTRIBUTION_TARGET / 12;
-  const monthlyActuals = [180_000, 320_000, 890_000];
+  // Monthly actuals from DB campaigns
+  const dbMonthlyActuals = (curated.monthly_actual || []).map((m: any) => Number(m.value1) || 0);
+  const monthlyActuals = dbMonthlyActuals.length > 0 ? dbMonthlyActuals : [0, 0, 0];
   const monthlyTrend = months.slice(0, Math.min(monthsElapsed + 2, 12)).map((m, i) => ({
     month: m,
     closed: i < monthlyActuals.length ? monthlyActuals[i] : 0,
@@ -430,16 +291,7 @@ function buildRevenueTrajectory(sf: SalesforceContext | null, sb: SpeedboatConte
     confidence: (s.text1 || "medium") as "high" | "medium" | "low",
     source: s.text2 || "",
   }));
-  const earlySignals: RevenueTrajectory["earlySignals"] = dbEarlySignals.length > 0 ? dbEarlySignals : [
-    { signal: "Tang Luck scaling to $57K/day with D1 ROAS 14.1% — validates CTV-to-App model at scale", type: "opportunity", confidence: "high", source: "#ctv-vip-winnerstudio" },
-    { signal: "CHAI Research planning $30M → $50M+ UA in 2026 — CTV is a growing share of their mix", type: "opportunity", confidence: "high", source: "#external-chai-research" },
-    { signal: "PMG shopping Moloco CTV to more clients after Experian win — agency flywheel starting", type: "opportunity", confidence: "medium", source: "#amer-win-wire" },
-    { signal: "~75% of CTV conversions from users not seen on mobile — strong incrementality story", type: "opportunity", confidence: "medium", source: "Experian data" },
-    { signal: "APAC CTV campaigns showing no revenue/payers — postback attribution issues", type: "risk", confidence: "high", source: "#ctv-sales-apac" },
-    { signal: "CTV-to-Web measurement gaps creating friction in sales conversations", type: "risk", confidence: "high", source: "GTM Alignment Doc" },
-    { signal: "EMEA/APAC pipeline tracker outdated — may be missing opportunities", type: "risk", confidence: "medium", source: "GTM Alignment Doc" },
-    { signal: "Test-to-scale stalls when customers pause to evaluate after 4-week test", type: "risk", confidence: "medium", source: "Gong" },
-  ];
+  const earlySignals: RevenueTrajectory["earlySignals"] = dbEarlySignals;
 
   return {
     annualTarget: ANNUAL_TARGET,
@@ -478,16 +330,7 @@ function buildCustomerVoice(gong: GongContext | null, curated: Record<string, an
     trend: (t.text1 || "flat") as "up" | "down" | "flat",
     implication: t.text2 || "",
   }));
-  const ctvThemes: CustomerVoice["topThemes"] = dbThemes.length > 0 ? dbThemes : [
-    { theme: "CTV-to-App performance measurement", count: 18, trend: "up", implication: "Buyers want proof that CTV drives app installs — our MMP integration story is the key differentiator" },
-    { theme: "Cross-device attribution (CTV → mobile)", count: 15, trend: "up", implication: "Household-level attribution is a must-have — this is where Moloco's ML advantage shows" },
-    { theme: "Incrementality vs existing mobile campaigns", count: 12, trend: "up", implication: "75% of CTV conversions are net-new users — we need to lead with this in every pitch" },
-    { theme: "CTV-to-Web measurement gaps", count: 10, trend: "flat", implication: "This is blocking EMEA/APAC pipeline — standardized deck needed urgently" },
-    { theme: "Competitive positioning vs TTD/Amazon DSP", count: 9, trend: "flat", implication: "TTD is the default incumbent — we need sharper battlecards for displacement pitches" },
-    { theme: "Creative optimization for CTV", count: 8, trend: "up", implication: "Advertisers want creative guidance — opportunity for Creative Studio to add value" },
-    { theme: "Test budget sizing and duration", count: 7, trend: "down", implication: "4-week / $50K minimum is landing well — less friction than before" },
-    { theme: "Supply quality and inventory transparency", count: 6, trend: "flat", implication: "FAST channels (Tubi, Roku) are undervalued — Doug Paladino sees opportunity here" },
-  ];
+  const ctvThemes: CustomerVoice["topThemes"] = dbThemes;
 
   const gongThemes = (gong?.topThemes || []).map((t, i) => ({
     theme: t,
@@ -505,14 +348,7 @@ function buildCustomerVoice(gong: GongContext | null, curated: Record<string, an
     winRateWhenRaised: Number(o.value2) || 0,
     bestResponse: o.text1 || "",
   }));
-  const ctvObjections: CustomerVoice["objections"] = dbObjections.length > 0 ? dbObjections : [
-    { objection: "How do you measure CTV-to-App attribution without a pixel?", frequency: 14, winRateWhenRaised: 55, bestResponse: "We integrate with all major MMPs (AppsFlyer, Adjust, Branch) for deterministic attribution. Our ML model also uses probabilistic signals at the household level." },
-    { objection: "We already run CTV through TTD — why switch?", frequency: 11, winRateWhenRaised: 40, bestResponse: "Not asking you to switch — start with a 4-week test alongside TTD. Our ML optimization typically delivers 20-40% better ROAS. Experian ran this exact test and paused TTD." },
-    { objection: "CTV budgets are separate from mobile — different buyer", frequency: 9, winRateWhenRaised: 35, bestResponse: "That's exactly why CTV is incremental. 75% of CTV conversions come from users not seen on mobile. We help you reach the brand buyer with performance metrics they can act on." },
-    { objection: "Need Brand Lift Study before committing to scale", frequency: 7, winRateWhenRaised: 50, bestResponse: "We support BLS through our measurement partners. But consider: Tang Luck scaled to $57K/day based on D1 ROAS alone — hard performance metrics often move faster than BLS." },
-    { objection: "CPMs seem high vs linear TV", frequency: 6, winRateWhenRaised: 60, bestResponse: "CTV CPMs are higher ($25-45) but the targeting precision means lower effective CPA. Our ML optimization drives CPMs down over time as the model learns." },
-    { objection: "How does Moloco CTV work for web-only advertisers?", frequency: 5, winRateWhenRaised: 30, bestResponse: "CTV-to-Web is in active development — we're in training phase with positive CPPV uplift. For now, CTV-to-App is our strongest offering. We'll have a Web solution by mid-2026." },
-  ];
+  const ctvObjections: CustomerVoice["objections"] = dbObjections;
 
   const gongObjections = (gong?.objectionPatterns || []).map((o, i) => ({
     objection: o,
@@ -535,12 +371,7 @@ function buildCustomerVoice(gong: GongContext | null, curated: Record<string, an
     neutral: Number(s.value2) || 0,
     negative: Number(s.value3) || 0,
   }));
-  const sentimentTrend = dbSentimentTrend.length > 0 ? dbSentimentTrend : [
-    { week: "W1 (Mar 3)", positive: 12, neutral: 8, negative: 4 },
-    { week: "W2 (Mar 10)", positive: 10, neutral: 9, negative: 5 },
-    { week: "W3 (Mar 17)", positive: 14, neutral: 7, negative: 3 },
-    { week: "W4 (Mar 24)", positive: 16, neutral: 6, negative: 2 },
-  ];
+  const sentimentTrend = dbSentimentTrend;
 
   // DB-backed competitor mentions
   const dbCompetitorMentions: CustomerVoice["competitorMentions"] = (curated.competitor_mention || []).map((c: any) => ({
@@ -549,13 +380,7 @@ function buildCustomerVoice(gong: GongContext | null, curated: Record<string, an
     context: c.text1 || "",
     threatLevel: (c.text2 || "medium") as "high" | "medium" | "low",
   }));
-  const competitorMentions: CustomerVoice["competitorMentions"] = dbCompetitorMentions.length > 0 ? dbCompetitorMentions : [
-    { competitor: "The Trade Desk", count: 14, context: "Primary incumbent — mentioned in 30%+ of pitches. UID2/OpenPath is their moat.", threatLevel: "high" },
-    { competitor: "Amazon DSP", count: 11, context: "Growing CTV via Freevee/Prime Video. Netflix partnership in Q2.", threatLevel: "high" },
-    { competitor: "DV360", count: 8, context: "Google's CTV play — strong with brand-focused buyers.", threatLevel: "medium" },
-    { competitor: "tvScientific", count: 6, context: "New 'Guaranteed Outcomes' — pay-for-results positioning. Pinterest acquisition.", threatLevel: "medium" },
-    { competitor: "Roku OneView", count: 5, context: "Owns supply + data. Walled garden advantage.", threatLevel: "low" },
-  ];
+  const competitorMentions: CustomerVoice["competitorMentions"] = dbCompetitorMentions;
 
   // DB-backed top quotes
   const dbTopQuotes: CustomerVoice["topQuotes"] = (curated.quote || []).map((q: any) => ({
@@ -564,12 +389,7 @@ function buildCustomerVoice(gong: GongContext | null, curated: Record<string, an
     date: q.text2 || "",
     sentiment: (q.text3 || "neutral") as "positive" | "negative" | "neutral",
   }));
-  const topQuotes: CustomerVoice["topQuotes"] = dbTopQuotes.length > 0 ? dbTopQuotes : [
-    { quote: "Given the strong performance we are seeing, it is clear that your mobile secret sauce shows a lot of intent at the household level.", customer: "Doug Paladino (Experian)", date: "2026-03-15", sentiment: "positive" },
-    { quote: "FAST channels and cheap stuff in CTV is still really undervalued... there is a lot more value and signals in Tubi and Roku.", customer: "Doug Paladino (Experian)", date: "2026-03-15", sentiment: "positive" },
-    { quote: "Weekend data at $57K/day is nearly complete, and CTV model is delivering above client KPIs.", customer: "Hye Jeong Lee (Tang Luck update)", date: "2026-03-29", sentiment: "positive" },
-    { quote: "We're seeing no revenue or payers on the CTV campaign while mobile campaigns show healthy D7 ROAS.", customer: "APAC client (CTV-sales-apac)", date: "2026-03-22", sentiment: "negative" },
-  ];
+  const topQuotes: CustomerVoice["topQuotes"] = dbTopQuotes;
 
   return {
     totalCalls: effectiveTotal,
@@ -604,13 +424,7 @@ function buildWinLossPatterns(gong: GongContext | null, curated: Record<string, 
     evidence: b.text2 || "",
     confidence: (b.text3 || "medium") as "high" | "medium" | "low",
   }));
-  const winningBehaviors: WinLossPatterns["winningBehaviors"] = dbBehaviors.length > 0 ? dbBehaviors : [
-    { behavior: "Lead with incrementality data (75% net-new users)", impact: "2x higher conversion from Pitch to Test", evidence: "Experian, Tang Luck, CHAI all converted after seeing incrementality proof", confidence: "high" },
-    { behavior: "Propose 4-week test with clear KPIs upfront", impact: "60% test-to-scale conversion vs 25% without clear KPIs", evidence: "Tang Luck scaled to $57K/day after structured 4-week test", confidence: "high" },
-    { behavior: "Engage the mobile/performance buyer, not the brand buyer", impact: "3x faster deal cycle (45d vs 120d+)", evidence: "Brand-focused pitches stall at Pitch stage — performance buyers have budget authority", confidence: "medium" },
-    { behavior: "Use MMP integration as proof of measurement rigor", impact: "Overcomes #1 objection (attribution without pixel)", evidence: "55% win rate when this objection is addressed with MMP story", confidence: "medium" },
-    { behavior: "Reference specific customer results (Tang Luck D1 ROAS 14.1%)", impact: "Builds credibility faster than generic CTV claims", evidence: "Reps who cite specific results close 30% faster", confidence: "low" },
-  ];
+  const winningBehaviors: WinLossPatterns["winningBehaviors"] = dbBehaviors;
 
   // DB-backed losing patterns
   const dbLosingPatterns: WinLossPatterns["losingPatterns"] = (curated.losing_pattern || []).map((b: any) => ({
@@ -619,12 +433,7 @@ function buildWinLossPatterns(gong: GongContext | null, curated: Record<string, 
     evidence: b.text2 || "",
     frequency: Number(b.value1) || 0,
   }));
-  const losingPatterns: WinLossPatterns["losingPatterns"] = dbLosingPatterns.length > 0 ? dbLosingPatterns : [
-    { pattern: "Pitching CTV-to-Web before the product is ready", impact: "Creates expectation gap — customer disappointed when measurement isn't available", evidence: "Multiple APAC deals stalled on CTV-to-Web measurement gaps", frequency: 8 },
-    { pattern: "Not proactively aligning on evergreen criteria before test ends", impact: "Customer pauses to 'evaluate' — momentum dies", evidence: "Test-to-scale stall is the #1 funnel bottleneck", frequency: 6 },
-    { pattern: "Targeting brand-only buyers without performance angle", impact: "Deal cycle extends to 120+ days, often stalls at Proposal", evidence: "CTV-experienced (branding) persona has 35% win rate vs 45% for performance", frequency: 5 },
-    { pattern: "Not involving agency partner (PMG, etc.) early enough", impact: "Misses the agency flywheel — PMG brought Experian AND Fanatics", evidence: "Agency-sourced deals have 2x pipeline value", frequency: 4 },
-  ];
+  const losingPatterns: WinLossPatterns["losingPatterns"] = dbLosingPatterns;
 
   // DB-backed rep leaderboard
   const dbRepLeaderboard: WinLossPatterns["repLeaderboard"] = (curated.rep_performance || []).map((r: any) => ({
@@ -635,12 +444,7 @@ function buildWinLossPatterns(gong: GongContext | null, curated: Record<string, 
     avgCycleDays: r.metadata?.avgCycleDays || 45,
     topStrength: r.text1 || "",
   }));
-  const repLeaderboard: WinLossPatterns["repLeaderboard"] = dbRepLeaderboard.length > 0 ? dbRepLeaderboard : [
-    { name: "Gabriel Green", closedValue: 720_000, pipelineValue: 200_000, winRate: 0.55, avgCycleDays: 35, topStrength: "CHAI relationship — deep trust, fast deal cycles" },
-    { name: "Hye Jeong Lee", closedValue: 570_000, pipelineValue: 350_000, winRate: 0.50, avgCycleDays: 28, topStrength: "APAC market expertise — Tang Luck scaling success" },
-    { name: "Austin White", closedValue: 300_000, pipelineValue: 500_000, winRate: 0.45, avgCycleDays: 42, topStrength: "Agency relationships — PMG flywheel (Experian + Fanatics)" },
-    { name: "Clara Copeland", closedValue: 0, pipelineValue: 400_000, winRate: 0.30, avgCycleDays: 55, topStrength: "Pipeline builder — strong at generating new opportunities" },
-  ];
+  const repLeaderboard: WinLossPatterns["repLeaderboard"] = dbRepLeaderboard;
 
   // DB-backed coaching opportunities
   const dbCoaching: WinLossPatterns["coachingOpportunities"] = (curated.coaching || []).map((c: any) => ({
@@ -649,13 +453,7 @@ function buildWinLossPatterns(gong: GongContext | null, curated: Record<string, 
     priority: (c.text1 || "medium") as "high" | "medium" | "low",
     suggestedAction: c.text2 || "",
   }));
-  const coachingOpportunities: WinLossPatterns["coachingOpportunities"] = dbCoaching.length > 0 ? dbCoaching : [
-    { area: "CTV-to-Web pitch (global deck in progress)", repsAffected: 8, priority: "high", suggestedAction: "Hold off on CTV-to-Web pitches until standardized deck is ready — use CTV-to-App as primary offering" },
-    { area: "Test-to-scale conversion playbook", repsAffected: 10, priority: "high", suggestedAction: "Proactively schedule 'evergreen criteria' discussion in week 2 of test — don't wait for test to end" },
-    { area: "Competitive positioning vs Amazon DSP / tvScientific", repsAffected: 5, priority: "medium", suggestedAction: "Review updated battlecards — Amazon Netflix partnership and tvScientific Guaranteed Outcomes are new angles" },
-    { area: "CTV attribution and postback troubleshooting", repsAffected: 6, priority: "high", suggestedAction: "Partner with Ad-Ops on pre-launch postback verification checklist — APAC attribution issues are preventable" },
-    { area: "EMEA/APAC CTV supply positioning", repsAffected: 4, priority: "medium", suggestedAction: "Use Doug Paladino's insight: FAST channels (Tubi, Roku) are undervalued — position as signal-rich, not cheap" },
-  ];
+  const coachingOpportunities: WinLossPatterns["coachingOpportunities"] = dbCoaching;
 
   // DB-backed test-to-scale drivers
   const dbDrivers: WinLossPatterns["testToScaleDrivers"] = (curated.test_to_scale || []).map((d: any) => ({
@@ -663,13 +461,7 @@ function buildWinLossPatterns(gong: GongContext | null, curated: Record<string, 
     correlation: (d.text1 || "moderate") as "strong" | "moderate" | "weak",
     evidence: d.text2 || "",
   }));
-  const testToScaleDrivers: WinLossPatterns["testToScaleDrivers"] = dbDrivers.length > 0 ? dbDrivers : [
-    { driver: "Clear KPIs agreed before test starts", correlation: "strong", evidence: "Tang Luck had D1 ROAS 12% target — exceeded at 14.1%, immediate scale decision" },
-    { driver: "Weekly performance check-ins during test", correlation: "strong", evidence: "Campaigns with weekly check-ins scale 2x more often than set-and-forget" },
-    { driver: "Proactive evergreen criteria discussion in week 2", correlation: "moderate", evidence: "Prevents the 'pause to evaluate' pattern that kills momentum" },
-    { driver: "Agency partner involvement", correlation: "moderate", evidence: "PMG-sourced tests have higher scale rates — agency has incentive to show results" },
-    { driver: "Creative refresh mid-test", correlation: "weak", evidence: "Novig refreshed creatives — too early to tell if it improves scale conversion" },
-  ];
+  const testToScaleDrivers: WinLossPatterns["testToScaleDrivers"] = dbDrivers;
 
   return {
     dataMaturity: "We're looking for leading indicators that might inform manager coaching, with the caveat that we're still testing whether the signal is strong enough to act on. Win/loss patterns below are based on ~50 CTV deals and ~100 Gong calls — directional, not statistically rigorous.",
@@ -681,12 +473,12 @@ function buildWinLossPatterns(gong: GongContext | null, curated: Record<string, 
     coachingOpportunities,
     testToScaleRate: 0.375,
     testToScaleDrivers,
-    activityTrend: [
-      { week: "W1 (Mar 3)", calls: 32, meetings: 12, emails: 85 },
-      { week: "W2 (Mar 10)", calls: 28, meetings: 10, emails: 78 },
-      { week: "W3 (Mar 17)", calls: 38, meetings: 15, emails: 95 },
-      { week: "W4 (Mar 24)", calls: 42, meetings: 18, emails: 102 },
-    ],
+    activityTrend: (curated.activity_trend || []).map((a: any) => ({
+      week: a.label,
+      calls: Number(a.value1) || 0,
+      meetings: Number(a.value2) || 0,
+      emails: Number(a.value3) || 0,
+    })),
   };
 }
 
@@ -703,13 +495,7 @@ function buildMarketPosition(gong: GongContext | null, st: SensorTowerContext | 
     netPosition: w.text1 || "",
     keyDifferentiator: w.text2 || "",
   }));
-  const winLossDynamics: MarketPosition["winLossDynamics"] = dbWinLoss.length > 0 ? dbWinLoss : [
-    { competitor: "The Trade Desk", winsAgainst: 3, lossesAgainst: 5, netPosition: "Challenger — winning on ML/performance, losing on brand reach and UID2 ecosystem", keyDifferentiator: "ML-driven optimization delivers 20-40% better ROAS in head-to-head tests" },
-    { competitor: "Amazon DSP", winsAgainst: 2, lossesAgainst: 3, netPosition: "Niche — winning with app-first advertisers, losing with brand/retail buyers", keyDifferentiator: "CTV-to-App attribution via MMP integration — Amazon can't match this for non-Amazon advertisers" },
-    { competitor: "DV360", winsAgainst: 4, lossesAgainst: 2, netPosition: "Advantage — winning on performance metrics, Google's CTV offering is still immature", keyDifferentiator: "Real-time ML optimization vs DV360's batch-based approach" },
-    { competitor: "tvScientific", winsAgainst: 1, lossesAgainst: 1, netPosition: "Even — too early to tell, but their 'Guaranteed Outcomes' is a compelling pitch", keyDifferentiator: "We have scale and proven ML; they have a novel pricing model" },
-    { competitor: "Roku OneView", winsAgainst: 2, lossesAgainst: 0, netPosition: "Advantage — Roku is supply-focused, we're demand-focused with better optimization", keyDifferentiator: "Cross-publisher optimization vs Roku's walled garden" },
-  ];
+  const winLossDynamics: MarketPosition["winLossDynamics"] = dbWinLoss;
 
   // DB-backed competitive signals
   const dbSignals: MarketPosition["competitiveSignals"] = (curated.competitive_signal || []).map((s: any) => ({
@@ -719,13 +505,7 @@ function buildMarketPosition(gong: GongContext | null, st: SensorTowerContext | 
     urgency: (s.text3 || "medium") as "high" | "medium" | "low",
     implication: s.text4 || "",
   }));
-  const competitiveSignals: MarketPosition["competitiveSignals"] = dbSignals.length > 0 ? dbSignals : [
-    { signal: "tvScientific launched 'Guaranteed Outcomes' — pay only for verified conversions", source: "#ctv-market-intelligence", date: "2026-03-20", urgency: "high", implication: "Changes the pricing conversation — we need a response or risk losing performance-focused buyers" },
-    { signal: "Netflix Ads Suite targeting $3B ad revenue by 2027 — Amazon partnership for ad tech", source: "#ctv-market-intelligence", date: "2026-03-15", urgency: "high", implication: "Premium CTV inventory expanding rapidly — we need Netflix supply integration on the roadmap" },
-    { signal: "TTD reported $1.9B revenue — CTV is their fastest-growing segment", source: "Earnings", date: "2026-02-28", urgency: "medium", implication: "TTD is investing heavily in CTV — expect more aggressive pricing and features" },
-    { signal: "Smadex (Entravision) building CTV partnerships — new entrant in performance CTV", source: "#ctv-market-intelligence", date: "2026-03-10", urgency: "low", implication: "More competition validates the market but fragments buyer attention" },
-    { signal: "Signal loss accelerating — cookie deprecation driving more budget to CTV", source: "Industry reports", date: "2026-03", urgency: "medium", implication: "Tailwind for CTV adoption — our ML advantage becomes more valuable as signals get scarcer" },
-  ];
+  const competitiveSignals: MarketPosition["competitiveSignals"] = dbSignals;
 
   // DB-backed TAM estimates
   const dbTam: MarketPosition["tamEstimate"] = (curated.tam_segment || []).map((t: any) => ({
@@ -734,11 +514,7 @@ function buildMarketPosition(gong: GongContext | null, st: SensorTowerContext | 
     samReachable: Number(t.value2) || 0,
     currentPenetration: Number(t.value3) || 0,
   }));
-  const tamEstimate: MarketPosition["tamEstimate"] = dbTam.length > 0 ? dbTam : [
-    { segment: "CTV-to-App (Performance)", tam: 8_000_000_000, samReachable: 2_000_000_000, currentPenetration: 0.0007 },
-    { segment: "CTV-to-App (Brand + Performance)", tam: 15_000_000_000, samReachable: 4_000_000_000, currentPenetration: 0.0004 },
-    { segment: "CTV-to-Web (Performance)", tam: 5_000_000_000, samReachable: 500_000_000, currentPenetration: 0.0003 },
-  ];
+  const tamEstimate: MarketPosition["tamEstimate"] = dbTam;
 
   // DB-backed market trends
   const dbTrends: MarketPosition["marketTrends"] = (curated.market_trend || []).map((t: any) => ({
@@ -746,13 +522,7 @@ function buildMarketPosition(gong: GongContext | null, st: SensorTowerContext | 
     direction: (t.text1 || "stable") as "accelerating" | "decelerating" | "stable",
     relevance: t.text2 || "",
   }));
-  const marketTrends: MarketPosition["marketTrends"] = dbTrends.length > 0 ? dbTrends : [
-    { trend: "CTV ad spend growing 25% YoY — fastest-growing digital channel", direction: "accelerating", relevance: "Rising tide lifts all boats — but competition is intensifying proportionally" },
-    { trend: "FAST channels (Tubi, Pluto, Roku Channel) gaining share vs premium", direction: "accelerating", relevance: "FAST inventory is signal-rich and undervalued — aligns with our ML advantage" },
-    { trend: "Performance measurement becoming table stakes for CTV buyers", direction: "accelerating", relevance: "Our MMP integration and ML optimization are exactly what the market is demanding" },
-    { trend: "Agency consolidation of CTV buying through fewer platforms", direction: "stable", relevance: "PMG flywheel validates this — agencies want one platform for CTV + mobile" },
-    { trend: "Retail media networks expanding into CTV", direction: "accelerating", relevance: "Potential new buyer segment — but may also bring Amazon DSP deeper into CTV" },
-  ];
+  const marketTrends: MarketPosition["marketTrends"] = dbTrends;
 
   // DB-backed Moloco advantages
   const dbAdvantages: MarketPosition["molocoAdvantages"] = (curated.advantage || []).map((a: any) => ({
@@ -760,13 +530,7 @@ function buildMarketPosition(gong: GongContext | null, st: SensorTowerContext | 
     evidence: a.text1 || "",
     durability: (a.text2 || "durable") as "durable" | "temporary" | "at-risk",
   }));
-  const molocoAdvantages: MarketPosition["molocoAdvantages"] = dbAdvantages.length > 0 ? dbAdvantages : [
-    { advantage: "ML-first optimization — proven on mobile, now applied to CTV", evidence: "Tang Luck D1 ROAS 14.1% at $57K/day; CHAI $24K DRR record", durability: "durable" },
-    { advantage: "CTV-to-App attribution via MMP integration", evidence: "75% of CTV conversions are net-new users not seen on mobile", durability: "durable" },
-    { advantage: "Cross-device household graph from mobile data", evidence: "Doug Paladino: 'your mobile secret sauce shows a lot of intent at the household level'", durability: "durable" },
-    { advantage: "Agency flywheel starting (PMG → Experian → Fanatics)", evidence: "PMG brought 2 clients in Q1 — shopping Moloco CTV to more", durability: "temporary" },
-    { advantage: "FAST channel signal extraction", evidence: "Tubi and Roku data is undervalued — our ML can extract more signal than competitors", durability: "at-risk" },
-  ];
+  const molocoAdvantages: MarketPosition["molocoAdvantages"] = dbAdvantages;
 
   // DB-backed Moloco vulnerabilities
   const dbVulnerabilities: MarketPosition["molocoVulnerabilities"] = (curated.vulnerability || []).map((v: any) => ({
@@ -774,12 +538,7 @@ function buildMarketPosition(gong: GongContext | null, st: SensorTowerContext | 
     threat: v.text1 || "",
     mitigation: v.text2 || "",
   }));
-  const molocoVulnerabilities: MarketPosition["molocoVulnerabilities"] = dbVulnerabilities.length > 0 ? dbVulnerabilities : [
-    { vulnerability: "No CTV-to-Web measurement yet", threat: "Blocks entire EMEA/APAC pipeline segment — web-only advertisers can't use us", mitigation: "CTV2Web in training phase — positive CPPV uplift. Target mid-2026 for GA." },
-    { vulnerability: "Small CTV team (2 FTEs + agents)", threat: "Can't cover all regions and verticals simultaneously", mitigation: "AI-first operating model — agents handle 80% of routine work, humans focus on strategic accounts" },
-    { vulnerability: "No Brand Lift Study integration", threat: "Brand-focused buyers need BLS before scaling", mitigation: "Partner with measurement vendors for BLS. Lead with performance metrics in the meantime." },
-    { vulnerability: "Limited CTV supply partnerships", threat: "TTD and Amazon have deeper supply relationships", mitigation: "Focus on FAST channels where we can differentiate. Build supply partnerships incrementally." },
-  ];
+  const molocoVulnerabilities: MarketPosition["molocoVulnerabilities"] = dbVulnerabilities;
 
   return {
     dataMaturity: "Win/loss dynamics, competitive signals, and TAM estimates below are a starting point for a conversation, not a definitive view. Win/loss data is based on ~50 CTV deals. TAM estimates use industry reports and internal modeling. Competitive signals are sourced from Slack channels and public information.",
@@ -850,7 +609,30 @@ function generateSynthesis(
 // MAIN REPORT BUILDER
 // ============================================================================
 
+// Report-level cache: 5 minutes TTL, deduplicates concurrent requests
+let insightsReportCache: { data: InsightsReport; timestamp: number } | null = null;
+const REPORT_CACHE_TTL = 5 * 60 * 1000;
+let insightsReportInFlight: Promise<InsightsReport> | null = null;
+
 export async function buildInsightsReport(): Promise<InsightsReport> {
+  if (insightsReportCache && (Date.now() - insightsReportCache.timestamp) < REPORT_CACHE_TTL) {
+    return insightsReportCache.data;
+  }
+  if (insightsReportInFlight) return insightsReportInFlight;
+
+  insightsReportInFlight = _buildInsightsReportUncached().then(report => {
+    insightsReportCache = { data: report, timestamp: Date.now() };
+    insightsReportInFlight = null;
+    return report;
+  }).catch(err => {
+    insightsReportInFlight = null;
+    throw err;
+  });
+
+  return insightsReportInFlight;
+}
+
+async function _buildInsightsReportUncached(): Promise<InsightsReport> {
   const [gong, sf, sb, st, slackLive, curated] = await Promise.all([
     getGongContext().catch(() => null),
     getSalesforceContext().catch(() => null),

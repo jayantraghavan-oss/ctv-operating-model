@@ -889,35 +889,35 @@
 - [x] Final checkpoint
 
 ## Phase 65: Site Loading Performance Fix + Deep Audit
-- [ ] Diagnose site loading performance issue (slow/not loading)
-- [ ] Fix server-side bottlenecks causing slow page loads
-- [ ] Optimize data fetching and reduce blocking requests
+- [x] Diagnose site loading performance issue — root cause: uncached liveData.status + reporting endpoints
+- [x] Fix server-side bottlenecks — added 1min cache + request deduplication to liveData.status
+- [x] Optimize data fetching — added report-level caching to reporting.insights + businessInsights, lazy-refresh LiveDataStatus
 
 ## Phase 65: Zero Hardcoded Data — Everything from DB or LLM
-- [ ] Catalog every hardcoded data array across all pages
-- [ ] Seed all data into curated_intel DB
-- [ ] Refactor Toolkit.tsx to use DB data
-- [ ] Refactor DataPulse.tsx to use DB data
-- [ ] Refactor WarRoom.tsx to use DB data
-- [ ] Refactor LearningLoops.tsx to use DB data
-- [ ] Refactor WeeklyPrep.tsx to use DB data
-- [ ] Refactor Reporting.tsx to use DB data
-- [ ] Refactor BuyerSim.tsx to use DB data
-- [ ] Refactor ConvictionDashboard.tsx to use DB data
-- [ ] Refactor operational.ts to use DB data
+- [x] Catalog every hardcoded data array across all pages
+- [x] Seed all data into curated_intel DB (25 new categories, 795 total records, 106 categories)
+- [x] Refactor Toolkit.tsx — SECTIONS is UI config, kept as-is
+- [x] Refactor DataPulse.tsx — already uses useCuratedData
+- [x] Refactor WarRoom.tsx — already uses useCuratedData
+- [x] Refactor LearningLoops.tsx — removed _FALLBACK_LOOPS
+- [x] Refactor WeeklyPrep.tsx — fully refactored to useCuratedData
+- [x] Refactor Reporting.tsx — SECTIONS is UI config, kept as-is
+- [x] Refactor BuyerSim.tsx — removed _FALLBACK_PERSONAS
+- [x] Refactor ConvictionDashboard.tsx — uses useAgent context, not hardcoded
+- [x] Refactor operational.ts — file doesn't exist, no action needed
 - [x] Refactor CCCTVReporting.tsx — remove hardcoded fallbacks (Q1 FALLBACK_REVENUE/CAMPAIGNS/CONCENTRATION/RISK_SIGNALS, Q2 sentimentData/themeData/verbatims, Q3 behaviorData/winRateByBehavior/lossReasons, Q4 competitorData/winRateByCompetitor/tamData/competitiveSignals)
 - [x] Refactor CTVIntelligence.tsx — remove hardcoded fallbacks (DEFAULT_Q3_BEHAVIORS, DEFAULT_Q3_LOSS_REASONS, DEFAULT_Q4_COMPETITORS, DEFAULT_Q4_TAM)
-- [ ] Refactor reporting.ts — remove hardcoded fallbacks
+- [x] Refactor reporting.ts — removed all 14 hardcoded fallback arrays + REAL_CTV_CAMPAIGNS constant
 - [x] Remove ALL DEFAULT_ fallback arrays from CTVIntelligence and CCCTVReporting
 - [x] Run full test suite — 217 tests passing (178 existing + 39 new curatedIntel tests)
-- [ ] Final checkpoint
+- [x] Final checkpoint — 244 tests passing, 0 TypeScript errors, 0 hardcoded fallbacks
 
 ## Phase 66: Super Dashboard + HTML Ingestion + Daily Refresh
 - [x] Parse uploaded moloco_ctv_dashboard.html and extract all data points (seed-html-dashboard.mjs)
 - [x] Seed extracted data into curated_intel DB, replacing stale records (727 records across 39 categories)
 - [x] Build Super Dashboard page comparing CTV Intelligence vs CC CTV Reporting (SuperDashboard.tsx)
 - [x] Validate zero hallucinations — every data point traced to source (BigQuery, Gong, SFDC, Slack, SearchLight)
-- [ ] Set up daily scheduled refresh task for HTML dashboard ingestion
+- [x] Set up daily scheduled refresh task for HTML dashboard ingestion (already done in Phase 67)
 - [x] Add Super Dashboard route to App.tsx and navigation (sidebar + NeuralShell)
 - [x] Fix trpcFetch.ts — no-input queries sent {json:null} causing 400 errors, now sends {} correctly
 - [x] Fix SuperDashboard endpoint name — reporting.insightsReport → reporting.insights
@@ -934,7 +934,7 @@
 - [x] Expanded html_pipeline_deals from 4 to 10 records (full Sales Intelligence tab)
 - [x] Expanded html_slack_signals from 4 to 7 records (deal + competitive signals)
 - [x] Set up daily scheduled task (weekdays 7AM PT) for HTML dashboard re-ingestion
-- [ ] Save checkpoint
+- [x] Save checkpoint
 
 ## Phase 72: Add CTV Intelligence (Claude) Tab
 - [x] Upload moloco_ctv_dashboard.html to CDN (https://d2xsxph8kpxj0f.cloudfront.net/.../moloco_ctv_dashboard_142ed267.html)
@@ -969,4 +969,4 @@
 ### Testing & Polish
 - [x] Write vitest tests for businessInsights.ts (27 tests, all passing)
 - [x] Verify all data sources are live (BQ, SFDC, Gong, Slack, curated DB)
-- [ ] Save checkpoint
+- [x] Save checkpoint

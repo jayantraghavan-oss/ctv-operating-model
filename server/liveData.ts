@@ -57,27 +57,49 @@ export interface ConnectorStatus {
 }
 
 let lastStatus: ConnectorStatus | null = null;
+let lastStatusCheckedAt = 0;
+const STATUS_CACHE_TTL = 60_000; // 1 minute cache for health checks
+let statusCheckInFlight: Promise<ConnectorStatus> | null = null;
 
 /**
  * Check health of all connectors. Returns status per source.
+ * Cached for 1 minute to prevent repeated slow subprocess calls.
+ * De-duplicates concurrent requests.
  */
 export async function checkConnectorStatus(): Promise<ConnectorStatus> {
-  const [gong, sf, st, sb] = await Promise.allSettled([
-    runPythonScript("gong_health_check"),
-    runPythonScript("sf_health_check"),
-    runPythonScript("st_health_check"),
-    runSpeedboatHealthCheck(),
-  ]);
+  // Return cached if fresh enough
+  if (lastStatus && (Date.now() - lastStatusCheckedAt) < STATUS_CACHE_TTL) {
+    return lastStatus;
+  }
 
-  lastStatus = {
-    gong: gong.status === "fulfilled" && gong.value?.ok ? "connected" : "unavailable",
-    salesforce: sf.status === "fulfilled" && sf.value?.ok ? "connected" : "unavailable",
-    sensorTower: st.status === "fulfilled" && st.value?.ok ? "connected" : "unavailable",
-    speedboat: sb.status === "fulfilled" && sb.value?.ok ? "connected" : "unavailable",
-    lastChecked: Date.now(),
-  };
+  // De-duplicate concurrent calls
+  if (statusCheckInFlight) return statusCheckInFlight;
 
-  return lastStatus;
+  statusCheckInFlight = (async () => {
+    try {
+      const [gong, sf, st, sb] = await Promise.allSettled([
+        runPythonScript("gong_health_check"),
+        runPythonScript("sf_health_check"),
+        runPythonScript("st_health_check"),
+        runSpeedboatHealthCheck(),
+      ]);
+
+      lastStatus = {
+        gong: gong.status === "fulfilled" && gong.value?.ok ? "connected" : "unavailable",
+        salesforce: sf.status === "fulfilled" && sf.value?.ok ? "connected" : "unavailable",
+        sensorTower: st.status === "fulfilled" && st.value?.ok ? "connected" : "unavailable",
+        speedboat: sb.status === "fulfilled" && sb.value?.ok ? "connected" : "unavailable",
+        lastChecked: Date.now(),
+      };
+      lastStatusCheckedAt = Date.now();
+
+      return lastStatus;
+    } finally {
+      statusCheckInFlight = null;
+    }
+  })();
+
+  return statusCheckInFlight;
 }
 
 export function getLastStatus(): ConnectorStatus | null {

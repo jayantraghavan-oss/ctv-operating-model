@@ -1048,7 +1048,30 @@ function buildMarketSection(
 // MAIN REPORT BUILDER
 // ============================================================================
 
+// Report-level cache: 5 minutes TTL, deduplicates concurrent requests
+let biReportCache: { data: BusinessInsightsReport; timestamp: number } | null = null;
+const BI_CACHE_TTL = 5 * 60 * 1000;
+let biReportInFlight: Promise<BusinessInsightsReport> | null = null;
+
 export async function buildBusinessInsightsReport(): Promise<BusinessInsightsReport> {
+  if (biReportCache && (Date.now() - biReportCache.timestamp) < BI_CACHE_TTL) {
+    return biReportCache.data;
+  }
+  if (biReportInFlight) return biReportInFlight;
+
+  biReportInFlight = _buildBusinessInsightsUncached().then(report => {
+    biReportCache = { data: report, timestamp: Date.now() };
+    biReportInFlight = null;
+    return report;
+  }).catch(err => {
+    biReportInFlight = null;
+    throw err;
+  });
+
+  return biReportInFlight;
+}
+
+async function _buildBusinessInsightsUncached(): Promise<BusinessInsightsReport> {
   console.log("[Business Insights] Building report...");
 
   // Fetch all data sources in parallel

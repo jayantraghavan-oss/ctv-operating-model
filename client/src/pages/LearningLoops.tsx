@@ -36,119 +36,7 @@ interface LearningLoop {
   criticalFor: string;
 }
 
-// Hardcoded fallback removed — data comes from DB
-const _FALLBACK_LOOPS: LearningLoop[] = [
-  {
-    id: "loop-1",
-    name: "Market → Messaging",
-    from: { module: 1, section: "Industry Landscape Monitoring" },
-    to: { module: 2, section: "Outbound System" },
-    signal: "Market shifts and competitive moves detected by Module 1 agents feed directly into Module 2 messaging variants.",
-    mechanism: "When the competitor agent detects a new feature launch or the analyst tracker surfaces a narrative shift, the outbound system automatically generates new messaging angles that address the changed landscape.",
-    frequency: "Weekly cycle — market brief triggers messaging refresh",
-    status: "active",
-    criticalFor: "Ensures outbound messaging stays current with market reality instead of running on stale positioning.",
-  },
-  {
-    id: "loop-2",
-    name: "Win/Loss → Positioning",
-    from: { module: 1, section: "Customer Voice & Win/Loss" },
-    to: { module: 1, section: "Positioning Intelligence" },
-    signal: "Win/loss patterns from Gong + CRM feed back into positioning decisions.",
-    mechanism: "When the win/loss agent detects that 'lack of incrementality measurement' is cited in 3+ losses, the positioning intelligence agent flags this as a gap and generates counter-positioning recommendations.",
-    frequency: "Continuous — each win/loss event triggers re-evaluation",
-    status: "active",
-    criticalFor: "Prevents positioning from drifting away from what actually wins and loses deals.",
-  },
-  {
-    id: "loop-3",
-    name: "Test Results → ICP Refinement",
-    from: { module: 3, section: "Campaign Monitoring" },
-    to: { module: 2, section: "ICP Intelligence" },
-    signal: "Campaign performance data from active tests feeds back into ICP scoring and prioritization.",
-    mechanism: "When a vertical consistently outperforms (e.g., gaming at 12% MQL→SQL), the ICP agent increases conviction on that segment. When a segment underperforms, it flags for deprioritization.",
-    frequency: "Weekly — performance data aggregated and fed back",
-    status: "active",
-    criticalFor: "Ensures ICP targeting improves with every test cycle rather than staying static.",
-  },
-  {
-    id: "loop-4",
-    name: "Customer Success → Market Intel",
-    from: { module: 3, section: "Cross-Account Intelligence" },
-    to: { module: 1, section: "Competitor Intelligence" },
-    signal: "Cross-account patterns and competitive benchmarks from live campaigns feed back into market intelligence.",
-    mechanism: "When the cross-account agent detects that Moloco consistently outperforms a specific competitor in a vertical, this becomes evidence for battlecard updates and positioning claims.",
-    frequency: "Monthly — cross-account synthesis cycle",
-    status: "partial",
-    criticalFor: "Turns customer delivery data into competitive ammunition. Currently partial because cross-account synthesis is manual.",
-  },
-  {
-    id: "loop-5",
-    name: "Pipeline → Resource Allocation",
-    from: { module: 4, section: "Commercial Performance" },
-    to: { module: 2, section: "Channel & Message Optimization" },
-    signal: "Pipeline velocity and conversion data inform where to allocate demand gen resources.",
-    mechanism: "When pipeline data shows a channel is generating volume but not converting, the optimization agent recommends reallocation. When a segment shows high conversion, it recommends doubling down.",
-    frequency: "Bi-weekly — pipeline review triggers reallocation",
-    status: "active",
-    criticalFor: "Prevents throwing resources at channels that generate activity but not revenue.",
-  },
-  {
-    id: "loop-6",
-    name: "Churn Signals → Product Feedback",
-    from: { module: 3, section: "Churn Prevention" },
-    to: { module: 4, section: "Learning Goals Synthesis" },
-    signal: "Churn patterns and at-risk signals feed into strategic learning goals about product-market fit.",
-    mechanism: "When the churn agent detects that customers leave for a specific reason (e.g., measurement gaps), this becomes evidence against the relevant learning goal and may trigger a conviction downgrade.",
-    frequency: "Continuous — each churn signal evaluated",
-    status: "partial",
-    criticalFor: "Ensures strategic decisions account for customer retention reality, not just acquisition metrics.",
-  },
-  {
-    id: "loop-7",
-    name: "Conviction → Operating Model",
-    from: { module: 4, section: "Learning Goals Synthesis" },
-    to: { module: 4, section: "Operating Rhythm Management" },
-    signal: "Conviction score changes trigger operating model adjustments.",
-    mechanism: "When overall conviction drops below 40%, the operating rhythm agent flags for strategic review. When a specific learning goal moves to 'strong,' it triggers scaling recommendations.",
-    frequency: "Weekly — conviction reviewed in XFN weekly",
-    status: "active",
-    criticalFor: "The meta-loop — ensures the operating model itself evolves based on what we're learning.",
-  },
-  {
-    id: "loop-8",
-    name: "Outbound → Content Engine",
-    from: { module: 2, section: "Outbound System" },
-    to: { module: 2, section: "Content Engine" },
-    signal: "Outbound response patterns inform content creation priorities.",
-    mechanism: "When a specific messaging angle gets high response rates, the content engine prioritizes creating supporting assets (case studies, whitepapers, webinars) around that theme.",
-    frequency: "After each outbound cycle (2-week sprints)",
-    status: "partial",
-    criticalFor: "Ensures content production is demand-driven, not assumption-driven.",
-  },
-  {
-    id: "loop-9",
-    name: "Onboarding → Sales Enablement",
-    from: { module: 3, section: "Onboarding & Setup" },
-    to: { module: 2, section: "Sales Engagement Support" },
-    signal: "Onboarding friction points feed back into sales expectation-setting.",
-    mechanism: "When onboarding reveals that customers were sold on capabilities that don't match reality, the sales enablement agent adjusts pitch materials and coaching recommendations.",
-    frequency: "Per-customer — each onboarding triggers feedback",
-    status: "broken",
-    criticalFor: "Prevents the 'oversell → underdeliver' cycle that kills retention.",
-  },
-  {
-    id: "loop-10",
-    name: "All Modules → Orchestration Layer",
-    from: { module: 0, section: "All Modules" },
-    to: { module: 0, section: "Human Orchestration (Prompts 181-200)" },
-    signal: "The orchestration layer synthesizes signals from all modules into unified strategic decisions.",
-    mechanism: "The 20 orchestrator prompts (181-200) are the 'connective tissue' — they detect contradictions between modules, identify systemic vs. local issues, and generate 'what matters most' summaries that no single module can produce alone.",
-    frequency: "Continuous — orchestrator agents run across all modules",
-    status: "active",
-    criticalFor: "This IS the operating model. Without the orchestration layer, you have 4 siloed modules. With it, you have a learning system.",
-  },
-];
+// Data comes from DB via useCuratedData(["learning_loop_full"])
 
 function toLearningLoops(rows: CuratedRow[]): LearningLoop[] {
   return rows.map((r, i) => {
@@ -202,7 +90,7 @@ export default function LearningLoops() {
     return rows?.length ? toLearningLoops(rows) : [];
   }, [curatedData]);
 
-  const learningLoops = dbLoops.length > 0 ? dbLoops : _FALLBACK_LOOPS;
+  const learningLoops = dbLoops;
 
   const activeCount = learningLoops.filter((l: LearningLoop) => l.status === "active").length;
   const partialCount = learningLoops.filter((l: LearningLoop) => l.status === "partial").length;
