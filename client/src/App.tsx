@@ -33,6 +33,7 @@ const Reporting = lazy(() => import("./pages/Reporting"));
 const CCCTVReporting = lazy(() => import("./pages/CCCTVReporting"));
 const CTVIntelligence = lazy(() => import("./pages/CTVIntelligence"));
 const SuperDashboard = lazy(() => import("./pages/SuperDashboard"));
+const CTVIntelligenceClaude = lazy(() => import("./pages/CTVIntelligenceClaude"));
 
 function PageLoader() {
   return (
@@ -81,6 +82,7 @@ function Router() {
           <Route path="/cc-ctv-reporting" component={CCCTVReporting} />
           <Route path="/ctv-intelligence" component={CTVIntelligence} />
           <Route path="/super-dashboard" component={SuperDashboard} />
+          <Route path="/ctv-intelligence-claude" component={CTVIntelligenceClaude} />
 
           {/* Aliases */}
           <Route path="/org-chart" component={OrgChart} />

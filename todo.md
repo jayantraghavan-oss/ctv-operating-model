@@ -935,3 +935,11 @@
 - [x] Expanded html_slack_signals from 4 to 7 records (deal + competitive signals)
 - [x] Set up daily scheduled task (weekdays 7AM PT) for HTML dashboard re-ingestion
 - [ ] Save checkpoint
+
+## Phase 72: Add CTV Intelligence (Claude) Tab
+- [x] Upload moloco_ctv_dashboard.html to CDN (https://d2xsxph8kpxj0f.cloudfront.net/.../moloco_ctv_dashboard_142ed267.html)
+- [x] Create CTVIntelligenceClaude.tsx — fetches HTML from CDN, renders via srcdoc iframe with loading/error states
+- [x] Add route /ctv-intelligence-claude in App.tsx
+- [x] Add nav link in NeuralShell.tsx sidebar
+- [x] Verified rendering — all tabs, charts, filters, KPIs working in embedded view
+- [ ] Save checkpoint
