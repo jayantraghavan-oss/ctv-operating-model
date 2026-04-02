@@ -59,44 +59,13 @@ const TABS: Tab[] = [
 // STATIC FALLBACK DATA — Q1: Revenue & Pipeline
 // Used when BQ is unavailable; replaced by live data when connected.
 // ============================================================================
-const FALLBACK_MONTHS = ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
-
-const FALLBACK_REVENUE = FALLBACK_MONTHS.map((m, i) => ({
-  month: m,
-  avgDailyGAS: [64.9, 57.9, 79.2, 86.8, 102.7, 140.8][i],
-  target: 274,
-  trailing7d: i === 5 ? 195.3 : null,
-}));
-
-const FALLBACK_CAMPAIGNS = FALLBACK_MONTHS.map((m, i) => ({
-  month: m,
-  campaigns: [22, 25, 29, 32, 36, 39][i],
-  target: 150,
-}));
-
-const FALLBACK_CONCENTRATION = [
-  { name: "PMG/FBG (38%)", value: 38, color: ROSE },
-  { name: "Kraken (12.6%)", value: 12.6, color: ORANGE },
-  { name: "ARBGaming (7.8%)", value: 7.8, color: AMBER },
-  { name: "Luckymoney (7.6%)", value: 7.6, color: CTV_PURPLE },
-  { name: "NOVIG (4.8%)", value: 4.8, color: CYAN },
-  { name: "Rest (29.1%)", value: 29.1, color: "#334155" },
-];
-
-const pipelineStages = [
-  { stage: "Prospecting", value: 24.1, deals: 87, pct: 100 },
-  { stage: "Discovery / Demo", value: 17.4, deals: 63, pct: 72 },
-  { stage: "Proposal", value: 10.8, deals: 39, pct: 45 },
-  { stage: "Negotiation", value: 6.0, deals: 22, pct: 25 },
-  { stage: "Close / Active", value: 3.4, deals: 12, pct: 14 },
-];
-
-const FALLBACK_RISK_SIGNALS = [
-  { title: "Advertiser Concentration", severity: "high" as const, source: "BQ", body: "Top 1 advertiser (PMG/FBG Oppco LLC) = 38% of all CTV GAS ($74K/day). Top 5 = 70.9%. If any top-3 account pauses, daily run-rate could drop below $100K." },
-  { title: "Campaign Volume", severity: "high" as const, source: "BQ", body: "39 active campaigns vs 150 EOY target — 3.8× ramp required. BQ count is lower than SearchLight estimate (49) because BQ counts campaigns with actual spend." },
-  { title: "Exchange Breadth", severity: "medium" as const, source: "BQ", body: "Only 5 exchanges with active CTV spend. MCTV + INDEX + FreeWheel = 87% of volume. Supply concentration mirrors advertiser concentration." },
-  { title: "March Momentum Signal", severity: "opportunity" as const, source: "BQ", body: "March GAS ($4.1M partial) is the highest month in the dataset — 2× October. The 7-day trailing rate ($195K/day) is significantly above the March monthly avg ($141K/day)." },
-];
+// Hardcoded fallback data removed — all data sourced from DB (curated_intel table) or live BQ
+// If DB categories are empty, sections will show empty state instead of fabricated numbers
+const FALLBACK_REVENUE: { month: string; avgDailyGAS: number; target: number; trailing7d: number | null }[] = [];
+const FALLBACK_CAMPAIGNS: { month: string; campaigns: number; target: number }[] = [];
+const FALLBACK_CONCENTRATION: { name: string; value: number; color: string }[] = [];
+const pipelineStages: { stage: string; value: number; deals: number; pct: number }[] = [];
+const FALLBACK_RISK_SIGNALS: { title: string; severity: "high" | "medium" | "opportunity"; source: string; body: string }[] = [];
 
 // ============================================================================
 // BQ DATA TYPES
@@ -208,96 +177,27 @@ function bqToRiskSignals(bq: NonNullable<BQResponse["data"]>) {
 // ============================================================================
 // DATA — Q2: Customer Voice
 // ============================================================================
-const sentimentData = FALLBACK_MONTHS.map((m, i) => ({
-  month: m,
-  positive: [5, 6, 7, 7, 8, 9][i],
-  mixed: [4, 3, 4, 4, 4, 5][i],
-  friction: [2, 3, 2, 2, 2, 3][i],
-}));
-
-const themeData = [
-  { theme: "ML targeting advantage", calls: 34, pct: 79, sentiment: "positive" as const },
-  { theme: "Attribution / measurement", calls: 31, pct: 72, sentiment: "mixed" as const },
-  { theme: "CTV reach & scale", calls: 28, pct: 65, sentiment: "positive" as const },
-  { theme: "Pricing / CPM vs. peers", calls: 24, pct: 56, sentiment: "mixed" as const },
-  { theme: "Cross-screen integration", calls: 20, pct: 47, sentiment: "positive" as const },
-  { theme: "Brand safety / inventory", calls: 16, pct: 37, sentiment: "friction" as const },
-  { theme: "Competitor comparison", calls: 12, pct: 28, sentiment: "mixed" as const },
-  { theme: "Incrementality proof", calls: 8, pct: 19, sentiment: "friction" as const },
-];
-
-const verbatims = [
-  { theme: "ML Targeting", sentiment: "positive" as const, quote: "Your ML-based optimization is genuinely differentiated. We saw ROAS improvement in week two that Tatari couldn't match in three months.", meta: "Sports vertical · March 2026", status: "Converted to active", statusColor: EMERALD },
-  { theme: "Attribution", sentiment: "mixed" as const, quote: "We believe the targeting works, but I can't go to my CFO without a cleaner attribution story. If we can't prove lift independently, I can't justify the budget increase.", meta: "Retail vertical · February 2026", status: "Late-stage stalled", statusColor: AMBER },
-  { theme: "Cross-Screen", sentiment: "positive" as const, quote: "The fact that you can tie CTV impression to mobile conversion in a single attribution window — that's the story our board has been asking for.", meta: "Gaming vertical · March 2026", status: "Converted $200K", statusColor: EMERALD },
-  { theme: "Incrementality", sentiment: "friction" as const, quote: "Every vendor says their CTV drives lift. I need a holdout test with clean control groups before I can believe any of these numbers.", meta: "CPG vertical · January 2026", status: "Lost to Tatari", statusColor: ROSE },
-  { theme: "Pricing", sentiment: "mixed" as const, quote: "The CPMs are higher than The Trade Desk, and I need to justify that premium to my team. The ML story helps, but I need case study proof, not just claims.", meta: "Finance vertical · February 2026", status: "In negotiation", statusColor: AMBER },
-  { theme: "CTV Reach", sentiment: "positive" as const, quote: "We had no idea Moloco had access to Tubi and Samsung at that scale. If the attribution story gets cleaner, this becomes our primary CTV buy.", meta: "Entertainment vertical · March 2026", status: "Active trial", statusColor: AMBER },
-];
+// Q2 hardcoded data removed — sourced from DB (curated_intel ccctv_* categories)
+const sentimentData: { month: string; positive: number; mixed: number; friction: number }[] = [];
+const themeData: { theme: string; calls: number; pct: number; sentiment: "positive" | "mixed" | "friction" }[] = [];
+const verbatims: { theme: string; sentiment: "positive" | "mixed" | "friction"; quote: string; meta: string; status: string; statusColor: string }[] = [];
 
 // ============================================================================
 // DATA — Q3: Win/Loss Patterns
 // ============================================================================
-const behaviorData = [
-  { behavior: "ML targeting demo shown", won: 89, lost: 38, delta: "+51pp", signal: "Strong" },
-  { behavior: "Executive sponsor engaged", won: 78, lost: 23, delta: "+55pp", signal: "Strong" },
-  { behavior: "Attribution story presented", won: 83, lost: 54, delta: "+29pp", signal: "Medium" },
-  { behavior: "Case study shared (same vertical)", won: 72, lost: 31, delta: "+41pp", signal: "Strong" },
-  { behavior: "Next step confirmed in call", won: 94, lost: 46, delta: "+48pp", signal: "Strong" },
-  { behavior: "Pricing objection unaddressed", won: 11, lost: 62, delta: "−51pp", signal: "Strong" },
-  { behavior: "No follow-up within 48h", won: 6, lost: 77, delta: "−71pp", signal: "Medium" },
-  { behavior: "Multi-threading (3+ contacts)", won: 67, lost: 23, delta: "+44pp", signal: "Medium" },
-];
-
-const winRateByBehavior = [
-  { behavior: "ML Demo", rate: 87 },
-  { behavior: "Exec Sponsor", rate: 82 },
-  { behavior: "Case Study", rate: 78 },
-  { behavior: "Next Step Confirmed", rate: 76 },
-  { behavior: "No Pricing Gap", rate: 71 },
-];
-
-const lossReasons = [
-  { reason: "Attribution not credible", pct: 38 },
-  { reason: "Lost to Tatari (measurement)", pct: 31 },
-  { reason: "No exec sponsor", pct: 20 },
-  { reason: "Price / CPM too high", pct: 11 },
-];
+// Q3 hardcoded data removed — sourced from DB (curated_intel ccctv_behavior, ccctv_loss_reason, etc.)
+const behaviorData: { behavior: string; won: number; lost: number; delta: string; signal: string }[] = [];
+const winRateByBehavior: { behavior: string; rate: number }[] = [];
+const lossReasons: { reason: string; pct: number }[] = [];
 
 // ============================================================================
 // DATA — Q4: Market Position
 // ============================================================================
-const competitorData = [
-  { competitor: "Tatari", deals: 9, winRate: 34, theirEdge: "Measurement credibility, holdout testing, TV-native", ourCounter: "ML optimization, cross-screen attribution, lower CPM" },
-  { competitor: "The Trade Desk", deals: 7, winRate: 43, theirEdge: "Brand recognition, self-serve, existing relationships", ourCounter: "Performance ML, app-to-CTV cross-screen, dedicated CS" },
-  { competitor: "tvScientific", deals: 5, winRate: 60, theirEdge: "Incrementality testing, outcome-based pricing", ourCounter: "ML targeting quality, reach breadth (Tubi/Samsung/Vizio)" },
-  { competitor: "Innovid / MNTN", deals: 4, winRate: 75, theirEdge: "Creative optimization, brand safety tools", ourCounter: "Performance focus, better ROI for direct response" },
-  { competitor: "Magnite / SSNC", deals: 3, winRate: 33, theirEdge: "Supply ownership (SSP), publisher relationships", ourCounter: "Demand-side ML, cross-publisher optimization" },
-  { competitor: "No vendor (internal)", deals: 3, winRate: 33, theirEdge: "Full control, no margin sharing, team buy-in", ourCounter: "Scale of ML, cost-efficiency vs. building in-house" },
-];
-
-const winRateByCompetitor = [
-  { name: "Innovid/MNTN", rate: 75, color: EMERALD },
-  { name: "tvScientific", rate: 60, color: EMERALD },
-  { name: "Trade Desk", rate: 43, color: AMBER },
-  { name: "Tatari", rate: 34, color: ROSE },
-  { name: "Magnite", rate: 33, color: ROSE },
-];
-
-const tamData = [
-  { label: "Total CTV Ad Market (AMER)", value: "$21B total", width: "100%", color: "rgba(148,163,184,0.15)", textColor: MUTED, amount: "$21.0B" },
-  { label: "Programmatic CTV (TAM)", value: "$4.2B", width: "20%", color: "rgba(139,92,246,0.25)", textColor: CTV_PURPLE, amount: "$4.2B" },
-  { label: "Addressable (our exchanges)", value: "~$2.0B", width: "9.5%", color: "rgba(6,182,212,0.3)", textColor: CYAN, amount: "~$2.0B" },
-  { label: "Our Current ARR Run-Rate", value: "$33.6M", width: "1.6%", color: CTV_PURPLE, textColor: CTV_PURPLE, amount: "$33.6M" },
-  { label: "$100M ARR Target", value: "$100M", width: "4.8%", color: "rgba(245,158,11,0.6)", textColor: AMBER, amount: "$100M" },
-];
-
-const competitiveSignals = [
-  { title: "Tatari leading on measurement credibility", body: "Tatari's holdout-based incrementality testing is being cited in 38% of our lost deals as the deciding factor. Buyers say \"Tatari proves lift, everyone else claims it.\"", source: "Gong · 8 call mentions · Feb–Mar 2026", color: ROSE },
-  { title: "The Trade Desk expanding CTV managed service push", body: "Multiple buyers mention TTD is now offering higher-touch CTV service including dedicated optimization teams. This shifts them from self-serve to managed-service competitor in mid-market.", source: "Slack · #ctv-sales-signals · 4 mentions · Mar 2026", color: AMBER },
-  { title: "tvScientific losing on reach breadth", body: "In 3 of 5 head-to-head deals we won against tvScientific, the buyer cited Tubi and Samsung access as the deciding factor. Our exchange breadth is a genuine competitive moat.", source: "SearchLight win notes · Mar 2026", color: EMERALD },
-  { title: "Amazon/Prime Video CTV entering performance market", body: "Early signal: Amazon advertising is now pitching CTV performance to direct-response buyers with access to Prime Video inventory. Not yet named in our deals but could emerge in H2 2026.", source: "Slack · #competitive-intel · 2 mentions · Mar 2026", color: CYAN },
-];
+// Q4 hardcoded data removed — sourced from DB (curated_intel ccctv_competitor, ccctv_tam, etc.)
+const competitorData: { competitor: string; deals: number; winRate: number; theirEdge: string; ourCounter: string }[] = [];
+const winRateByCompetitor: { name: string; rate: number; color: string }[] = [];
+const tamData: { label: string; value: string; width: string; color: string; textColor: string; amount: string }[] = [];
+const competitiveSignals: { title: string; body: string; source: string; color: string }[] = [];
 
 // ============================================================================
 // HELPER COMPONENTS
@@ -439,19 +339,44 @@ export default function CCCTVReporting() {
   const bq = bqData?.available && bqData.data ? bqData.data : null;
   const isLive = bq !== null;
 
+  // DB-backed fallbacks for Q1 data
+  const dbRevenueFallback = useMemo(() => {
+    const rows = curatedData.ccctv_q1_revenue;
+    if (!rows?.length) return FALLBACK_REVENUE;
+    return rows.map((r: any) => ({
+      month: r.label, avgDailyGAS: Number(r.value1) || 0, target: Number(r.value2) || 274,
+      trailing7d: r.text2 ? Number(r.text2) : null,
+    }));
+  }, [curatedData]);
+  const dbCampaignFallback = useMemo(() => {
+    const rows = curatedData.ccctv_q1_revenue;
+    if (!rows?.length) return FALLBACK_CAMPAIGNS;
+    return rows.map((r: any) => ({ month: r.label, campaigns: Number(r.text1) || 0, target: 150 }));
+  }, [curatedData]);
+  const dbConcentrationFallback = useMemo(() => {
+    const rows = curatedData.ccctv_q1_concentration;
+    if (!rows?.length) return FALLBACK_CONCENTRATION;
+    return rows.map((r: any) => ({ name: r.label, value: Number(r.value1) || 0, color: r.text1 || "#334155" }));
+  }, [curatedData]);
+  const dbRiskFallback = useMemo(() => {
+    const rows = curatedData.ccctv_q1_risk;
+    if (!rows?.length) return FALLBACK_RISK_SIGNALS;
+    return rows.map((r: any) => ({
+      title: r.label, severity: (r.subcategory || "medium") as "high" | "medium" | "opportunity",
+      source: r.text1 || "BQ", body: r.text2 || "",
+    }));
+  }, [curatedData]);
   const revenueData = useMemo(() => {
-    if (!bq) return FALLBACK_REVENUE;
+    if (!bq) return dbRevenueFallback;
     const chart = bqToRevenueChart(bq.monthly);
-    // Add trailing 7d to the last month
     if (chart.length > 0 && bq.trailing_7d[0]) {
       chart[chart.length - 1].trailing7d = Math.round(bq.trailing_7d[0].trailing_7d_daily / 1000 * 10) / 10;
     }
     return chart;
-  }, [bq]);
-
-  const campaignData = useMemo(() => bq ? bqToCampaignChart(bq.monthly) : FALLBACK_CAMPAIGNS, [bq]);
-  const concentrationData = useMemo(() => bq ? bqToConcentration(bq.concentration) : FALLBACK_CONCENTRATION, [bq]);
-  const riskSignals = useMemo(() => bq ? bqToRiskSignals(bq) : FALLBACK_RISK_SIGNALS, [bq]);
+  }, [bq, dbRevenueFallback]);
+  const campaignData = useMemo(() => bq ? bqToCampaignChart(bq.monthly) : dbCampaignFallback, [bq, dbCampaignFallback]);
+  const concentrationData = useMemo(() => bq ? bqToConcentration(bq.concentration) : dbConcentrationFallback, [bq, dbConcentrationFallback]);
+  const riskSignals = useMemo(() => bq ? bqToRiskSignals(bq) : dbRiskFallback, [bq, dbRiskFallback]);
 
   // Derived KPI values
   const trailing7dDaily = bq?.trailing_7d[0]?.trailing_7d_daily || 195_000;

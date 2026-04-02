@@ -25,6 +25,7 @@ import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { Streamdown } from "streamdown";
+import { useCuratedData, toCompetitors, toScenarios, toInsightCards, toHighlights, toLoops } from "@/hooks/useCuratedData";
 
 const stats = getTotalStats();
 const spring = { type: "spring" as const, stiffness: 300, damping: 30 };
@@ -201,53 +202,48 @@ export default function Toolkit() {
     }
   };
 
-  // Competitive scenarios
-  const competitors = [
-    { name: "The Trade Desk", focus: "Premium CTV, UID2 identity", threat: "high" },
-    { name: "DV360 (Google)", focus: "YouTube CTV, cross-channel", threat: "high" },
-    { name: "Amazon DSP", focus: "Retail + CTV convergence", threat: "medium" },
-    { name: "Roku OneView", focus: "OS-level CTV data", threat: "medium" },
-    { name: "Samsung Ads", focus: "ACR data, smart TV", threat: "low" },
-  ];
+  // DB-backed data
+  const { data: curatedData } = useCuratedData([
+    "toolkit_competitor", "toolkit_scenario", "toolkit_gong_insight",
+    "toolkit_pipeline_insight", "toolkit_weekly_highlight", "toolkit_loop",
+    "toolkit_section",
+  ]);
 
-  const competitiveScenarios = [
-    { id: 1, name: "Head-to-Head vs TTD", desc: "Simulate a pitch against The Trade Desk for a DTC brand's CTV budget" },
-    { id: 2, name: "Google CTV Bundling", desc: "Counter DV360's cross-channel bundling strategy" },
-    { id: 3, name: "Amazon Retail + CTV", desc: "Compete against Amazon's retail data advantage in CTV" },
-    { id: 4, name: "First-Party Data Play", desc: "Position Moloco's ML against walled garden data moats" },
-  ];
+  const competitors = useMemo(() =>
+    curatedData.toolkit_competitor?.length
+      ? toCompetitors(curatedData.toolkit_competitor)
+      : []
+  , [curatedData]);
 
-  // Insights data (static for now)
-  const gongInsights = [
-    { label: "Calls This Week", value: "23", trend: "+12%", desc: "CTV-related calls across team" },
-    { label: "Win Rate", value: "34%", trend: "+5pp", desc: "CTV deals closed vs. pitched" },
-    { label: "Top Objection", value: "Measurement", trend: "", desc: "Attribution and incrementality concerns" },
-    { label: "Avg Deal Cycle", value: "47d", trend: "-8d", desc: "Days from first call to close" },
-  ];
+  const competitiveScenarios = useMemo(() =>
+    curatedData.toolkit_scenario?.length
+      ? toScenarios(curatedData.toolkit_scenario)
+      : []
+  , [curatedData]);
 
-  const pipelineInsights = [
-    { label: "CTV Pipeline", value: "$4.2M", trend: "+18%", desc: "Active CTV opportunities" },
-    { label: "Weighted", value: "$1.8M", trend: "+22%", desc: "Probability-weighted pipeline" },
-    { label: "New This Month", value: "12", trend: "+3", desc: "New CTV opportunities created" },
-    { label: "At Risk", value: "4", trend: "-1", desc: "Deals flagged for attention" },
-  ];
+  const gongInsights = useMemo(() =>
+    curatedData.toolkit_gong_insight?.length
+      ? toInsightCards(curatedData.toolkit_gong_insight)
+      : []
+  , [curatedData]);
 
-  // Weekly prep data
-  const weeklyHighlights = [
-    "3 new CTV RFPs received — 2 from gaming verticals, 1 from retail media",
-    "TTD announced new CTV measurement partnership with iSpot — competitive response needed",
-    "SDK integration with 2 new SSPs completed — expands CTV inventory 15%",
-    "Q2 conviction score at 62% — need evidence on web attribution before EOQ2 decision",
-  ];
+  const pipelineInsights = useMemo(() =>
+    curatedData.toolkit_pipeline_insight?.length
+      ? toInsightCards(curatedData.toolkit_pipeline_insight)
+      : []
+  , [curatedData]);
 
-  // Learning loops
-  const loops = [
-    { id: 1, name: "Pitch → Win/Loss → Pitch Refinement", status: "active" as const, source: "M1", target: "M1", signal: "Win/loss patterns from Gong" },
-    { id: 2, name: "Campaign Data → Insight → Selling Point", status: "active" as const, source: "M3", target: "M1", signal: "Performance benchmarks" },
-    { id: 3, name: "Buyer Sim → Objection Bank → Training", status: "partial" as const, source: "M2", target: "M1", signal: "Simulated objections" },
-    { id: 4, name: "Competitive Intel → Positioning → Pitch", status: "active" as const, source: "M2", target: "M1", signal: "Competitor moves" },
-    { id: 5, name: "Support Tickets → Product Feedback → Roadmap", status: "partial" as const, source: "M3", target: "M4", signal: "Customer pain points" },
-  ];
+  const weeklyHighlights = useMemo(() =>
+    curatedData.toolkit_weekly_highlight?.length
+      ? toHighlights(curatedData.toolkit_weekly_highlight)
+      : []
+  , [curatedData]);
+
+  const loops = useMemo(() =>
+    curatedData.toolkit_loop?.length
+      ? toLoops(curatedData.toolkit_loop)
+      : []
+  , [curatedData]);
 
   return (
     <NeuralShell>

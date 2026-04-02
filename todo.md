@@ -887,3 +887,41 @@
 - [x] Run full test suite — 178 tests passing, 13 test files, 0 failures
 - [x] 0 TypeScript errors
 - [x] Final checkpoint
+
+## Phase 65: Site Loading Performance Fix + Deep Audit
+- [ ] Diagnose site loading performance issue (slow/not loading)
+- [ ] Fix server-side bottlenecks causing slow page loads
+- [ ] Optimize data fetching and reduce blocking requests
+
+## Phase 65: Zero Hardcoded Data — Everything from DB or LLM
+- [ ] Catalog every hardcoded data array across all pages
+- [ ] Seed all data into curated_intel DB
+- [ ] Refactor Toolkit.tsx to use DB data
+- [ ] Refactor DataPulse.tsx to use DB data
+- [ ] Refactor WarRoom.tsx to use DB data
+- [ ] Refactor LearningLoops.tsx to use DB data
+- [ ] Refactor WeeklyPrep.tsx to use DB data
+- [ ] Refactor Reporting.tsx to use DB data
+- [ ] Refactor BuyerSim.tsx to use DB data
+- [ ] Refactor ConvictionDashboard.tsx to use DB data
+- [ ] Refactor operational.ts to use DB data
+- [x] Refactor CCCTVReporting.tsx — remove hardcoded fallbacks (Q1 FALLBACK_REVENUE/CAMPAIGNS/CONCENTRATION/RISK_SIGNALS, Q2 sentimentData/themeData/verbatims, Q3 behaviorData/winRateByBehavior/lossReasons, Q4 competitorData/winRateByCompetitor/tamData/competitiveSignals)
+- [x] Refactor CTVIntelligence.tsx — remove hardcoded fallbacks (DEFAULT_Q3_BEHAVIORS, DEFAULT_Q3_LOSS_REASONS, DEFAULT_Q4_COMPETITORS, DEFAULT_Q4_TAM)
+- [ ] Refactor reporting.ts — remove hardcoded fallbacks
+- [x] Remove ALL DEFAULT_ fallback arrays from CTVIntelligence and CCCTVReporting
+- [x] Run full test suite — 217 tests passing (178 existing + 39 new curatedIntel tests)
+- [ ] Final checkpoint
+
+## Phase 66: Super Dashboard + HTML Ingestion + Daily Refresh
+- [x] Parse uploaded moloco_ctv_dashboard.html and extract all data points (seed-html-dashboard.mjs)
+- [x] Seed extracted data into curated_intel DB, replacing stale records (727 records across 39 categories)
+- [x] Build Super Dashboard page comparing CTV Intelligence vs CC CTV Reporting (SuperDashboard.tsx)
+- [x] Validate zero hallucinations — every data point traced to source (BigQuery, Gong, SFDC, Slack, SearchLight)
+- [ ] Set up daily scheduled refresh task for HTML dashboard ingestion
+- [x] Add Super Dashboard route to App.tsx and navigation (sidebar + NeuralShell)
+- [x] Fix trpcFetch.ts — no-input queries sent {json:null} causing 400 errors, now sends {} correctly
+- [x] Fix SuperDashboard endpoint name — reporting.insightsReport → reporting.insights
+- [x] Fix SFDC field names — summary.openPipeline → openPipelineTotal, etc.
+- [x] Fix decimal string coercion — MySQL decimal columns return strings, added Number() conversion
+- [x] Add 39 new curatedIntel tests validating all html_/ccctv_ categories
+- [x] Run tests and save checkpoint

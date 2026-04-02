@@ -7,44 +7,46 @@ import NeuralShell from "@/components/NeuralShell";
 import TipBanner from "@/components/TipBanner";
 import { useAgent } from "@/contexts/AgentContext";
 import { modules, getTotalStats, prompts } from "@/lib/data";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
   Database, Radio, Users, Search, TrendingUp, BarChart3,
   Sparkles, ChevronDown, ChevronUp, Zap, Brain, Play,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Streamdown } from "streamdown";
+import { useCuratedData, type CuratedRow } from "@/hooks/useCuratedData";
 
 const stats = getTotalStats();
 const spring = { type: "spring" as const, stiffness: 300, damping: 30 };
 
-const gongInsights = [
-  { id: 1, title: "CTV Performance Proof Points", calls: 12, signal: "strong", summary: "12 calls reference ROAS improvement. Average cited: 22% lift vs incumbent DSP. Gaming vertical strongest.", promptId: 10, moduleId: 1 },
-  { id: 2, title: "Brand Safety Concerns", calls: 8, signal: "warning", summary: "8 calls flagged brand safety as a blocker. Buyers want GARM certification before scaling spend.", promptId: 20, moduleId: 1 },
-  { id: 3, title: "Measurement & Attribution", calls: 15, signal: "strong", summary: "15 calls discuss measurement. AppsFlyer integration is the #1 cited enabler. Branch partnership requested 4x.", promptId: 30, moduleId: 1 },
-  { id: 4, title: "Competitive Positioning vs TTD", calls: 6, signal: "neutral", summary: "6 calls compare to The Trade Desk. ML optimization is our differentiator. TTD has brand recognition advantage.", promptId: 40, moduleId: 1 },
-  { id: 5, title: "CTV-to-Web Interest", calls: 4, signal: "emerging", summary: "4 calls express interest in CTV-to-Web. Retail media and DTC brands most interested. Product not yet ready.", promptId: 50, moduleId: 2 },
-  { id: 6, title: "Pricing & Test Fund Sensitivity", calls: 10, signal: "warning", summary: "10 calls discuss pricing. $50K test fund threshold is common. CPM sensitivity high in mid-market.", promptId: 60, moduleId: 3 },
-  { id: 7, title: "SDK Integration Questions", calls: 7, signal: "neutral", summary: "7 calls about SDK requirements. Integration timeline is a concern. Pre-integrated MMP partners reduce friction.", promptId: 70, moduleId: 3 },
-  { id: 8, title: "Creative Format Capabilities", calls: 9, signal: "strong", summary: "9 calls about creative. Video completion rate optimization is a key differentiator. Dynamic creative interest growing.", promptId: 80, moduleId: 2 },
-];
+function toGongInsights(rows: CuratedRow[]) {
+  return rows.map((r, i) => ({
+    id: i + 1,
+    title: r.label,
+    calls: Number(r.value1) || 0,
+    signal: r.text1 || "neutral",
+    summary: r.text2 || "",
+    promptId: (i + 1) * 10,
+    moduleId: Number(r.value2) || 1,
+  }));
+}
 
-const pipelineStages = [
-  { stage: "Prospecting", count: 28, value: "$2.1M", color: "bg-foreground/20" },
-  { stage: "Qualification", count: 15, value: "$3.4M", color: "bg-amber-signal" },
-  { stage: "Testing", count: 8, value: "$1.8M", color: "bg-primary" },
-  { stage: "Scaling", count: 5, value: "$4.2M", color: "bg-emerald-signal" },
-  { stage: "Churned/Lost", count: 12, value: "$1.9M", color: "bg-rose-signal" },
-];
+function toPipelineStages(rows: CuratedRow[]) {
+  return rows.map((r) => ({
+    stage: r.label,
+    count: Number(r.value1) || 0,
+    value: r.text1 || "",
+    color: r.text2 || "bg-foreground/20",
+  }));
+}
 
-const topVerticals = [
-  { name: "Gaming", brands: 18, signal: "hot" },
-  { name: "DTC E-commerce", brands: 14, signal: "warm" },
-  { name: "Streaming/Entertainment", brands: 11, signal: "warm" },
-  { name: "Retail Media", brands: 8, signal: "emerging" },
-  { name: "Financial Services", brands: 6, signal: "cool" },
-  { name: "Travel & Hospitality", brands: 5, signal: "cool" },
-];
+function toVerticals(rows: CuratedRow[]) {
+  return rows.map((r) => ({
+    name: r.label,
+    brands: Number(r.value1) || 0,
+    signal: r.text1 || "neutral",
+  }));
+}
 
 export default function DataPulse() {
   const { runAgent, recentRuns, getStreamingOutput } = useAgent();
@@ -53,7 +55,13 @@ export default function DataPulse() {
   const [expandedInsight, setExpandedInsight] = useState<number | null>(null);
   const [analyzingPipeline, setAnalyzingPipeline] = useState(false);
 
-  const filteredInsights = gongInsights.filter((g) =>
+  // DB-backed data
+  const { data: curatedData } = useCuratedData(["datapulse_gong", "datapulse_pipeline", "datapulse_vertical"]);
+  const gongInsights = useMemo(() => toGongInsights(curatedData.datapulse_gong || []), [curatedData]);
+  const pipelineStages = useMemo(() => toPipelineStages(curatedData.datapulse_pipeline || []), [curatedData]);
+  const topVerticals = useMemo(() => toVerticals(curatedData.datapulse_vertical || []), [curatedData]);
+
+  const filteredInsights = gongInsights.filter((g: any) =>
     g.title.toLowerCase().includes(searchTerm.toLowerCase()) || g.summary.toLowerCase().includes(searchTerm.toLowerCase())
   );
 

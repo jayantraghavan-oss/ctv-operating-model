@@ -6,34 +6,42 @@
 import NeuralShell from "@/components/NeuralShell";
 import TipBanner from "@/components/TipBanner";
 import { useAgent } from "@/contexts/AgentContext";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Swords, Play, Target, Shield, Zap, Cpu, Copy, Sparkles, RotateCcw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Streamdown } from "streamdown";
 import { toast } from "sonner";
+import { useCuratedData, type CuratedRow } from "@/hooks/useCuratedData";
 
 const spring = { type: "spring" as const, stiffness: 300, damping: 30 };
 
-const competitors = [
-  { id: "ttd", name: "The Trade Desk", strength: "Brand recognition, self-serve, CTV scale", weakness: "Rules-based optimization, premium pricing", threatLevel: "high" },
-  { id: "tvs", name: "tvScientific", strength: "CTV-native, incrementality, lower CPMs", weakness: "Smaller scale, limited brand safety", threatLevel: "high" },
-  { id: "mn", name: "Mntn/Performance TV", strength: "Self-serve CTV, creative tools, DTC focus", weakness: "Limited ML, narrow vertical", threatLevel: "medium" },
-  { id: "innovid", name: "Innovid", strength: "Creative optimization, cross-screen measurement", weakness: "Not a DSP, limited buying", threatLevel: "medium" },
-  { id: "roku", name: "Roku OneView", strength: "First-party data, owned inventory", weakness: "Walled garden, limited transparency", threatLevel: "medium" },
-  { id: "amazon", name: "Amazon DSP", strength: "Shopping data, massive scale, Fire TV", weakness: "Complex UI, Amazon-centric", threatLevel: "high" },
-];
+function toWarRoomCompetitors(rows: CuratedRow[]) {
+  return rows.map((r) => ({
+    id: r.subcategory || r.label.toLowerCase().replace(/[^a-z]/g, "").slice(0, 6),
+    name: r.label,
+    strength: r.text1 || "",
+    weakness: r.text2 || "",
+    threatLevel: r.text3 || "medium",
+  }));
+}
 
-const scenarios = [
-  { id: 1, name: "Head-to-Head: Gaming Vertical", desc: "Run a competitive bake-off simulation in the gaming vertical. Moloco ML DSP vs The Trade Desk and tvScientific. Analyze win probability, key differentiators, and recommended battle strategy with specific talking points and proof points.", comp: "ttd" },
-  { id: 2, name: "Brand Safety Objection", desc: "A major enterprise buyer raises brand safety concerns about Moloco's CTV offering. Generate a comprehensive objection-handling playbook including current controls, GARM certification timeline, competitive comparison, and risk mitigation strategy.", comp: "tvs" },
-  { id: 3, name: "Price War: Mid-Market CPMs", desc: "A mid-market buyer is comparing CPMs across Moloco, MNTN/Performance TV, and tvScientific. Generate a counter-positioning strategy that shifts the conversation from CPM to effective CPA/ROAS, including specific data points and a test fund proposal.", comp: "mn" },
-  { id: 4, name: "Measurement Shootout", desc: "A sophisticated buyer wants incrementality proof and is comparing Moloco against tvScientific's native incrementality and Innovid's cross-screen measurement. Generate a measurement strategy that leverages MMP partnerships and proposes a joint measurement study.", comp: "innovid" },
-  { id: 5, name: "Retail Media CTV Play", desc: "A retail media network is evaluating Amazon DSP vs Moloco for their CTV advertising program. Generate a positioning strategy that addresses Amazon's first-party data advantage while highlighting Moloco's transparency, cross-publisher optimization, and open-web reach.", comp: "amazon" },
-];
+function toWarRoomScenarios(rows: CuratedRow[], comps: any[]) {
+  return rows.map((r, i) => ({
+    id: i + 1,
+    name: r.label,
+    desc: r.text1 || "",
+    comp: r.text2 || (comps[i % comps.length]?.id || "ttd"),
+  }));
+}
 
 export default function WarRoom() {
   const { runAgent, recentRuns, getStreamingOutput } = useAgent();
   const [activeScenario, setActiveScenario] = useState<number | null>(null);
+
+  // DB-backed data
+  const { data: curatedData } = useCuratedData(["warroom_competitor", "warroom_scenario"]);
+  const competitors = useMemo(() => toWarRoomCompetitors(curatedData.warroom_competitor || []), [curatedData]);
+  const scenarios = useMemo(() => toWarRoomScenarios(curatedData.warroom_scenario || [], competitors), [curatedData, competitors]);
 
   const runScenario = useCallback((s: typeof scenarios[0]) => {
     setActiveScenario(s.id);

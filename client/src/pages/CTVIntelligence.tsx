@@ -232,41 +232,12 @@ interface GongData {
 // ============================================================================
 
 // Q3 Win/Loss — curated from deal analysis (not from live source yet)
-// Q3 behaviors and loss reasons — fallback defaults, overridden by DB data via curatedData prop
-const DEFAULT_Q3_BEHAVIORS = [
-  { behavior: "Multi-threading (3+ contacts)", wonPct: 89, lostPct: 31, delta: "+58pp", signal: "Critical" },
-  { behavior: "Technical POC before proposal", wonPct: 83, lostPct: 23, delta: "+60pp", signal: "Critical" },
-  { behavior: "CTV-specific case study shared", wonPct: 78, lostPct: 15, delta: "+63pp", signal: "High" },
-  { behavior: "Executive sponsor identified", wonPct: 72, lostPct: 38, delta: "+34pp", signal: "High" },
-  { behavior: "Measurement framework agreed", wonPct: 94, lostPct: 46, delta: "+48pp", signal: "Critical" },
-  { behavior: "Competitive displacement framing", wonPct: 67, lostPct: 54, delta: "+13pp", signal: "Medium" },
-];
-
-const DEFAULT_Q3_LOSS_REASONS = [
-  { reason: "No attribution path agreed", pct: 34 },
-  { reason: "Budget frozen / reallocated", pct: 23 },
-  { reason: "Champion left organization", pct: 15 },
-  { reason: "Competitor undercut on CPM", pct: 13 },
-  { reason: "Internal team built in-house", pct: 8 },
-  { reason: "Timing — launched too late in quarter", pct: 7 },
-];
-
-// Q4 Market — fallback defaults, overridden by DB data via curatedData prop
-const DEFAULT_Q4_COMPETITORS = [
-  { vendor: "The Trade Desk", headToHead: "12-8", winRate: 60, theirEdge: "Self-serve scale, brand trust", ourCounter: "ML performance, managed service depth" },
-  { vendor: "Tatari", headToHead: "7-3", winRate: 70, theirEdge: "Linear+CTV unified, attribution", ourCounter: "Programmatic reach, app-install pedigree" },
-  { vendor: "Amazon DSP", headToHead: "5-6", winRate: 45, theirEdge: "1P data, Fire TV inventory", ourCounter: "Cross-exchange reach, transparent pricing" },
-  { vendor: "MNTN", headToHead: "4-1", winRate: 80, theirEdge: "Performance branding narrative", ourCounter: "True ML optimization, broader inventory" },
-  { vendor: "DV360", headToHead: "3-4", winRate: 43, theirEdge: "Google ecosystem lock-in", ourCounter: "Dedicated CTV focus, better support" },
-];
-
-const DEFAULT_Q4_TAM = [
-  { segment: "Sports Betting & iGaming", tam: 4.2, penetration: 18, takeaway: "Highest density — expand via PMG/agency" },
-  { segment: "Streaming & Entertainment", tam: 8.5, penetration: 4, takeaway: "Massive TAM, low penetration — need case studies" },
-  { segment: "D2C / Performance", tam: 6.1, penetration: 7, takeaway: "Natural fit — attribution story resonates" },
-  { segment: "Fintech & Crypto", tam: 2.8, penetration: 12, takeaway: "Strong beachhead — Kraken, Kalshi, Rush Street" },
-  { segment: "Retail & CPG", tam: 12.0, penetration: 1, takeaway: "Greenfield — requires brand safety story" },
-];
+// Q3/Q4 fallback defaults removed — all data sourced from DB (curated_intel table)
+// If DB categories are empty, sections will show "No data available" instead of fabricated numbers
+const DEFAULT_Q3_BEHAVIORS: { behavior: string; wonPct: number; lostPct: number; delta: string; signal: string }[] = [];
+const DEFAULT_Q3_LOSS_REASONS: { reason: string; pct: number }[] = [];
+const DEFAULT_Q4_COMPETITORS: { vendor: string; headToHead: string; winRate: number; theirEdge: string; ourCounter: string }[] = [];
+const DEFAULT_Q4_TAM: { segment: string; tam: number; penetration: number; takeaway: string }[] = [];
 
 // ============================================================================
 // HELPER COMPONENTS
@@ -1673,7 +1644,15 @@ function Q3Tab({ gongData, curatedData = {} }: { gongData: GongData | null; cura
       delta: b.text1 || `+${(Number(b.value1) || 0) - (Number(b.value2) || 0)}pp`,
       signal: b.text2 || "Medium",
     }));
-    return dbWinRateByBehavior.length > 0 ? dbWinRateByBehavior : dbBehaviors.length > 0 ? dbBehaviors : DEFAULT_Q3_BEHAVIORS;
+    if (dbWinRateByBehavior.length > 0) return dbWinRateByBehavior;
+    if (dbBehaviors.length > 0) return dbBehaviors;
+    // Try DB-seeded fallback category
+    const dbSeeded = (curatedData.ctvi_q3_behavior || []).map((b: any) => ({
+      behavior: b.label, wonPct: Number(b.value1) || 0, lostPct: 0,
+      delta: b.subcategory === "winning" ? `+${b.value1}pp` : `${b.value1}pp`,
+      signal: b.subcategory === "winning" ? "Strong" : "Weak",
+    }));
+    return dbSeeded.length > 0 ? dbSeeded : DEFAULT_Q3_BEHAVIORS; // empty — no hallucinated data
   }, [curatedData]);
 
   // DB-backed loss reasons with fallback
@@ -1682,7 +1661,11 @@ function Q3Tab({ gongData, curatedData = {} }: { gongData: GongData | null; cura
       reason: r.label,
       pct: Number(r.value1) || 0,
     }));
-    return dbLoss.length > 0 ? dbLoss : DEFAULT_Q3_LOSS_REASONS;
+    if (dbLoss.length > 0) return dbLoss;
+    const dbSeededLoss = (curatedData.ctvi_q3_loss_reason || []).map((r: any) => ({
+      reason: r.label, pct: Number(r.value1) || 0,
+    }));
+    return dbSeededLoss.length > 0 ? dbSeededLoss : DEFAULT_Q3_LOSS_REASONS; // empty — no hallucinated data
   }, [curatedData]);
 
   const gongLive = !!gongData?.available;
@@ -1910,7 +1893,12 @@ function Q4Tab({ bqData, gongData, curatedData = {} }: { bqData: BQData | null; 
       theirEdge: c.text2 || "",
       ourCounter: c.text3 || "",
     }));
-    return dbCompetitors.length > 0 ? dbCompetitors : DEFAULT_Q4_COMPETITORS;
+    if (dbCompetitors.length > 0) return dbCompetitors;
+    const dbSeededComp = (curatedData.ctvi_q4_competitor || []).map((c: any) => ({
+      vendor: c.label, headToHead: "—", winRate: Number(c.value1) || 0,
+      theirEdge: c.subcategory || "", ourCounter: "",
+    }));
+    return dbSeededComp.length > 0 ? dbSeededComp : DEFAULT_Q4_COMPETITORS; // empty — no hallucinated data
   }, [curatedData]);
 
   // DB-backed TAM with fallback
@@ -1921,7 +1909,11 @@ function Q4Tab({ bqData, gongData, curatedData = {} }: { bqData: BQData | null; 
       penetration: Number(t.value2) || 0,
       takeaway: t.text1 || "",
     }));
-    return dbTam.length > 0 ? dbTam : DEFAULT_Q4_TAM;
+    if (dbTam.length > 0) return dbTam;
+    const dbSeededTam = (curatedData.ctvi_q4_tam || []).map((t: any) => ({
+      segment: t.label, tam: Number(t.value1) || 0, penetration: 0, takeaway: "",
+    }));
+    return dbSeededTam.length > 0 ? dbSeededTam : DEFAULT_Q4_TAM; // empty — no hallucinated data
   }, [curatedData]);
 
   return (

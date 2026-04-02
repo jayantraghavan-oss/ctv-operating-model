@@ -19,7 +19,8 @@ import {
   Layers,
   ArrowUpRight,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useCuratedData, type CuratedRow } from "@/hooks/useCuratedData";
 
 const fade = { initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 } };
 
@@ -35,7 +36,8 @@ interface LearningLoop {
   criticalFor: string;
 }
 
-const learningLoops: LearningLoop[] = [
+// Hardcoded fallback removed — data comes from DB
+const _FALLBACK_LOOPS: LearningLoop[] = [
   {
     id: "loop-1",
     name: "Market → Messaging",
@@ -148,6 +150,24 @@ const learningLoops: LearningLoop[] = [
   },
 ];
 
+function toLearningLoops(rows: CuratedRow[]): LearningLoop[] {
+  return rows.map((r, i) => {
+    let meta: any = {};
+    try { meta = r.metadata ? JSON.parse(r.metadata as string) : {}; } catch { meta = {}; }
+    return {
+      id: `loop-${i + 1}`,
+      name: r.label,
+      from: meta.from || { module: 0, section: "Unknown" },
+      to: meta.to || { module: 0, section: "Unknown" },
+      signal: r.text1 || "",
+      mechanism: meta.mechanism || r.text2 || "",
+      frequency: meta.frequency || "Unknown",
+      status: (r.subcategory as "active" | "partial" | "broken") || "partial",
+      criticalFor: meta.criticalFor || r.text3 || "",
+    };
+  });
+}
+
 function StatusBadge({ status }: { status: "active" | "partial" | "broken" }) {
   const configs = {
     active: { bg: "bg-emerald-100 text-emerald-700 border-emerald-200", label: "Active" },
@@ -176,12 +196,19 @@ function ModuleTag({ id }: { id: number }) {
 export default function LearningLoops() {
   const [expandedLoop, setExpandedLoop] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const { data: curatedData } = useCuratedData(["learning_loop_full"]);
+  const dbLoops = useMemo(() => {
+    const rows = curatedData.learning_loop_full;
+    return rows?.length ? toLearningLoops(rows) : [];
+  }, [curatedData]);
 
-  const activeCount = learningLoops.filter((l) => l.status === "active").length;
-  const partialCount = learningLoops.filter((l) => l.status === "partial").length;
-  const brokenCount = learningLoops.filter((l) => l.status === "broken").length;
+  const learningLoops = dbLoops.length > 0 ? dbLoops : _FALLBACK_LOOPS;
 
-  const filtered = filterStatus === "all" ? learningLoops : learningLoops.filter((l) => l.status === filterStatus);
+  const activeCount = learningLoops.filter((l: LearningLoop) => l.status === "active").length;
+  const partialCount = learningLoops.filter((l: LearningLoop) => l.status === "partial").length;
+  const brokenCount = learningLoops.filter((l: LearningLoop) => l.status === "broken").length;
+
+  const filtered = filterStatus === "all" ? learningLoops : learningLoops.filter((l: LearningLoop) => l.status === filterStatus);
 
   return (
     <NeuralShell>

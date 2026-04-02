@@ -21,7 +21,7 @@ import {
   getStatusColor,
 } from "@/lib/data";
 import type { SubModule, Prompt } from "@/lib/data";
-import { getSubModuleOps } from "@/lib/operational";
+import { useOperationalData } from "@/hooks/useOperationalData";
 import type { SubModuleOps, WorkflowStep } from "@/lib/operational";
 import {
   ChevronDown,
@@ -54,6 +54,7 @@ export default function ModulePage() {
   const moduleId = parseInt(params.id || "1", 10);
   const mod = modules.find((m) => m.id === moduleId);
   const { recentRuns, runAgent, getStreamingOutput } = useAgent();
+  const { getSubModuleOps } = useOperationalData();
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(mod?.sections.map((s) => s.key) || [])
   );

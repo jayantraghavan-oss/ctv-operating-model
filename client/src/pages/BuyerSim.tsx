@@ -13,6 +13,7 @@ import {
   Activity, Brain, Radar, Clock, CheckCircle2, AlertTriangle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useCuratedData, type CuratedRow } from "@/hooks/useCuratedData";
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -51,9 +52,35 @@ interface Persona {
   timeline: string;
 }
 
-// ── Personas — Real CTV buyer archetypes ───────────────────────────────
+// ── Personas — DB-backed with fallback ───────────────────────────────
 
-const PERSONAS: Persona[] = [
+function dbToPersonas(rows: CuratedRow[]): Persona[] {
+  return rows.map((r) => {
+    const parts = (r.text3 || "").split("|");
+    const disposition = parts[0] || "skeptical";
+    const vertical = parts[1] || "";
+    const segment = parts[2] || "enterprise";
+    // Map DB subcategory to persona id
+    const idMap: Record<string, string> = { vp_growth: "gaming-vp", head_digital: "dtc-cmo", dir_programmatic: "agency-dir", cmo: "retail-svp" };
+    return {
+      id: idMap[r.subcategory || ""] || r.subcategory || r.label.toLowerCase().replace(/\s+/g, "-"),
+      name: r.label,
+      title: (r.text1 || "").split(",")[0]?.trim() || "",
+      company: (r.text1 || "").split(",").slice(1).join(",").trim() || "",
+      vertical: vertical || r.label,
+      budget: "$500K test",
+      priority: (r.text2 || "").slice(0, 60),
+      currentStack: "TTD + DV360",
+      kpis: ["ROAS > 3.0x", "Incremental lift > 15%"],
+      objections: (r.text2 || "").split(".").filter(Boolean).slice(0, 4),
+      dealComplexity: "high" as const,
+      stakeholders: [],
+      timeline: "4-8 weeks",
+    };
+  });
+}
+
+const _FALLBACK_PERSONAS: Persona[] = [
   {
     id: "gaming-vp",
     name: "Sarah Chen",
@@ -421,6 +448,12 @@ const moduleIcons: Record<number, typeof Radar> = {
 
 export default function BuyerSim() {
   const { runAgent } = useAgent();
+  const { data: curatedData } = useCuratedData(["buyer_persona"]);
+  const PERSONAS = useMemo(() => {
+    const rows = curatedData.buyer_persona;
+    if (rows?.length) return dbToPersonas(rows);
+    return _FALLBACK_PERSONAS;
+  }, [curatedData]);
   const [persona, setPersona] = useState<string | null>(null);
   const [messages, setMessages] = useState<SimMessage[]>([]);
   const [currentTurn, setCurrentTurn] = useState(0);
