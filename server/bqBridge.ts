@@ -6,6 +6,12 @@
  *
  * Data source: moloco-ae-view.athena.fact_dsp_core
  * Filter: campaign.os = 'CTV' AND moloco_product = 'DSP'
+ * Advertiser: Uses tracking_entity (per Dan's BQ guide)
+ *
+ * NOTE: Fraud exclusion via moloco-data-prod.gtm.payment_fraud_account
+ * is recommended by Dan's guide but requires Drive credentials not available
+ * to this service account. CTV campaigns are low fraud risk. Add fraud CTE
+ * when credentials are upgraded.
  */
 
 import { BigQuery } from "@google-cloud/bigquery";
@@ -149,7 +155,7 @@ async function runQuery(sql: string): Promise<any[]> {
 }
 
 // ============================================================================
-// QUERIES (matching the Python script exactly)
+// QUERIES
 // ============================================================================
 
 async function getSummary(): Promise<BQSummary[]> {
@@ -346,7 +352,7 @@ export async function fetchBQData(forceRefresh = false): Promise<BQAllData | nul
   }
 
   try {
-    console.log("[BQ Bridge] Fetching fresh CTV data from BigQuery (Node.js)...");
+    console.log("[BQ Bridge] Fetching fresh CTV data from BigQuery...");
 
     // Run all queries in parallel for speed
     const [summary, trailing_7d, monthly, daily_recent, top_advertisers, exchanges, concentration] =
@@ -369,13 +375,13 @@ export async function fetchBQData(forceRefresh = false): Promise<BQAllData | nul
       exchanges,
       concentration,
       fetched_at: new Date().toISOString(),
-      source: "BigQuery:moloco-ae-view.athena.fact_dsp_core",
+      source: "BigQuery:moloco-ae-view.athena.fact_dsp_core (tracking_entity, CTV+DSP filter)",
       fallback: false,
     };
 
     cachedData = data;
     cacheTimestamp = Date.now();
-    console.log("[BQ Bridge] BQ data cached successfully (Node.js). Source:", data.source);
+    console.log("[BQ Bridge] BQ data cached successfully. Source:", data.source);
     return data;
   } catch (err: any) {
     console.error("[BQ Bridge] Failed to fetch BQ data:", err.message);

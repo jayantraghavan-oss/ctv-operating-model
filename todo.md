@@ -934,4 +934,54 @@
 - [x] Expanded html_pipeline_deals from 4 to 10 records (full Sales Intelligence tab)
 - [x] Expanded html_slack_signals from 4 to 7 records (deal + competitive signals)
 - [x] Set up daily scheduled task (weekdays 7AM PT) for HTML dashboard re-ingestion
+- [x] Save checkpoint (version 64e47ac8)
+
+## Phase 68: Remove CTV Intelligence, CC CTV Reporting, and Super Dashboard
+- [ ] Remove CTV Intelligence route from App.tsx
+- [ ] Remove CC CTV Reporting route from App.tsx
+- [ ] Remove Super Dashboard route from App.tsx
+- [ ] Remove nav links from Layout.tsx sidebar
+- [ ] Remove nav links from NeuralShell.tsx sidebar
+- [ ] Delete client/src/pages/CTVIntelligence.tsx
+- [ ] Delete client/src/pages/CCCTVReporting.tsx
+- [ ] Delete client/src/pages/SuperDashboard.tsx
+- [ ] Verify build and tests pass
 - [ ] Save checkpoint
+
+## Phase 69: Restructure Reporting Tab — Revenue (BQ) vs Pipeline (SFDC)
+- [ ] Finish removing CTV Intelligence, CC CTV Reporting, Super Dashboard pages
+- [ ] Set up direct BigQuery query capability using GOOGLE_APPLICATION_CREDENTIALS_JSON
+- [ ] Build CTV revenue query per Dan's BQ guide (fact_dsp_core, CTV filter, fraud exclusion, DSP filter)
+- [ ] Verify ~$10M YTD GAS, ~$200K/7d, ~$76M implied ARR from BQ
+- [ ] Create BQ revenue endpoint in server/routers.ts
+- [ ] Restructure Reporting tab: separate Revenue section (BQ-sourced) from Pipeline section (SFDC-sourced)
+- [ ] Store BQ results in database for caching and historical tracking
+- [ ] Wire SFDC pipeline data as separate section
+- [ ] Run tests and save checkpoint
+
+## Phase 69: Restructure Reporting Tab — Revenue (BQ) vs Pipeline (SFDC)
+- [ ] Finish removing CTV Intelligence, CC CTV Reporting, Super Dashboard pages
+- [ ] Set up direct BigQuery access using mayukh.chowdhury@moloco.com credentials
+- [ ] Build CTV revenue query per Dan's BQ guide (fact_dsp_core, CTV filter, fraud exclusion, DSP filter)
+- [ ] Verify ~$10M YTD GAS, ~$200K/7d, ~$76M implied ARR from BQ
+- [ ] Create BQ revenue endpoint in server
+- [ ] Restructure Reporting tab: separate Revenue (BQ) from Pipeline (SFDC)
+- [ ] Store BQ results in DB for caching
+- [ ] Run tests and save checkpoint
+
+## Phase 70: Clean Up Published Version — Too Many Dashboards
+- [x] Audit all routes in App.tsx — 5 main routes remain (/, /toolkit, /simulation, /reporting, /data-explorer) + 14 legacy routes
+- [x] Audit all nav items in Layout.tsx and NeuralShell.tsx — clean, 5 items only
+- [x] CTV Intelligence, CC CTV Reporting, Super Dashboard already removed from nav and routes
+- [ ] Save checkpoint and guide user to republish (user needs to click Publish in UI)
+
+## Phase 71: Fix Reporting Data Accuracy (User-reported)
+- [x] Fix EOY target: Primary is now $10M GAS target (green banner, "On Track" badge at 98.8%)
+- [x] Fix ARR calculation: Now uses monthly pacing × 12 (March $4.1M × 12 = $49.2M ARR)
+- [x] Fix BQ data not rendering in KPI cards — was showing $0, now shows live BQ data
+- [x] $100M ARR moved to secondary "stretch target" banner (violet, smaller)
+- [x] Updated Insights VP/GM tab to lead with $10M GAS target framing
+- [x] Updated "Are We On Track?" bottom line with correct framing
+- [x] All numbers verified from live BQ: YTD $9.9M, ARR $49.2M, GAS/Day $187.3K, 1.7× accel, 135 campaigns
+- [x] 217 tests passing (14 test files)
+- [x] Save checkpoint

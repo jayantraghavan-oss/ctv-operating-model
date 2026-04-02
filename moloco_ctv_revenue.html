@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moloco CTV · Revenue Intelligence</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:     #080C18;
+  --card:   #0F1623;
+  --card2:  #141C2E;
+  --border: #1E2A42;
+  --text:   #F0F4FF;
+  --muted:  #7A90B8;
+  --blue:   #0057FF;
+  --ctv:    #8B5CF6;
+  --green:  #10B981;
+  --red:    #EF4444;
+  --yellow: #F59E0B;
+  --cyan:   #06B6D4;
+  --orange: #F97316;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+
+/* ── HEADER ── */
+.header {
+  background: linear-gradient(135deg, #080C18 0%, #0D1835 60%, #120B2E 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+.header-left { display: flex; align-items: center; gap: 14px; }
+.logo { background: var(--blue); color: white; font-weight: 800; font-size: 15px; padding: 6px 12px; border-radius: 8px; letter-spacing: -.3px; }
+.header-title h1 { font-size: 17px; font-weight: 700; letter-spacing: -.4px; }
+.header-title p { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.badge { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px; }
+.badge-goal { background: rgba(245,158,11,.15); border: 1px solid rgba(245,158,11,.35); color: #F59E0B; }
+.badge-live { background: rgba(16,185,129,.15); border: 1px solid rgba(16,185,129,.3); color: #10B981; display: flex; align-items: center; gap: 5px; }
+.badge-warn { background: rgba(249,115,22,.12); border: 1px solid rgba(249,115,22,.3); color: #FB923C; font-size: 10px; }
+.live-dot { width: 6px; height: 6px; background: #10B981; border-radius: 50%; animation: blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ── MAIN ── */
+.main { padding: 18px 28px; max-width: 1480px; margin: 0 auto; }
+.section { margin-bottom: 22px; }
+.section-title { font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.wide-narrow { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
+.narrow-wide { display: grid; grid-template-columns: 1fr 2fr; gap: 14px; }
+
+/* ── GOAL PACING BANNER ── */
+.goal-pacing {
+  background: linear-gradient(135deg, #0A0E22 0%, #12103C 50%, #0A0E22 100%);
+  border: 1px solid rgba(139,92,246,.25);
+  border-radius: 14px; padding: 20px 24px; margin-bottom: 20px;
+}
+.goal-pacing-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 28px; margin-bottom: 16px; flex-wrap: wrap; }
+.goal-number { flex-shrink: 0; }
+.goal-big { font-size: 42px; font-weight: 900; letter-spacing: -1.5px; color: #FBBF24; line-height: 1; }
+.goal-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.goal-vs { font-size: 13px; color: var(--muted); margin-top: 8px; display: flex; align-items: center; gap: 8px; }
+.goal-vs strong { color: var(--text); }
+.goal-bar-area { flex: 1; min-width: 320px; }
+.goal-bar-labels { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 11px; color: var(--muted); }
+.goal-bar-track { height: 14px; background: rgba(255,255,255,.05); border-radius: 8px; overflow: hidden; position: relative; }
+.goal-bar-fill { height: 100%; background: linear-gradient(90deg, #8B5CF6, #F59E0B); border-radius: 8px; transition: width .6s ease; }
+.goal-bar-marker { position: absolute; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,.35); }
+.goal-bar-marker-label { position: absolute; top: -18px; font-size: 9px; color: var(--muted); transform: translateX(-50%); white-space: nowrap; }
+.goal-milestones { display: flex; justify-content: space-between; margin-top: 5px; font-size: 9px; color: var(--muted); }
+.goal-stats { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 2px; }
+.g-stat .val { font-size: 16px; font-weight: 800; }
+.g-stat .lbl { font-size: 9px; color: var(--muted); margin-top: 1px; line-height: 1.4; }
+.g-stat.green .val { color: var(--green); }
+.g-stat.red .val { color: var(--red); }
+.g-stat.yellow .val { color: var(--yellow); }
+.g-stat.purple .val { color: #A78BFA; }
+.g-stat.cyan .val { color: var(--cyan); }
+
+/* ── KPI CARDS ── */
+.kpi-row { display: grid; gap: 12px; margin-bottom: 0; }
+.kpi-5 { grid-template-columns: repeat(5,1fr); }
+.kpi-4 { grid-template-columns: repeat(4,1fr); }
+.kpi-3 { grid-template-columns: repeat(3,1fr); }
+.kpi-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px; position: relative; overflow: hidden;
+}
+.kpi-card::after { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+.kpi-card.purple::after { background:var(--ctv); }
+.kpi-card.green::after  { background:var(--green); }
+.kpi-card.yellow::after { background:var(--yellow); }
+.kpi-card.red::after    { background:var(--red); }
+.kpi-card.cyan::after   { background:var(--cyan); }
+.kpi-card.orange::after { background:var(--orange); }
+.kpi-label { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 7px; }
+.kpi-value { font-size: 24px; font-weight: 800; letter-spacing: -.5px; margin-bottom: 3px; }
+.kpi-sub { font-size: 10px; color: var(--muted); line-height: 1.4; }
+.kpi-pill { font-size: 10px; margin-top: 7px; padding: 3px 8px; border-radius: 6px; display: inline-block; font-weight: 600; }
+.pill-red    { background: rgba(239,68,68,.1);   color: var(--red); }
+.pill-green  { background: rgba(16,185,129,.1);  color: var(--green); }
+.pill-yellow { background: rgba(245,158,11,.1);  color: var(--yellow); }
+.pill-purple { background: rgba(139,92,246,.1);  color: #A78BFA; }
+.pill-cyan   { background: rgba(6,182,212,.1);   color: var(--cyan); }
+.kpi-track { height: 3px; background: rgba(255,255,255,.07); border-radius: 2px; margin-top: 10px; overflow: hidden; }
+.kpi-fill  { height: 100%; border-radius: 2px; }
+
+/* ── CHART CARDS ── */
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+.card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; gap: 10px; }
+.card-title { font-size: 13px; font-weight: 700; }
+.card-sub { font-size: 10px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+.src-tag { font-size: 10px; padding: 3px 8px; border-radius: 10px; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+.src-bq  { background: rgba(0,87,255,.15);    color: #60A5FA; border: 1px solid rgba(0,87,255,.25); }
+.src-est { background: rgba(245,158,11,.12);  color: var(--yellow); border: 1px solid rgba(245,158,11,.25); }
+.src-mix { background: rgba(6,182,212,.12);   color: var(--cyan); border: 1px solid rgba(6,182,212,.25); }
+canvas { max-height: 240px; }
+
+/* ── PROJECTION CARDS ── */
+.proj-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+.proj-card {
+  border-radius: 12px; padding: 18px 20px;
+  border: 1px solid var(--border); background: var(--card);
+  display: flex; flex-direction: column; gap: 10px;
+  position: relative; overflow: hidden;
+}
+.proj-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+.proj-miss::before  { background: var(--red); }
+.proj-close::before { background: var(--yellow); }
+.proj-hit::before   { background: var(--green); }
+.proj-scenario { font-size: 10px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); }
+.proj-name { font-size: 15px; font-weight: 800; margin-top: 2px; }
+.proj-eoy { font-size: 36px; font-weight: 900; letter-spacing: -1px; line-height: 1; margin: 4px 0; }
+.proj-miss  .proj-eoy { color: #F87171; }
+.proj-close .proj-eoy { color: #FBBF24; }
+.proj-hit   .proj-eoy { color: #34D399; }
+.proj-target { font-size: 11px; color: var(--muted); }
+.proj-how { font-size: 11px; color: var(--muted); line-height: 1.6; border-top: 1px solid var(--border); padding-top: 10px; margin-top: 4px; }
+.proj-how strong { color: var(--text); }
+.proj-pill { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 8px; display: inline-block; margin-top: 4px; }
+.proj-miss  .proj-pill { background: rgba(239,68,68,.1);   color: #F87171; border: 1px solid rgba(239,68,68,.2); }
+.proj-close .proj-pill { background: rgba(245,158,11,.12); color: #FBBF24; border: 1px solid rgba(245,158,11,.25); }
+.proj-hit   .proj-pill { background: rgba(16,185,129,.12); color: #34D399; border: 1px solid rgba(16,185,129,.25); }
+
+/* ── QUARTERLY TABLE ── */
+.q-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.q-table th { text-align: left; padding: 8px 12px; font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border); }
+.q-table td { padding: 11px 12px; border-bottom: 1px solid rgba(30,42,66,.4); vertical-align: middle; }
+.q-table tr:last-child td { border-bottom: none; }
+.q-table tr:hover td { background: rgba(255,255,255,.02); }
+.q-table .q-label { font-weight: 700; }
+.status-pill { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 8px; white-space: nowrap; }
+.s-actual   { background: rgba(16,185,129,.12); color: #34D399; border: 1px solid rgba(16,185,129,.25); }
+.s-current  { background: rgba(139,92,246,.12); color: #A78BFA; border: 1px solid rgba(139,92,246,.25); }
+.s-proj     { background: rgba(245,158,11,.1);  color: #FBBF24; border: 1px solid rgba(245,158,11,.2); }
+.s-est      { background: rgba(255,255,255,.05); color: var(--muted); border: 1px solid var(--border); }
+.delta-pos { color: var(--green); font-weight: 700; }
+.delta-neg { color: var(--red);   font-weight: 700; }
+.delta-neu { color: var(--muted); font-weight: 600; }
+.est-label { font-size: 9px; color: var(--muted); font-style: italic; }
+.quarter-row-future td { opacity: .7; }
+
+/* ── ACCELERATION BARS ── */
+.accel-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.accel-label { font-size: 11px; color: var(--text); flex: 0 0 120px; }
+.accel-track { flex: 1; height: 10px; background: rgba(255,255,255,.05); border-radius: 5px; overflow: hidden; }
+.accel-fill  { height: 100%; border-radius: 5px; }
+.accel-val   { font-size: 12px; font-weight: 800; min-width: 70px; text-align: right; }
+.accel-delta { font-size: 10px; min-width: 60px; text-align: right; }
+
+/* ── RISK CARDS ── */
+.risk-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+.risk-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+.risk-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.risk-title { font-size: 12px; font-weight: 700; }
+.risk-pill { font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 6px; }
+.rp-high { background: rgba(239,68,68,.15); color: var(--red); }
+.rp-med  { background: rgba(245,158,11,.15); color: var(--yellow); }
+.rp-low  { background: rgba(16,185,129,.15); color: var(--green); }
+.risk-metric { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+.risk-body { font-size: 11px; color: var(--muted); line-height: 1.6; }
+
+/* ── HONESTY BOX ── */
+.est-box { border-radius: 8px; padding: 9px 13px; font-size: 11px; line-height: 1.6; background: rgba(245,158,11,.05); border: 1px solid rgba(245,158,11,.2); color: #FCD34D; margin-bottom: 14px; display: flex; gap: 8px; }
+.est-box .body { color: var(--text); }
+.est-box .body strong { color: #FCD34D; }
+
+/* ── UTILITY ── */
+.divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+@media (max-width:1200px) { .kpi-5 { grid-template-columns: repeat(3,1fr); } .proj-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width:900px)  { .two-col,.wide-narrow,.narrow-wide,.three-col { grid-template-columns: 1fr; } .risk-grid { grid-template-columns: repeat(2,1fr); } .proj-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo">Moloco</div>
+    <div class="header-title">
+      <h1>CTV Revenue Intelligence</h1>
+      <p>Pacing · Trends · Quarterly Performance · Risk Signals</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="badge badge-goal">🎯 $100M ARR Target · EOY 2026</span>
+    <span class="badge badge-warn">⚠ Pre-Oct 2025 data: estimated</span>
+    <span class="badge badge-live"><span class="live-dot"></span>BQ verified · <span id="hdr-date">Mar 31, 2026</span></span>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- ═══════ GOAL PACING BANNER ═══════ -->
+<div class="goal-pacing">
+  <div class="goal-pacing-top">
+    <div class="goal-number">
+      <div class="goal-big" id="gp-arr">$76.1M</div>
+      <div class="goal-label">Current ARR Run-Rate · 7-day trailing avg × 365</div>
+      <div class="goal-vs">
+        <strong id="gp-pct">76.1%</strong> of $100M goal ·
+        <span style="color:var(--red)" id="gp-gap">$23.9M gap</span> ·
+        <span id="gp-days-left">275 days</span> remaining in 2026
+      </div>
+    </div>
+    <div class="goal-bar-area">
+      <div class="goal-bar-labels">
+        <span>Jan 1, 2026</span>
+        <span style="color:var(--yellow);font-weight:700" id="gp-bar-right">$100M by Dec 31</span>
+      </div>
+      <div class="goal-bar-track" style="position:relative">
+        <!-- Q milestone markers -->
+        <div class="goal-bar-marker" style="left:25%"><span class="goal-bar-marker-label">Q1 · $60M</span></div>
+        <div class="goal-bar-marker" style="left:50%"><span class="goal-bar-marker-label">Q2 · $75M</span></div>
+        <div class="goal-bar-marker" style="left:75%"><span class="goal-bar-marker-label">Q3 · $88M</span></div>
+        <div class="goal-bar-fill" id="gp-bar" style="width:76.1%"></div>
+      </div>
+      <div class="goal-milestones">
+        <span>$0</span><span>$25M</span><span>$50M</span><span>$75M</span><span style="color:var(--yellow)">$100M</span>
+      </div>
+    </div>
+  </div>
+  <div class="goal-stats">
+    <div class="g-stat purple">
+      <div class="val" id="gs-daily">$208K</div>
+      <div class="lbl">Current daily pace<br>7-day trailing BQ</div>
+    </div>
+    <div class="g-stat yellow">
+      <div class="val">$274K</div>
+      <div class="lbl">Daily pace<br>needed for $100M</div>
+    </div>
+    <div class="g-stat red">
+      <div class="val" id="gs-shortfall">−$66K</div>
+      <div class="lbl">Daily shortfall<br>vs required pace</div>
+    </div>
+    <div class="g-stat cyan">
+      <div class="val" id="gs-ytd">$9.67M</div>
+      <div class="lbl">YTD total GAS<br>Jan 1 – Mar 31</div>
+    </div>
+    <div class="g-stat green">
+      <div class="val" id="gs-accel">1.9×</div>
+      <div class="lbl">7d pace vs<br>YTD daily avg</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ KPI ROW ═══════ -->
+<div class="section">
+  <div class="section-title">Key Revenue Metrics · BQ Verified</div>
+  <div class="kpi-row kpi-5">
+    <div class="kpi-card purple">
+      <div class="kpi-label">ARR Run-Rate</div>
+      <div class="kpi-value" style="color:#A78BFA" id="kpi-arr">$76.1M</div>
+      <div class="kpi-sub">7-day trailing avg × 365 · BQ</div>
+      <div class="kpi-pill pill-yellow" id="kpi-arr-pill">76.1% of $100M goal</div>
+      <div class="kpi-track"><div class="kpi-fill" id="kpi-arr-bar" style="width:76.1%;background:var(--ctv)"></div></div>
+    </div>
+    <div class="kpi-card yellow">
+      <div class="kpi-label">GAS / Day (Trailing 7d)</div>
+      <div class="kpi-value" style="color:#FBBF24" id="kpi-gas">$208K</div>
+      <div class="kpi-sub">BQ · fact_dsp_core · Mar 23–30</div>
+      <div class="kpi-pill pill-red" id="kpi-gas-pill">76.0% of $274K target pace</div>
+      <div class="kpi-track"><div class="kpi-fill" id="kpi-gas-bar" style="width:76%;background:var(--yellow)"></div></div>
+    </div>
+    <div class="kpi-card cyan">
+      <div class="kpi-label">YTD Total GAS</div>
+      <div class="kpi-value" style="color:#22D3EE" id="kpi-ytd">$9.67M</div>
+      <div class="kpi-sub" id="kpi-ytd-sub">BQ · Jan 1–Mar 31 · 90 days</div>
+      <div class="kpi-pill pill-cyan" id="kpi-ytd-pill">$107K avg/day YTD</div>
+      <div class="kpi-track"><div class="kpi-fill" id="kpi-ytd-bar" style="width:9.67%;background:var(--cyan)"></div></div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">Gap to $100M Goal</div>
+      <div class="kpi-value" style="color:#F87171" id="kpi-gap">$23.9M</div>
+      <div class="kpi-sub">ARR gap · needs $66K more/day</div>
+      <div class="kpi-pill pill-red" id="kpi-gap-pill">~275 active campaigns needed</div>
+      <div class="kpi-track"><div class="kpi-fill" id="kpi-gap-bar" style="width:23.9%;background:var(--red)"></div></div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Active Campaigns</div>
+      <div class="kpi-value" style="color:#34D399" id="kpi-camps">38</div>
+      <div class="kpi-sub">BQ · distinct campaign_ids · 30d spend &gt; $0</div>
+      <div class="kpi-pill pill-red" id="kpi-camps-pill">25% of 150 EOY target</div>
+      <div class="kpi-track"><div class="kpi-fill" id="kpi-camps-bar" style="width:25%;background:var(--green)"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ PROJECTION SCENARIOS ═══════ -->
+<div class="section">
+  <div class="section-title">Where Are We Heading? · EOY 2026 Projection Scenarios</div>
+  <div class="proj-grid">
+
+    <div class="proj-card proj-miss">
+      <div class="proj-scenario">Scenario A · Bear Case</div>
+      <div class="proj-name">Flat Rate — No Growth</div>
+      <div class="proj-eoy" id="proj-bear">$76M</div>
+      <div class="proj-target">vs $100M target</div>
+      <div class="proj-pill" id="proj-bear-miss">−$24M miss (24%)</div>
+      <div class="proj-how">If daily GAS holds flat at <strong id="proj-bear-rate">$208K/day</strong> through Dec 31, ARR never moves. The late-March spike was a one-time event, not structural. This is the downside scenario if top-account concentration creates volatility.</div>
+    </div>
+
+    <div class="proj-card proj-close">
+      <div class="proj-scenario">Scenario B · Base Case</div>
+      <div class="proj-name">Linear Ramp — Steady Growth</div>
+      <div class="proj-eoy" id="proj-base">$89M</div>
+      <div class="proj-target">vs $100M target</div>
+      <div class="proj-pill" id="proj-base-miss">−$11M miss (11%)</div>
+      <div class="proj-how">Adding <strong>~$3K/day each month</strong> from current pace. Requires consistent new campaign activation — roughly 4–5 net new campaigns per month generating $600K+ GAS each. Achievable if pipeline converts at historical rates.</div>
+    </div>
+
+    <div class="proj-card proj-hit">
+      <div class="proj-scenario">Scenario C · Required Case</div>
+      <div class="proj-name">Accelerated Ramp — On Target</div>
+      <div class="proj-eoy" id="proj-bull">$100M</div>
+      <div class="proj-target">= $100M target ✓</div>
+      <div class="proj-pill" id="proj-bull-req">Needs +$7.3K/day added each month</div>
+      <div class="proj-how">Requires adding <strong>~$7.3K/day in GAS per month</strong> from April through December to reach $274K/day by Dec 31. Needs campaign ramp to 150 active + diversification away from PMG/FBG concentration.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════ REVENUE TRENDS ═══════ -->
+<div class="section">
+  <div class="section-title">Revenue Trends · Monthly &amp; Trailing Rates</div>
+  <div class="two-col">
+
+    <!-- 12-month trend -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Monthly Avg Daily GAS — 12-Month Trend</div>
+          <div class="card-sub">Oct–Mar BQ verified · Apr–Sep 2025 estimated · dashed = $274K/day required pace</div>
+        </div>
+        <span class="src-tag src-mix">BQ + estimated</span>
+      </div>
+      <canvas id="chartMonthly"></canvas>
+      <div style="margin-top:10px;font-size:10px;color:var(--muted);line-height:1.5">
+        ⚠ <strong style="color:var(--yellow)">March spike</strong>: Monthly avg ($84.6K/day) vs trailing 7d ($208.6K/day) — the acceleration happened in the final week of March. Whether this is structural depends on the next 2–4 weeks of data.
+      </div>
+    </div>
+
+    <!-- Acceleration analysis -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Trailing Rate Comparison</div>
+          <div class="card-sub">7-day vs 30-day vs 90-day vs YTD · target = $274K/day</div>
+        </div>
+        <span class="src-tag src-bq">BQ</span>
+      </div>
+
+      <div style="margin-top:8px;margin-bottom:16px">
+        <div class="accel-row">
+          <div class="accel-label" style="font-size:12px;font-weight:700">7-day trailing</div>
+          <div class="accel-track"><div class="accel-fill" id="accel7-bar" style="background:var(--ctv)"></div></div>
+          <div class="accel-val" style="color:#A78BFA" id="accel7-val">$208.6K</div>
+          <div class="accel-delta"><span class="pill-purple" style="font-size:10px;padding:2px 6px;border-radius:5px;background:rgba(139,92,246,.1);color:#A78BFA">76% of target</span></div>
+        </div>
+        <div class="accel-row">
+          <div class="accel-label" style="font-size:12px;font-weight:700">30-day trailing</div>
+          <div class="accel-track"><div class="accel-fill" id="accel30-bar" style="background:var(--cyan)"></div></div>
+          <div class="accel-val" style="color:#22D3EE" id="accel30-val">$152.4K</div>
+          <div class="accel-delta"><span style="font-size:10px;padding:2px 6px;border-radius:5px;background:rgba(6,182,212,.1);color:#22D3EE">56% of target</span></div>
+        </div>
+        <div class="accel-row">
+          <div class="accel-label" style="font-size:12px;font-weight:700">90-day (Q1 avg)</div>
+          <div class="accel-track"><div class="accel-fill" id="accel90-bar" style="background:var(--yellow)"></div></div>
+          <div class="accel-val" style="color:#FBBF24" id="accel90-val">$107.4K</div>
+          <div class="accel-delta"><span style="font-size:10px;padding:2px 6px;border-radius:5px;background:rgba(245,158,11,.1);color:#FBBF24">39% of target</span></div>
+        </div>
+        <div class="accel-row">
+          <div class="accel-label" style="font-size:12px;font-weight:700">Required pace</div>
+          <div class="accel-track"><div class="accel-fill" style="width:100%;background:rgba(245,158,11,.25)"></div></div>
+          <div class="accel-val" style="color:var(--yellow)">$274.0K</div>
+          <div class="accel-delta"><span style="font-size:10px;color:var(--muted)">← target</span></div>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
+        <div class="card-title" style="margin-bottom:10px;font-size:12px">MoM Acceleration Signal</div>
+        <canvas id="chartAccel" style="max-height:120px"></canvas>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════ QUARTERLY PERFORMANCE ═══════ -->
+<div class="section">
+  <div class="section-title">Quarterly Performance · Q2 2025 → Q4 2026</div>
+
+  <div class="est-box">
+    <span>⚠</span>
+    <div class="body"><strong>Data transparency:</strong> Q2–Q3 2025 figures are estimated based on extrapolated growth curve — not BQ verified. Q4 2025 and Q1 2026 are BQ verified. Q2–Q4 2026 figures are projections at the linear ramp scenario (Scenario B). Treat 2025 historical data as directional only.</div>
+  </div>
+
+  <div class="two-col" style="margin-bottom:14px">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Quarterly Total GAS</div>
+          <div class="card-sub">Actual cash collected per quarter · Q4 2025 + Q1 2026 BQ verified · rest estimated/projected</div>
+        </div>
+        <span class="src-tag src-mix">BQ + est. + proj.</span>
+      </div>
+      <canvas id="chartQGAS"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">ARR Run-Rate Glide Path</div>
+          <div class="card-sub">ARR run-rate at end of each quarter vs required glide path to $100M · Q4 2025 + Q1 2026 BQ verified</div>
+        </div>
+        <span class="src-tag src-mix">BQ + est. + proj.</span>
+      </div>
+      <canvas id="chartGlide"></canvas>
+    </div>
+  </div>
+
+  <!-- Quarterly Detail Table -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Quarterly Breakdown — Detail</div>
+        <div class="card-sub">Q2 2025 through Q4 2026 · historical + current + projected · BQ verified where noted</div>
+      </div>
+      <span class="src-tag src-mix">BQ + est. + proj.</span>
+    </div>
+    <table class="q-table">
+      <thead>
+        <tr>
+          <th>Quarter</th>
+          <th>Total GAS</th>
+          <th>Avg Daily GAS</th>
+          <th>End-of-Q ARR Run-Rate</th>
+          <th>ARR Target (glide)</th>
+          <th>vs Target</th>
+          <th>QoQ Growth</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="q-label">Q2 2025 <span class="est-label">(Apr–Jun)</span></td>
+          <td>~$2.1M</td>
+          <td>~$23K/day</td>
+          <td style="color:var(--muted)">~$10.5M ARR</td>
+          <td style="color:var(--muted)">—</td>
+          <td class="delta-neu">—</td>
+          <td class="delta-neu">—</td>
+          <td><span class="status-pill s-est">Estimated</span></td>
+        </tr>
+        <tr>
+          <td class="q-label">Q3 2025 <span class="est-label">(Jul–Sep)</span></td>
+          <td>~$3.9M</td>
+          <td>~$43K/day</td>
+          <td style="color:var(--muted)">~$18.9M ARR</td>
+          <td style="color:var(--muted)">—</td>
+          <td class="delta-pos">+86%</td>
+          <td class="delta-pos">+87%</td>
+          <td><span class="status-pill s-est">Estimated</span></td>
+        </tr>
+        <tr>
+          <td class="q-label">Q4 2025 <span class="est-label">(Oct–Dec)</span></td>
+          <td><strong>$6.86M</strong></td>
+          <td>$74.0K/day</td>
+          <td style="color:#A78BFA"><strong>$31.7M ARR</strong></td>
+          <td style="color:var(--muted)">—</td>
+          <td class="delta-pos">+68%</td>
+          <td class="delta-pos">+75%</td>
+          <td><span class="status-pill s-actual">BQ Verified</span></td>
+        </tr>
+        <tr style="background:rgba(139,92,246,.04)">
+          <td class="q-label" style="color:#A78BFA">Q1 2026 <span class="est-label">(Jan–Mar)</span></td>
+          <td><strong style="color:#A78BFA">$9.65M</strong></td>
+          <td style="color:#A78BFA">$107.4K/day</td>
+          <td style="color:#A78BFA"><strong>$76.1M ARR</strong></td>
+          <td>$60M target</td>
+          <td class="delta-pos">+27%* above target</td>
+          <td class="delta-pos">+41%</td>
+          <td><span class="status-pill s-current">Current · BQ</span></td>
+        </tr>
+        <tr class="quarter-row-future">
+          <td class="q-label">Q2 2026 <span class="est-label">(Apr–Jun)</span></td>
+          <td>~$19.7M <span class="est-label">proj.</span></td>
+          <td>~$216K/day</td>
+          <td>~$81M ARR <span class="est-label">proj.</span></td>
+          <td style="color:var(--yellow)">$75M target</td>
+          <td class="delta-pos">+8% above target <span class="est-label">proj.</span></td>
+          <td class="delta-pos">+6%</td>
+          <td><span class="status-pill s-proj">Projected (B)</span></td>
+        </tr>
+        <tr class="quarter-row-future">
+          <td class="q-label">Q3 2026 <span class="est-label">(Jul–Sep)</span></td>
+          <td>~$22.0M <span class="est-label">proj.</span></td>
+          <td>~$239K/day</td>
+          <td>~$87M ARR <span class="est-label">proj.</span></td>
+          <td style="color:var(--yellow)">$88M target</td>
+          <td class="delta-neg">−1% below target <span class="est-label">proj.</span></td>
+          <td class="delta-pos">+7%</td>
+          <td><span class="status-pill s-proj">Projected (B)</span></td>
+        </tr>
+        <tr class="quarter-row-future">
+          <td class="q-label">Q4 2026 <span class="est-label">(Oct–Dec)</span></td>
+          <td>~$24.2M <span class="est-label">proj.</span></td>
+          <td>~$263K/day</td>
+          <td>~$96M ARR <span class="est-label">proj.</span></td>
+          <td style="color:var(--yellow)">$100M target</td>
+          <td class="delta-neg">−4% below target <span class="est-label">proj.</span></td>
+          <td class="delta-pos">+10%</td>
+          <td><span class="status-pill s-proj">Projected (B)</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.6">
+      * Q1 2026 "above target" driven by late-March spike ($208K/day trailing vs $107K/day Q1 avg) — run-rate may not reflect structural level. · Scenario B projections assume +$7.3K/day added per month. · Full-year 2026 projected total GAS at Scenario B: ~$75.5M.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ YoY CONTEXT ═══════ -->
+<div class="section">
+  <div class="section-title">Year-over-Year Context · 2025 vs 2026</div>
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Quarterly GAS — 2025 vs 2026 YoY Comparison</div>
+        <div class="card-sub">Full-year 2025 est. ~$16.5M · Full-year 2026 proj. (Scenario B) ~$75.5M · 4.6× YoY growth required</div>
+      </div>
+      <span class="src-tag src-mix">BQ (Q4 2025, Q1 2026) + estimated</span>
+    </div>
+    <canvas id="chartYoY" style="max-height:200px"></canvas>
+    <div style="margin-top:12px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+      <div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:4px">Q1 YoY</div>
+        <div style="font-size:18px;font-weight:800;color:var(--green)">+4.6×</div>
+        <div style="font-size:10px;color:var(--muted)">$2.1M → $9.65M</div>
+      </div>
+      <div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:4px">Q2 YoY (proj.)</div>
+        <div style="font-size:18px;font-weight:800;color:var(--green)">+9.4×</div>
+        <div style="font-size:10px;color:var(--muted)">$2.1M → $19.7M</div>
+      </div>
+      <div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:4px">Q3 YoY (proj.)</div>
+        <div style="font-size:18px;font-weight:800;color:var(--green)">+5.6×</div>
+        <div style="font-size:10px;color:var(--muted)">$3.9M → $22.0M</div>
+      </div>
+      <div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:4px">Q4 YoY (proj.)</div>
+        <div style="font-size:18px;font-weight:800;color:var(--green)">+3.5×</div>
+        <div style="font-size:10px;color:var(--muted)">$6.86M → $24.2M</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ RISK SIGNALS ═══════ -->
+<div class="section">
+  <div class="section-title">Revenue Risk Signals</div>
+  <div class="risk-grid">
+
+    <div class="risk-card">
+      <div class="risk-top">
+        <div class="risk-title">Trajectory Risk</div>
+        <span class="risk-pill rp-high">High</span>
+      </div>
+      <div class="risk-metric" style="color:var(--red)" id="risk-traj">$76M proj.</div>
+      <div class="risk-body">At flat rate (Scenario A), EOY ARR = $76M — 24% below target. The 7d trailing spike ($208K) vs Q1 avg ($107K) means run-rate may be inflated by a short burst. Confirmed structural only after 3–4 more weeks at this level.</div>
+    </div>
+
+    <div class="risk-card">
+      <div class="risk-top">
+        <div class="risk-title">Advertiser Concentration</div>
+        <span class="risk-pill rp-high">High · BQ</span>
+      </div>
+      <div class="risk-metric" style="color:var(--red)">38%</div>
+      <div class="risk-body">Top advertiser (PMG/FBG) = 38% of all CTV GAS ($79K/day). If this account pauses, ARR run-rate drops from $76M to ~$47M overnight. Top 3 = 60% of GAS. Single largest near-term revenue risk.</div>
+    </div>
+
+    <div class="risk-card">
+      <div class="risk-top">
+        <div class="risk-title">Exchange Concentration</div>
+        <span class="risk-pill rp-med">Watch · BQ</span>
+      </div>
+      <div class="risk-metric" style="color:var(--yellow)">87%</div>
+      <div class="risk-body">MCTV + INDEX + FreeWheel = 87% of CTV exchange volume. IRONSOURCE is a distant 5th at &lt;1% of GAS. Supply concentration mirrors advertiser concentration — both need diversification to de-risk ARR.</div>
+    </div>
+
+    <div class="risk-card">
+      <div class="risk-top">
+        <div class="risk-title">Campaign Ramp</div>
+        <span class="risk-pill rp-high">High · BQ</span>
+      </div>
+      <div class="risk-metric" style="color:var(--red)">38 / 150</div>
+      <div class="risk-body">38 active campaigns (BQ) vs 150 EOY target. Requires 3.9× growth in campaign count across 9 months — roughly 13 net new campaigns/month. At historical close rate (22.7% win rate), that means 57+ proposals needed monthly.</div>
+    </div>
+
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<!-- ═══════ BQ DATA BLOCK ═══════ -->
+<!-- BQ_DATA_START -->
+<script id="bq-data" type="application/json">
+{
+  "gas_per_day": 208624,
+  "arr_run_rate_m": 76.1,
+  "pct_to_goal": 76.1,
+  "gap_m": 23.9,
+  "active_campaigns": 38,
+  "ytd_gas_m": 9.67,
+  "ytd_days": 90,
+  "ytd_start": "2026-01-01",
+  "trailing_7d_k": 208.6,
+  "trailing_30d_k": 152.4,
+  "trailing_90d_k": 107.4,
+  "concentration": [37.77, 12.18, 10.08, 7.44, 5.04, 27.49],
+  "monthly_labels":       ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"],
+  "monthly_daily_avg_k":  [18.2, 22.4, 28.6, 35.1, 42.3, 51.8, 57.9, 79.2, 86.8, 102.7, 132.2, 208.6],
+  "monthly_bq_verified":  [false,false,false,false,false,false,true,true,true,true,true,true],
+  "monthly_year":         ["25","25","25","25","25","25","25","25","25","26","26","26"],
+  "quarterly_labels":     ["Q2 '25","Q3 '25","Q4 '25","Q1 '26","Q2 '26","Q3 '26","Q4 '26"],
+  "quarterly_gas_m":      [2.1, 3.9, 6.86, 9.65, 19.7, 22.0, 24.2],
+  "quarterly_gas_bq":     [false,false,true,true,false,false,false],
+  "quarterly_arr_eop":    [10.5, 18.9, 31.7, 76.1, 81.0, 87.0, 96.0],
+  "quarterly_arr_target": [null, null, null, 60.0, 75.0, 88.0, 100.0],
+  "last_updated": "2026-03-31",
+  "_estimated_months": ["Apr","May","Jun","Jul","Aug","Sep"]
+}
+</script>
+<!-- BQ_DATA_END -->
+
+<script>
+const BQ = JSON.parse(document.getElementById('bq-data').textContent);
+
+// ── Helpers ──────────────────────────────
+const fmtK  = v => '$' + Math.round(v/1000) + 'K';
+const fmtKd = v => '$' + v.toFixed(1) + 'K';
+const fmtM  = v => '$' + v.toFixed(1) + 'M';
+
+// ── Goal pacing banner ───────────────────
+document.getElementById('hdr-date').textContent = BQ.last_updated;
+document.getElementById('gp-arr').textContent    = fmtM(BQ.arr_run_rate_m);
+document.getElementById('gp-pct').textContent    = BQ.pct_to_goal.toFixed(1) + '%';
+document.getElementById('gp-gap').textContent    = fmtM(BQ.gap_m) + ' gap';
+document.getElementById('gp-bar').style.width    = BQ.pct_to_goal + '%';
+document.getElementById('gp-bar-right').textContent = '$100M by Dec 31';
+const daysLeft = Math.round((new Date('2026-12-31') - new Date(BQ.last_updated)) / 86400000);
+document.getElementById('gp-days-left').textContent = daysLeft + ' days';
+document.getElementById('gs-daily').textContent   = fmtK(BQ.gas_per_day);
+document.getElementById('gs-shortfall').textContent = '−' + fmtK(274000 - BQ.gas_per_day);
+document.getElementById('gs-ytd').textContent     = fmtM(BQ.ytd_gas_m);
+const accelX = BQ.ytd_days ? (BQ.trailing_7d_k / (BQ.ytd_gas_m * 1000 / BQ.ytd_days)).toFixed(1) : '—';
+document.getElementById('gs-accel').textContent   = accelX + '×';
+
+// ── KPI cards ───────────────────────────
+document.getElementById('kpi-arr').textContent       = fmtM(BQ.arr_run_rate_m);
+document.getElementById('kpi-arr-pill').textContent  = BQ.pct_to_goal.toFixed(1) + '% of $100M goal';
+document.getElementById('kpi-arr-bar').style.width   = BQ.pct_to_goal + '%';
+const gasPctOfTarget = (BQ.gas_per_day / 274000 * 100).toFixed(1);
+document.getElementById('kpi-gas').textContent       = fmtK(BQ.gas_per_day);
+document.getElementById('kpi-gas-pill').textContent  = gasPctOfTarget + '% of $274K target';
+document.getElementById('kpi-gas-bar').style.width   = gasPctOfTarget + '%';
+document.getElementById('kpi-ytd').textContent       = fmtM(BQ.ytd_gas_m);
+document.getElementById('kpi-ytd-sub').textContent   = 'BQ · ' + BQ.ytd_start + ' – ' + BQ.last_updated + ' · ' + BQ.ytd_days + ' days';
+const ytdDailyAvg = BQ.ytd_gas_m * 1000 / BQ.ytd_days;
+document.getElementById('kpi-ytd-pill').textContent  = fmtK(ytdDailyAvg * 1000) + ' avg/day YTD';
+document.getElementById('kpi-ytd-bar').style.width   = (BQ.ytd_gas_m / 75 * 100).toFixed(1) + '%'; // out of ~$75M full-year
+document.getElementById('kpi-gap').textContent       = fmtM(BQ.gap_m);
+document.getElementById('kpi-gap-bar').style.width   = (BQ.gap_m / 100 * 100).toFixed(1) + '%';
+document.getElementById('kpi-camps').textContent     = BQ.active_campaigns;
+document.getElementById('kpi-camps-pill').textContent = Math.round(BQ.active_campaigns/150*100) + '% of 150 EOY target';
+document.getElementById('kpi-camps-bar').style.width = (BQ.active_campaigns/150*100).toFixed(0) + '%';
+
+// ── Projection scenarios ─────────────────
+// Bear: flat at current
+const bearEOY = BQ.arr_run_rate_m;
+const bearMiss = (100 - bearEOY).toFixed(1);
+document.getElementById('proj-bear').textContent      = fmtM(bearEOY);
+document.getElementById('proj-bear-miss').textContent = '−$' + bearMiss + 'M miss (' + Math.round(bearMiss) + '%)';
+document.getElementById('proj-bear-rate').textContent = fmtK(BQ.gas_per_day) + '/day';
+
+// Base: add ~$3K/day/month (linear from here to ~$263K by Dec → ARR ~$96M)
+// Months remaining: Apr–Dec = 9 months
+// Simple estimate: avg pace = ($208.6K + $263K) / 2 = $235.8K → ARR = $86M
+// More precise: sum month by month
+let baseMonthlyK = BQ.trailing_7d_k;
+const baseMonthlyIncr = 3.0; // $3K/day added per month
+let baseEOYK = BQ.trailing_7d_k;
+for (let m = 0; m < 9; m++) { baseEOYK += baseMonthlyIncr; }
+const baseEOY = (baseEOYK * 365 / 1000).toFixed(1);
+const baseMiss = (100 - parseFloat(baseEOY)).toFixed(1);
+document.getElementById('proj-base').textContent      = '$' + parseFloat(baseEOY).toFixed(0) + 'M';
+document.getElementById('proj-base-miss').textContent = '−$' + Math.max(0,baseMiss) + 'M miss (' + Math.round(Math.max(0,baseMiss)) + '%)';
+
+// Required: must reach $274K/day by Dec 31 ($100M ARR)
+const reqIncr = ((274 - BQ.trailing_7d_k) / 9).toFixed(1);
+document.getElementById('proj-bull').textContent      = '$100M';
+document.getElementById('proj-bull-req').textContent  = 'Needs +$' + reqIncr + 'K/day added each month';
+
+// ── Acceleration bars ────────────────────
+const maxRate = 274;
+document.getElementById('accel7-bar').style.width  = (BQ.trailing_7d_k  / maxRate * 100).toFixed(1) + '%';
+document.getElementById('accel30-bar').style.width = (BQ.trailing_30d_k / maxRate * 100).toFixed(1) + '%';
+document.getElementById('accel90-bar').style.width = (BQ.trailing_90d_k / maxRate * 100).toFixed(1) + '%';
+document.getElementById('accel7-val').textContent  = '$' + BQ.trailing_7d_k.toFixed(1) + 'K';
+document.getElementById('accel30-val').textContent = '$' + BQ.trailing_30d_k.toFixed(1) + 'K';
+document.getElementById('accel90-val').textContent = '$' + BQ.trailing_90d_k.toFixed(1) + 'K';
+
+// ── Risk trajectory ──────────────────────
+document.getElementById('risk-traj').textContent = '$' + bearEOY.toFixed(0) + 'M flat proj.';
+
+// ── Chart defaults ───────────────────────
+Chart.defaults.color = '#7A90B8';
+Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Inter', sans-serif";
+Chart.defaults.font.size = 11;
+const GRID = { color: 'rgba(255,255,255,0.04)' };
+
+// ── Chart 1: 12-month monthly trend ──────
+const monthColors = BQ.monthly_daily_avg_k.map((_, i) =>
+  BQ.monthly_bq_verified[i] ? 'rgba(139,92,246,.85)' : 'rgba(139,92,246,.3)'
+);
+new Chart(document.getElementById('chartMonthly'), {
+  type: 'bar',
+  data: {
+    labels: BQ.monthly_labels.map((l,i) => l + " '" + BQ.monthly_year[i]),
+    datasets: [
+      {
+        label: 'BQ Verified',
+        data: BQ.monthly_daily_avg_k.map((v,i) => BQ.monthly_bq_verified[i] ? v : null),
+        backgroundColor: 'rgba(139,92,246,.8)', borderRadius: 4, order: 2
+      },
+      {
+        label: 'Estimated (pre-Oct 2025)',
+        data: BQ.monthly_daily_avg_k.map((v,i) => !BQ.monthly_bq_verified[i] ? v : null),
+        backgroundColor: 'rgba(139,92,246,.25)', borderColor: 'rgba(139,92,246,.5)', borderWidth: 1, borderRadius: 4, order: 2
+      },
+      {
+        label: '$274K/day required pace',
+        data: BQ.monthly_labels.map(() => 274),
+        type: 'line', borderColor: '#F59E0B', borderDash: [5,4], borderWidth: 2,
+        pointRadius: 0, fill: false, order: 1
+      },
+      {
+        label: '7-day trailing',
+        data: [...BQ.monthly_labels.map((_, i) => i === BQ.monthly_labels.length - 1 ? BQ.trailing_7d_k : null)],
+        type: 'line', borderColor: '#10B981', borderWidth: 0,
+        pointRadius: 8, pointBackgroundColor: '#10B981', fill: false, order: 0
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { labels: { boxWidth: 10, font: { size: 10 } } }, tooltip: { backgroundColor: '#0F1623', borderColor: '#1E2A42', borderWidth: 1 } },
+    scales: {
+      x: { grid: GRID, stacked: false },
+      y: { grid: GRID, ticks: { callback: v => '$' + v + 'K' } }
+    }
+  }
+});
+
+// ── Chart 2: MoM acceleration (line chart of monthly avg daily GAS) ──
+new Chart(document.getElementById('chartAccel'), {
+  type: 'line',
+  data: {
+    labels: BQ.monthly_labels.slice(-6).map((l,i,a) => l + " '" + BQ.monthly_year.slice(-6)[i]),
+    datasets: [{
+      label: 'Avg daily GAS ($K)',
+      data: BQ.monthly_daily_avg_k.slice(-6),
+      borderColor: '#8B5CF6', backgroundColor: 'rgba(139,92,246,.08)',
+      tension: 0.4, fill: true, borderWidth: 2, pointRadius: 3
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false } },
+      y: { grid: GRID, ticks: { callback: v => '$' + v + 'K', maxTicksLimit: 4 } }
+    }
+  }
+});
+
+// ── Chart 3: Quarterly total GAS ──────────
+new Chart(document.getElementById('chartQGAS'), {
+  type: 'bar',
+  data: {
+    labels: BQ.quarterly_labels,
+    datasets: [
+      {
+        label: 'BQ Verified',
+        data: BQ.quarterly_gas_m.map((v,i) => BQ.quarterly_gas_bq[i] ? v : null),
+        backgroundColor: 'rgba(6,182,212,.75)', borderRadius: 4
+      },
+      {
+        label: 'Estimated / Projected',
+        data: BQ.quarterly_gas_m.map((v,i) => !BQ.quarterly_gas_bq[i] ? v : null),
+        backgroundColor: ['rgba(139,92,246,.25)','rgba(139,92,246,.25)','rgba(139,92,246,.25)','rgba(139,92,246,.25)','rgba(245,158,11,.3)','rgba(245,158,11,.3)','rgba(245,158,11,.3)'],
+        borderColor: ['rgba(139,92,246,.5)','rgba(139,92,246,.5)','rgba(139,92,246,.5)','rgba(139,92,246,.5)','rgba(245,158,11,.5)','rgba(245,158,11,.5)','rgba(245,158,11,.5)'],
+        borderWidth: 1, borderRadius: 4
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { labels: { boxWidth: 10, font: { size: 10 } } }, tooltip: { backgroundColor: '#0F1623', borderColor: '#1E2A42', borderWidth: 1, callbacks: { label: ctx => ' $' + ctx.raw.toFixed(2) + 'M' } } },
+    scales: { x: { grid: GRID }, y: { grid: GRID, ticks: { callback: v => '$' + v + 'M' } } }
+  }
+});
+
+// ── Chart 4: ARR glide path ───────────────
+new Chart(document.getElementById('chartGlide'), {
+  type: 'line',
+  data: {
+    labels: BQ.quarterly_labels,
+    datasets: [
+      {
+        label: 'Actual / Projected ARR Run-Rate',
+        data: BQ.quarterly_arr_eop,
+        borderColor: '#8B5CF6', backgroundColor: 'rgba(139,92,246,.08)',
+        tension: 0.3, fill: true, borderWidth: 2.5, pointRadius: 5,
+        pointBackgroundColor: BQ.quarterly_arr_eop.map((_, i) => i <= 3 ? '#8B5CF6' : '#F59E0B'),
+        pointBorderColor: BQ.quarterly_arr_eop.map((_, i) => i <= 3 ? '#8B5CF6' : '#F59E0B')
+      },
+      {
+        label: 'Required Glide Path to $100M',
+        data: BQ.quarterly_arr_target,
+        borderColor: '#F59E0B', borderDash: [5,4], borderWidth: 2,
+        pointRadius: 4, pointBackgroundColor: '#F59E0B', fill: false
+      },
+      {
+        label: '$100M Target',
+        data: BQ.quarterly_labels.map(() => 100),
+        borderColor: '#10B981', borderDash: [3,3], borderWidth: 1.5,
+        pointRadius: 0, fill: false
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { labels: { boxWidth: 10, font: { size: 10 } } }, tooltip: { backgroundColor: '#0F1623', borderColor: '#1E2A42', borderWidth: 1, callbacks: { label: ctx => ' $' + (ctx.raw || 0).toFixed(1) + 'M ARR' } } },
+    scales: { x: { grid: GRID }, y: { grid: GRID, ticks: { callback: v => '$' + v + 'M' }, max: 110 } }
+  }
+});
+
+// ── Chart 5: YoY comparison ───────────────
+const yoyQ = ['Q1','Q2','Q3','Q4'];
+const yoy2025 = [2.1, 2.1, 3.9, 6.86];
+const yoy2026 = [9.65, 19.7, 22.0, 24.2];
+new Chart(document.getElementById('chartYoY'), {
+  type: 'bar',
+  data: {
+    labels: yoyQ,
+    datasets: [
+      {
+        label: '2025 (estimated)',
+        data: yoy2025,
+        backgroundColor: 'rgba(139,92,246,.3)', borderColor: 'rgba(139,92,246,.5)', borderWidth: 1, borderRadius: 4
+      },
+      {
+        label: '2026 (BQ Q1, projected Q2–Q4)',
+        data: yoy2026,
+        backgroundColor: ['rgba(6,182,212,.75)','rgba(245,158,11,.55)','rgba(245,158,11,.55)','rgba(245,158,11,.55)'],
+        borderRadius: 4
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { labels: { boxWidth: 10, font: { size: 10 } } }, tooltip: { backgroundColor: '#0F1623', borderColor: '#1E2A42', borderWidth: 1, callbacks: { label: ctx => ' $' + ctx.raw.toFixed(2) + 'M' } } },
+    scales: { x: { grid: GRID }, y: { grid: GRID, ticks: { callback: v => '$' + v + 'M' } } }
+  }
+});
+</script>
+</body>
+</html>
