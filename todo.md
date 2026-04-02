@@ -925,3 +925,13 @@
 - [x] Fix decimal string coercion — MySQL decimal columns return strings, added Number() conversion
 - [x] Add 39 new curatedIntel tests validating all html_/ccctv_ categories
 - [x] Run tests and save checkpoint
+
+## Phase 67: Daily HTML Dashboard Ingestion + Refresh
+- [x] Ingest new moloco_ctv_dashboard.html (uploaded Apr 1, 2026)
+- [x] Refresh curated_intel DB with updated data — 771 records across 29 html_ categories (up from 727), 99 total categories
+- [x] Verify via API: GAS/day $208,624, ARR $76.1M, 38 campaigns, $23.9M gap — all correct
+- [x] Added 6 new categories: html_sales_intel_kpi, html_insights_scorecard, html_insights_gm_agenda, html_market_links, html_bq_window, html_bq_exchange_detail
+- [x] Expanded html_pipeline_deals from 4 to 10 records (full Sales Intelligence tab)
+- [x] Expanded html_slack_signals from 4 to 7 records (deal + competitive signals)
+- [x] Set up daily scheduled task (weekdays 7AM PT) for HTML dashboard re-ingestion
+- [ ] Save checkpoint

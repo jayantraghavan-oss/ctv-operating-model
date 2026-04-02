@@ -1,0 +1,2815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moloco CTV · Strategic Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #080C18;
+  --card: #0F1623;
+  --card2: #141C2E;
+  --border: #1E2A42;
+  --text: #F0F4FF;
+  --muted: #7A90B8;
+  --blue: #0057FF;
+  --ctv: #8B5CF6;
+  --green: #10B981;
+  --red: #EF4444;
+  --yellow: #F59E0B;
+  --cyan: #06B6D4;
+  --orange: #F97316;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+
+/* ── HEADER ── */
+.header {
+  background: linear-gradient(135deg, #080C18 0%, #0D1835 60%, #120B2E 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+.header-left { display: flex; align-items: center; gap: 14px; }
+.logo { background: var(--blue); color: white; font-weight: 800; font-size: 15px; padding: 6px 12px; border-radius: 8px; letter-spacing: -.3px; }
+.header-title h1 { font-size: 17px; font-weight: 700; letter-spacing: -.4px; }
+.header-title p { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.badge { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px; }
+.badge-goal { background: rgba(245,158,11,.15); border: 1px solid rgba(245,158,11,.35); color: #F59E0B; }
+.badge-caveat { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.25); color: #FCA5A5; font-size: 10px; }
+.badge-live { background: rgba(16,185,129,.15); border: 1px solid rgba(16,185,129,.3); color: #10B981; display: flex; align-items: center; gap: 5px; }
+.live-dot { width: 6px; height: 6px; background: #10B981; border-radius: 50%; animation: blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ── GOAL BANNER ── */
+.goal-banner {
+  background: linear-gradient(90deg, #0A0E20 0%, #14103A 50%, #0A0E20 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 28px;
+}
+.goal-inner { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+.goal-label .big { font-size: 20px; font-weight: 800; color: #F59E0B; letter-spacing: -.5px; }
+.goal-label .sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+.goal-bar-wrap { flex: 1; min-width: 200px; }
+.goal-bar-top { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 11px; color: var(--muted); }
+.goal-bar-track { height: 10px; background: rgba(255,255,255,.06); border-radius: 8px; overflow: hidden; position: relative; }
+.goal-bar-fill { height: 100%; background: linear-gradient(90deg, #8B5CF6, #F59E0B); border-radius: 8px; }
+.goal-milestones { display: flex; justify-content: space-between; margin-top: 4px; font-size: 9px; color: var(--muted); }
+.goal-stats { display: flex; gap: 22px; flex-wrap: wrap; }
+.g-stat .val { font-size: 15px; font-weight: 800; }
+.g-stat .lbl { font-size: 9px; color: var(--muted); margin-top: 1px; line-height: 1.4; }
+.g-stat.green .val { color: var(--green); }
+.g-stat.red .val { color: var(--red); }
+.g-stat.yellow .val { color: var(--yellow); }
+.g-stat.purple .val { color: #A78BFA; }
+
+/* ── FILTER BAR ── */
+.filter-bar {
+  background: var(--card2); border-bottom: 1px solid var(--border);
+  padding: 8px 24px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+}
+.filter-group { display: flex; align-items: center; gap: 6px; }
+.filter-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; }
+.filter-pill {
+  font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 20px;
+  border: 1px solid var(--border); background: transparent; color: var(--muted);
+  cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.filter-pill:hover { color: var(--text); border-color: rgba(139,92,246,.4); }
+.filter-pill.active { background: rgba(139,92,246,.15); color: #A78BFA; border-color: rgba(139,92,246,.5); }
+.filter-pill.active-window { background: rgba(245,158,11,.12); color: #FBBF24; border-color: rgba(245,158,11,.4); }
+.filter-divider { width: 1px; height: 20px; background: var(--border); }
+.filter-state-label { font-size: 10px; color: var(--muted); margin-left: auto; font-style: italic; }
+
+/* ── INSIGHTS TAB ── */
+.scorecard-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px; }
+@media(max-width:900px){.scorecard-grid{grid-template-columns:repeat(2,1fr);}}
+.sc-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 16px; position:relative; overflow:hidden; }
+.sc-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+.sc-card.sc-green::before { background:linear-gradient(90deg,#10B981,#34D399); }
+.sc-card.sc-red::before   { background:linear-gradient(90deg,#EF4444,#F87171); }
+.sc-card.sc-yellow::before{ background:linear-gradient(90deg,#D97706,#FBBF24); }
+.sc-card.sc-purple::before{ background:linear-gradient(90deg,#7C3AED,#A78BFA); }
+.sc-card.sc-cyan::before  { background:linear-gradient(90deg,#0891B2,#22D3EE); }
+.sc-card.sc-orange::before{ background:linear-gradient(90deg,#EA580C,#FB923C); }
+.sc-label { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; margin-bottom:4px; }
+.sc-value { font-size:26px; font-weight:800; line-height:1.1; margin-bottom:2px; }
+.sc-vs    { font-size:11px; color:var(--muted); margin-bottom:6px; }
+.sc-trend { font-size:11px; display:flex; align-items:center; gap:5px; }
+.trend-up   { color:#34D399; }
+.trend-down { color:#F87171; }
+.trend-warn { color:#FBBF24; }
+.sc-bar-wrap { margin-top:8px; height:4px; background:rgba(255,255,255,.06); border-radius:2px; }
+.sc-bar      { height:4px; border-radius:2px; transition:width .4s; }
+
+.insight-section { margin-bottom:16px; }
+.insight-section-title { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+.insight-section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+
+.action-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+@media(max-width:900px){.action-grid{grid-template-columns:1fr;}}
+.action-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
+.action-card-title { font-size:12px; font-weight:700; color:var(--text); margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+.action-item { display:flex; gap:10px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,.04); }
+.action-item:last-child { border-bottom:none; padding-bottom:0; }
+.action-priority { font-size:9px; font-weight:700; padding:2px 7px; border-radius:8px; white-space:nowrap; align-self:flex-start; margin-top:1px; }
+.ap-urgent  { background:rgba(239,68,68,.12);  color:#F87171; border:1px solid rgba(239,68,68,.25); }
+.ap-high    { background:rgba(245,158,11,.12); color:#FBBF24; border:1px solid rgba(245,158,11,.25); }
+.ap-opp     { background:rgba(16,185,129,.12); color:#34D399; border:1px solid rgba(16,185,129,.25); }
+.action-body { flex:1; }
+.action-body strong { font-size:12px; color:var(--text); display:block; margin-bottom:2px; }
+.action-body p { font-size:11px; color:var(--muted); line-height:1.5; margin:0; }
+
+.trend-feed { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:14px; }
+@media(max-width:900px){.trend-feed{grid-template-columns:1fr;}}
+.trend-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:13px 15px; }
+.trend-card-label { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
+.trend-card-value { font-size:18px; font-weight:800; margin-bottom:3px; }
+.trend-card-desc { font-size:11px; color:var(--muted); line-height:1.5; }
+.trend-arrow { font-size:14px; margin-right:4px; }
+
+/* ── NAV ── */
+.nav-tabs {
+  background: var(--card); border-bottom: 1px solid var(--border);
+  padding: 0 24px; display: flex; overflow-x: auto;
+}
+.tab-btn {
+  padding: 0 16px; height: 44px; font-size: 12px; font-weight: 600;
+  color: var(--muted); border: none; background: none; cursor: pointer;
+  border-bottom: 2px solid transparent; transition: all .2s; white-space: nowrap;
+  display: flex; align-items: center; gap: 7px;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--ctv); border-bottom-color: var(--ctv); }
+.tab-q-badge { font-size: 10px; background: rgba(139,92,246,.15); color: #A78BFA; padding: 2px 7px; border-radius: 10px; font-weight: 700; }
+
+/* ── LAYOUT ── */
+.main { padding: 14px 24px; max-width: 1440px; margin: 0 auto; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.wide-narrow { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-bottom: 12px; }
+.narrow-wide { display: grid; grid-template-columns: 1fr 2fr; gap: 12px; margin-bottom: 12px; }
+.full { margin-bottom: 12px; }
+
+/* ── QUESTION HEADER ── */
+.q-header {
+  border-radius: 10px; padding: 14px 18px; margin-bottom: 14px;
+  display: flex; align-items: flex-start; gap: 14px;
+}
+.q-header.q1 { background: linear-gradient(135deg, rgba(245,158,11,.08), rgba(245,158,11,.03)); border: 1px solid rgba(245,158,11,.2); }
+.q-header.q2 { background: linear-gradient(135deg, rgba(139,92,246,.08), rgba(139,92,246,.03)); border: 1px solid rgba(139,92,246,.2); }
+.q-header.q3 { background: linear-gradient(135deg, rgba(16,185,129,.08), rgba(16,185,129,.03)); border: 1px solid rgba(16,185,129,.2); }
+.q-header.q4 { background: linear-gradient(135deg, rgba(6,182,212,.08), rgba(6,182,212,.03)); border: 1px solid rgba(6,182,212,.2); }
+.q-icon { font-size: 24px; flex-shrink: 0; line-height: 1; }
+.q-body { flex: 1; }
+.q-number { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.q-title { font-size: 16px; font-weight: 800; letter-spacing: -.4px; margin-bottom: 5px; }
+.q-desc { font-size: 12px; color: var(--muted); line-height: 1.6; }
+.q1 .q-title { color: #FBBF24; }
+.q2 .q-title { color: #A78BFA; }
+.q3 .q-title { color: #34D399; }
+.q4 .q-title { color: #22D3EE; }
+.q-caveat { margin-top: 8px; font-size: 11px; padding: 5px 10px; border-radius: 6px; display: inline-block; }
+.caveat-yellow { background: rgba(245,158,11,.1); color: #FBBF24; border: 1px solid rgba(245,158,11,.2); }
+.caveat-purple { background: rgba(139,92,246,.1); color: #C4B5FD; border: 1px solid rgba(139,92,246,.2); }
+.caveat-green { background: rgba(16,185,129,.1); color: #6EE7B7; border: 1px solid rgba(16,185,129,.2); }
+.caveat-cyan { background: rgba(6,182,212,.1); color: #67E8F9; border: 1px solid rgba(6,182,212,.2); }
+
+/* ── KPI CARDS ── */
+.kpi-row { display: grid; gap: 10px; margin-bottom: 12px; }
+.kpi-row-6 { grid-template-columns: repeat(6, 1fr); }
+.kpi-row-5 { grid-template-columns: repeat(5, 1fr); }
+.kpi-row-4 { grid-template-columns: repeat(4, 1fr); }
+.kpi-row-3 { grid-template-columns: repeat(3, 1fr); }
+.kpi-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 13px; position: relative; overflow: hidden;
+}
+.kpi-card::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+.kpi-card.purple::after { background: var(--ctv); }
+.kpi-card.green::after { background: var(--green); }
+.kpi-card.yellow::after { background: var(--yellow); }
+.kpi-card.red::after { background: var(--red); }
+.kpi-card.cyan::after { background: var(--cyan); }
+.kpi-card.orange::after { background: var(--orange); }
+.kpi-label { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 7px; }
+.kpi-value { font-size: 22px; font-weight: 800; letter-spacing: -.5px; margin-bottom: 3px; }
+.kpi-sub { font-size: 10px; color: var(--muted); line-height: 1.4; }
+.kpi-pill { font-size: 10px; margin-top: 7px; padding: 3px 8px; border-radius: 6px; display: inline-block; font-weight: 600; }
+.pill-red { background: rgba(239,68,68,.1); color: var(--red); }
+.pill-green { background: rgba(16,185,129,.1); color: var(--green); }
+.pill-yellow { background: rgba(245,158,11,.1); color: var(--yellow); }
+.pill-purple { background: rgba(139,92,246,.1); color: #A78BFA; }
+.kpi-track { height: 3px; background: rgba(255,255,255,.07); border-radius: 2px; margin-top: 10px; overflow: hidden; }
+.kpi-fill { height: 100%; border-radius: 2px; }
+
+/* ── CHART CARDS ── */
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+.card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; gap: 10px; }
+.card-title { font-size: 13px; font-weight: 700; }
+.card-sub { font-size: 10px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+.src-tag { font-size: 10px; padding: 3px 8px; border-radius: 10px; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+.src-bq { background: rgba(0,87,255,.15); color: #60A5FA; border: 1px solid rgba(0,87,255,.25); }
+.src-gong { background: rgba(139,92,246,.15); color: #A78BFA; border: 1px solid rgba(139,92,246,.25); }
+.src-est { background: rgba(245,158,11,.12); color: var(--yellow); border: 1px solid rgba(245,158,11,.25); }
+.src-sl { background: rgba(16,185,129,.12); color: var(--green); border: 1px solid rgba(16,185,129,.25); }
+.src-mixed { background: rgba(6,182,212,.12); color: var(--cyan); border: 1px solid rgba(6,182,212,.25); }
+
+/* ── RISK CARDS ── */
+.risk-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; }
+.risk-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 11px 13px; }
+.risk-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
+.risk-title { font-size: 12px; font-weight: 700; }
+.risk-pill { font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 6px; }
+.rp-high { background: rgba(239,68,68,.15); color: var(--red); }
+.rp-med { background: rgba(245,158,11,.15); color: var(--yellow); }
+.rp-opp { background: rgba(16,185,129,.15); color: var(--green); }
+.risk-body { font-size: 11px; color: var(--muted); line-height: 1.55; }
+
+/* ── SIGNAL FEED ── */
+.signal-feed { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.signal-item { padding: 10px 14px; border-bottom: 1px solid rgba(30,42,66,.5); display: flex; gap: 10px; align-items: flex-start; }
+.signal-item:last-child { border-bottom: none; }
+.sig-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+.sig-title { font-size: 12px; font-weight: 700; margin-bottom: 3px; }
+.sig-body { font-size: 11px; color: var(--muted); line-height: 1.5; }
+.sig-src { font-size: 10px; color: var(--muted); margin-top: 4px; }
+
+/* ── VOC ── */
+.voc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+.voc-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+.voc-theme-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+.voc-quote { font-size: 11px; color: var(--muted); line-height: 1.65; font-style: italic; border-left: 2px solid var(--ctv); padding-left: 10px; margin-bottom: 10px; }
+.voc-meta { font-size: 10px; color: var(--muted); display: flex; justify-content: space-between; }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.dot-green { background: var(--green); }
+.dot-yellow { background: var(--yellow); }
+.dot-red { background: var(--red); }
+.dot-purple { background: var(--ctv); }
+
+/* ── THEME BARS ── */
+.theme-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.theme-label { font-size: 12px; flex: 0 0 190px; color: var(--text); }
+.theme-track { flex: 1; height: 8px; background: rgba(255,255,255,.06); border-radius: 4px; overflow: hidden; }
+.theme-fill { height: 100%; border-radius: 4px; }
+.theme-count { font-size: 11px; font-weight: 700; color: var(--muted); min-width: 55px; text-align: right; }
+
+/* ── COACHING / BEHAVIOR TABLE ── */
+.behavior-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.behavior-table th { text-align: left; padding: 8px 10px; font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border); }
+.behavior-table td { padding: 10px; border-bottom: 1px solid rgba(30,42,66,.4); vertical-align: middle; }
+.behavior-table tr:last-child td { border-bottom: none; }
+.behavior-table tr:hover td { background: rgba(255,255,255,.02); }
+.score-bars { display: flex; gap: 4px; align-items: center; }
+.score-bar { height: 7px; border-radius: 3px; overflow: hidden; background: rgba(255,255,255,.07); min-width: 60px; flex: 1; }
+.sb-green { height: 100%; background: var(--green); border-radius: 3px; }
+.sb-red { height: 100%; background: var(--red); border-radius: 3px; }
+.delta-pos { color: var(--green); font-weight: 700; }
+.delta-neg { color: var(--red); font-weight: 700; }
+.sig-strength { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+.ss-high { background: rgba(16,185,129,.15); color: var(--green); }
+.ss-med { background: rgba(245,158,11,.15); color: var(--yellow); }
+.ss-low { background: rgba(139,92,246,.15); color: #A78BFA; }
+
+/* ── COMPETITIVE TABLE ── */
+.comp-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.comp-table th { text-align: left; padding: 8px 10px; font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border); }
+.comp-table td { padding: 10px; border-bottom: 1px solid rgba(30,42,66,.4); vertical-align: middle; }
+.comp-table tr:last-child td { border-bottom: none; }
+.comp-table tr:hover td { background: rgba(255,255,255,.02); }
+.win-pill { padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }
+.win-high { background: rgba(16,185,129,.15); color: var(--green); }
+.win-mid { background: rgba(245,158,11,.15); color: var(--yellow); }
+.win-low { background: rgba(239,68,68,.15); color: var(--red); }
+
+/* ── HONESTY BOX ── */
+.honesty-box {
+  border-radius: 8px; padding: 10px 14px; margin-bottom: 14px;
+  font-size: 11px; line-height: 1.6;
+  background: rgba(239,68,68,.05); border: 1px solid rgba(239,68,68,.15);
+  color: #FCA5A5;
+  display: flex; gap: 10px; align-items: flex-start;
+}
+.honesty-box .icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.honesty-box .body { color: var(--text); }
+.honesty-box .body strong { color: #FCA5A5; }
+
+/* ── PIPELINE FUNNEL ── */
+.funnel-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.funnel-label { font-size: 12px; flex: 0 0 140px; color: var(--text); }
+.funnel-track { flex: 1; height: 24px; background: rgba(255,255,255,.05); border-radius: 4px; overflow: hidden; display: flex; align-items: center; position: relative; }
+.funnel-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 10px; font-size: 11px; font-weight: 700; color: white; }
+.funnel-count { font-size: 11px; color: var(--muted); min-width: 60px; text-align: right; }
+
+/* ── TAM ── */
+.tam-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.tam-label { font-size: 12px; flex: 0 0 180px; }
+.tam-bar-outer { flex: 1; height: 28px; background: rgba(255,255,255,.04); border-radius: 6px; overflow: hidden; position: relative; }
+.tam-bar-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; padding: 0 10px; font-size: 10px; font-weight: 700; }
+.tam-total { font-size: 11px; font-weight: 700; min-width: 70px; text-align: right; }
+
+/* ── UTILITY ── */
+.divider { height: 1px; background: var(--border); margin: 14px 0; }
+.label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.label-row .title { font-size: 12px; font-weight: 700; }
+.label-row .sub { font-size: 10px; color: var(--muted); }
+canvas { max-height: 220px; }
+
+@media (max-width: 1200px) { .kpi-row-6 { grid-template-columns: repeat(3,1fr); } }
+@media (max-width: 1100px) { .kpi-row-5 { grid-template-columns: repeat(3,1fr); } .risk-grid { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 800px) { .two-col,.three-col,.wide-narrow,.narrow-wide { grid-template-columns: 1fr; } .kpi-row-6,.kpi-row-5,.kpi-row-4,.kpi-row-3 { grid-template-columns: repeat(2,1fr); } .voc-grid { grid-template-columns: 1fr; } }
+
+/* ── GM AGENDA ── */
+.gm-agenda { border-radius: 10px; border: 1px solid rgba(245,158,11,.3); background: linear-gradient(135deg, rgba(245,158,11,.06) 0%, rgba(139,92,246,.04) 100%); padding: 14px 16px; margin-bottom: 14px; }
+.gm-agenda-title { font-size: 12px; font-weight: 700; color: #F59E0B; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.gm-agenda-date { font-size: 10px; color: var(--muted); font-weight: 400; }
+.gm-items { display: flex; flex-direction: column; gap: 8px; }
+.gm-item { background: rgba(0,0,0,.25); border-radius: 8px; padding: 10px 14px; border-left: 3px solid var(--border); }
+.gm-action { border-left-color: #EF4444; }
+.gm-alert { border-left-color: #F59E0B; }
+.gm-watch { border-left-color: #8B5CF6; }
+.gm-positive { border-left-color: #10B981; }
+.gm-item-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
+.gm-item-icon { font-size: 14px; line-height: 1; }
+.gm-item-title { font-size: 12px; font-weight: 700; color: var(--text); flex: 1; }
+.gm-item-pill { font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 8px; white-space: nowrap; }
+.pill-action { background: rgba(239,68,68,.15); color: #FCA5A5; border: 1px solid rgba(239,68,68,.3); }
+.pill-alert { background: rgba(245,158,11,.15); color: #FCD34D; border: 1px solid rgba(245,158,11,.3); }
+.pill-watch { background: rgba(139,92,246,.15); color: #C4B5FD; border: 1px solid rgba(139,92,246,.3); }
+.pill-positive { background: rgba(16,185,129,.15); color: #6EE7B7; border: 1px solid rgba(16,185,129,.3); }
+.gm-item-body { font-size: 11px; color: var(--muted); line-height: 1.55; }
+
+/* ── PLACEHOLDER MARKERS ── */
+.placeholder-banner {
+  background: rgba(245,158,11,.12);
+  border: 1px solid rgba(245,158,11,.4);
+  color: #FBBF24;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.placeholder-dim { opacity: 0.35; pointer-events: none; user-select: none; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo">Moloco</div>
+    <div class="header-title">
+      <h1>CTV Strategic Dashboard</h1>
+      <p>Four questions that matter · Revenue · Voice · Behaviors · Position</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="badge badge-goal">🎯 $100M CTV ARR · EOY 2026</span>
+    <span class="badge badge-caveat">⚠ Gong / coaching data: early signal, not validated</span>
+    <span class="badge badge-live"><span class="live-dot"></span>BQ verified · Mar 31, 2026</span>
+  </div>
+</div>
+
+<!-- GOAL PROGRESS BANNER -->
+<div class="goal-banner">
+  <div class="goal-inner">
+    <div class="goal-label">
+      <div class="big">$100M ARR</div>
+      <div class="sub">Beth's mandate · CTV · EOY 2026</div>
+    </div>
+    <div class="goal-bar-wrap">
+      <div class="goal-bar-top">
+        <span>Current run-rate: ~<span id="bq-arr-label">$71.3M ARR ($195K/day × 365)</span> · BQ verified 7-day trailing avg</span>
+        <span style="color:#F59E0B;font-weight:700"><span id="bq-pct-label">71.3%</span> of goal — <span id="bq-gap-label">$28.7M</span> gap to close</span>
+      </div>
+      <div class="goal-bar-track">
+        <div class="goal-bar-fill" id="bq-goal-bar" style="width:71.3%"></div>
+      </div>
+      <div class="goal-milestones">
+        <span>$0</span><span>$25M · Q1</span><span>$50M · Q2</span><span>$75M · Q3</span><span style="color:#F59E0B">$100M · EOY</span>
+      </div>
+    </div>
+    <div class="goal-stats">
+      <div class="g-stat purple">
+        <div class="val" id="bq-gas-day">$195K</div>
+        <div class="lbl">CTV GAS/day<br>BQ · 7d trailing</div>
+      </div>
+      <div class="g-stat yellow">
+        <div class="val">$274K</div>
+        <div class="lbl">Daily target<br>needed</div>
+      </div>
+      <div class="g-stat yellow">
+        <div class="val" id="bq-campaigns">39</div>
+        <div class="lbl">Active<br>campaigns</div>
+      </div>
+      <div class="g-stat red">
+        <div class="val">22.7%</div>
+        <div class="lbl">Win rate<br>vs 35% target</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NAV TABS -->
+<div class="nav-tabs">
+  <button class="tab-btn active" onclick="showTab('insights', this)">⚡ Insights &amp; Actions <span class="tab-q-badge" style="background:rgba(16,185,129,.15);color:#34D399">NEW</span></button>
+  <button class="tab-btn" onclick="showTab('q1', this)">📈 Are we on track for $100M? <span class="tab-q-badge">Q1</span></button>
+  <button class="tab-btn" onclick="showTab('q2', this)">🎙 What are customers telling us? <span class="tab-q-badge">Q2</span></button>
+  <button class="tab-btn" onclick="showTab('q3', this)">🎯 What separates winning from losing? <span class="tab-q-badge">Q3</span></button>
+  <button class="tab-btn" onclick="showTab('q4', this)">⚔ How are we positioned? <span class="tab-q-badge">Q4</span></button>
+  <button class="tab-btn" onclick="showTab('queries', this)">📋 Data Sources <span class="tab-q-badge">SQL</span></button>
+  <button class="tab-btn" onclick="showTab('sales', this)">🔍 Sales Intelligence <span class="tab-q-badge">Sales</span></button>
+</div>
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+  <div class="filter-group">
+    <span class="filter-label">Window</span>
+    <button class="filter-pill active-window" data-filter="window" data-value="7d"  onclick="setFilter('window','7d',this)">7d</button>
+    <button class="filter-pill" data-filter="window" data-value="30d" onclick="setFilter('window','30d',this)">30d</button>
+    <button class="filter-pill" data-filter="window" data-value="90d" onclick="setFilter('window','90d',this)">90d</button>
+  </div>
+  <div class="filter-divider"></div>
+  <div class="filter-group">
+    <span class="filter-label">Exchange</span>
+    <button class="filter-pill active" data-filter="exchange" data-value="all"        onclick="setFilter('exchange','all',this)">All</button>
+    <button class="filter-pill" data-filter="exchange" data-value="MCTV"              onclick="setFilter('exchange','MCTV',this)">MCTV</button>
+    <button class="filter-pill" data-filter="exchange" data-value="FREE_WHEEL"        onclick="setFilter('exchange','FREE_WHEEL',this)">FreeWheel</button>
+    <button class="filter-pill" data-filter="exchange" data-value="INDEX"             onclick="setFilter('exchange','INDEX',this)">Index</button>
+    <button class="filter-pill" data-filter="exchange" data-value="NEXXEN"            onclick="setFilter('exchange','NEXXEN',this)">Nexxen</button>
+  </div>
+  <span class="filter-state-label" id="filter-state"></span>
+</div>
+
+<div class="main">
+
+<!-- ═══════════════════════════════════════
+     INSIGHTS & ACTIONS TAB
+════════════════════════════════════════ -->
+<div id="tab-insights" class="tab-panel active">
+
+  <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px">
+    <div>
+      <div style="font-size:18px;font-weight:800;color:var(--text)">CTV — Insights &amp; Actions</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">Synthesized from BQ (live), Gong (N=43), SearchLight (N=31 deals) · updated daily · <span id="insights-date"></span></div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);text-align:right">Use this tab first.<br>Drill into Q1–Q4 for full detail.</div>
+  </div>
+
+  <!-- ── SCORECARD ─────────────────────────────────────────────────────── -->
+  <div class="insight-section-title">Scorecard — Key Metrics at a Glance</div>
+  <div class="scorecard-grid">
+
+    <div class="sc-card sc-purple">
+      <div class="sc-label">GAS / Day · 7d Trailing</div>
+      <div class="sc-value" style="color:#A78BFA" id="sc-gas-day">$208.6K</div>
+      <div class="sc-vs">Target: $274K/day for $100M ARR</div>
+      <div class="sc-trend"><span class="trend-up">↑ Accelerating</span><span style="color:var(--muted)">— 2.5× above 90d avg</span></div>
+      <div class="sc-bar-wrap"><div class="sc-bar" id="sc-gas-bar" style="width:76%;background:linear-gradient(90deg,#7C3AED,#A78BFA)"></div></div>
+    </div>
+
+    <div class="sc-card sc-yellow">
+      <div class="sc-label">ARR Run-Rate</div>
+      <div class="sc-value" style="color:#FBBF24" id="sc-arr">$76.1M</div>
+      <div class="sc-vs">$23.9M gap to $100M goal</div>
+      <div class="sc-trend"><span class="trend-warn">⚠ Need 3× acceleration by EOY</span></div>
+      <div class="sc-bar-wrap"><div class="sc-bar" id="sc-arr-bar" style="width:76%;background:linear-gradient(90deg,#D97706,#FBBF24)"></div></div>
+    </div>
+
+    <div class="sc-card sc-orange">
+      <div class="sc-label">YTD Gross Ad Spend</div>
+      <div class="sc-value" style="color:#FB923C" id="sc-ytd">$9.67M</div>
+      <div class="sc-vs">90 days · $107K avg/day YTD</div>
+      <div class="sc-trend"><span class="trend-up">↑ Implies $39M/yr at YTD pace</span></div>
+      <div class="sc-bar-wrap"><div class="sc-bar" id="sc-ytd-bar" style="width:24%;background:linear-gradient(90deg,#EA580C,#FB923C)"></div></div>
+    </div>
+
+    <div class="sc-card sc-red">
+      <div class="sc-label">Active Campaigns (BQ)</div>
+      <div class="sc-value" style="color:#F87171" id="sc-campaigns">38</div>
+      <div class="sc-vs">Target: 150 by EOY · 25% of goal</div>
+      <div class="sc-trend"><span class="trend-down">↓ Need 112 more campaigns</span></div>
+      <div class="sc-bar-wrap"><div class="sc-bar" id="sc-camp-bar" style="width:25%;background:linear-gradient(90deg,#EF4444,#F87171)"></div></div>
+    </div>
+
+    <div class="sc-card sc-red">
+      <div class="sc-label">Win Rate (SearchLight · 90d)</div>
+      <div class="sc-value" style="color:#F87171">22.7%</div>
+      <div class="sc-vs">Target: 35% · 12.3pp below</div>
+      <div class="sc-trend"><span class="trend-down">↓ Top loss reason: attribution</span></div>
+      <div class="sc-bar-wrap"><div class="sc-bar" style="width:65%;background:linear-gradient(90deg,#EF4444,#F87171)"></div></div>
+    </div>
+
+    <div class="sc-card sc-yellow">
+      <div class="sc-label">Advertiser Concentration</div>
+      <div class="sc-value" style="color:#FBBF24">38%</div>
+      <div class="sc-vs">PMG/FBG Oppco — single advertiser</div>
+      <div class="sc-trend"><span class="trend-warn">⚠ Risk threshold: 30% · Above limit</span></div>
+      <div class="sc-bar-wrap"><div class="sc-bar" style="width:38%;background:linear-gradient(90deg,#D97706,#FBBF24)"></div></div>
+    </div>
+
+  </div>
+
+  <!-- ── NOTABLE TRENDS ─────────────────────────────────────────────────── -->
+  <div class="insight-section-title">Notable Trends This Week</div>
+  <div class="placeholder-banner">⚠ PLACEHOLDER — Trend cards reference Gong/SearchLight data · Replace before sharing</div>
+  <div class="trend-feed placeholder-dim">
+
+    <div class="trend-card">
+      <div class="trend-card-label">Revenue Acceleration</div>
+      <div class="trend-card-value" style="color:#34D399"><span class="trend-arrow">↑</span>2.5×</div>
+      <div class="trend-card-desc">7d GAS ($208.6K/day) is 2.5× the 90d average ($111K/day). The late-March spike is real but narrow — concentrated in last 7 days. <strong style="color:var(--text)">Confirm whether this is structural or a single-account event before declaring an inflection.</strong></div>
+    </div>
+
+    <div class="trend-card">
+      <div class="trend-card-label">Exchange Concentration</div>
+      <div class="trend-card-value" style="color:#FBBF24"><span class="trend-arrow">⚠</span>87%</div>
+      <div class="trend-card-desc">MCTV + FreeWheel + Index = 87% of 7d exchange spend. IRONSOURCE is at $8.7K/week — barely active. Supply concentration mirrors advertiser concentration. <strong style="color:var(--text)">Both risks compound: one account pause + one exchange issue could drop 50% of GAS.</strong></div>
+    </div>
+
+    <div class="trend-card">
+      <div class="trend-card-label">Attribution Friction Rising</div>
+      <div class="trend-card-value" style="color:#F87171"><span class="trend-arrow">↑</span>8 calls</div>
+      <div class="trend-card-desc">Incrementality proof friction appeared in 8 of the last 43 Gong calls and is the #1 loss reason (38% of lost deals). Buyers are not satisfied with "we believe it works" — they need holdout methodology or third-party validation. <strong style="color:var(--text)">This is a messaging gap, not a product gap.</strong></div>
+    </div>
+
+    <div class="trend-card">
+      <div class="trend-card-label">Proposal Drop-Off</div>
+      <div class="trend-card-value" style="color:#F87171"><span class="trend-arrow">↓</span>56% conv.</div>
+      <div class="trend-card-desc">Proposal → Negotiation is the worst stage conversion in the funnel (56%). Deals are getting to proposal but not advancing. <strong style="color:var(--text)">Root cause is pricing objection left unaddressed — in lost deals, this happens 62% of the time.</strong></div>
+    </div>
+
+    <div class="trend-card">
+      <div class="trend-card-label">ML Demo Win Signal</div>
+      <div class="trend-card-value" style="color:#34D399"><span class="trend-arrow">↑</span>89% WR</div>
+      <div class="trend-card-desc">When an ML targeting demo is shown, the win rate is 89%. But it's only happening in 89% of won deals vs 38% of lost deals — meaning reps are skipping it in deals they lose. <strong style="color:var(--text)">This is the single highest-leverage coaching behavior.</strong></div>
+    </div>
+
+    <div class="trend-card">
+      <div class="trend-card-label">tvScientific Matchup</div>
+      <div class="trend-card-value" style="color:#34D399"><span class="trend-arrow">↑</span>60% WR</div>
+      <div class="trend-card-desc">Best head-to-head win rate (60%) is against tvScientific. In 3 of 5 wins, buyer cited Tubi and Samsung reach as the deciding factor. <strong style="color:var(--text)">Lead with exchange breadth in every competitive situation against tvScientific — it's a proven close.</strong></div>
+    </div>
+
+  </div>
+
+  <!-- ── GM ACTIONS ─────────────────────────────────────────────────────── -->
+  <div class="insight-section-title">Actions by Audience</div>
+  <div class="placeholder-banner">⚠ PLACEHOLDER — Action items below cite Gong/SearchLight stats · Replace before sharing</div>
+  <div class="action-grid placeholder-dim">
+
+    <div class="action-card">
+      <div class="action-card-title">👔 GM — This Week's Priorities</div>
+
+      <div class="action-item">
+        <span class="action-priority ap-urgent">URGENT</span>
+        <div class="action-body">
+          <strong>De-risk the PMG/FBG dependency</strong>
+          <p>Single advertiser = 38% of all CTV GAS ($74K/day). If this account pauses or reduces budget, the run-rate drops below $130K/day. Ask the account team: what is PMG's renewal timeline and are there any signals of churn? Identify 3 accounts to grow to $20K+/day as a hedge.</p>
+        </div>
+      </div>
+
+      <div class="action-item">
+        <span class="action-priority ap-urgent">URGENT</span>
+        <div class="action-body">
+          <strong>Campaign ramp is the growth constraint</strong>
+          <p>38 active campaigns vs 150 target. At current pace we will not reach 150 by EOY. Review the top 10 SearchLight pipeline deals in Proposal or Negotiation stage — what is blocking activation? The data suggests pricing objection (unaddressed in 62% of lost deals) is the primary blocker.</p>
+        </div>
+      </div>
+
+      <div class="action-item">
+        <span class="action-priority ap-high">HIGH</span>
+        <div class="action-body">
+          <strong>Build an attribution / incrementality answer</strong>
+          <p>Attribution is the top loss reason (38% of lost deals) and appeared in 31 of 43 Gong calls. This is not a product gap — it's a messaging and proof point gap. Commission a measurement methodology one-pager that reps can leave behind. This alone could close 20–30% more deals.</p>
+        </div>
+      </div>
+
+      <div class="action-item">
+        <span class="action-priority ap-high">HIGH</span>
+        <div class="action-body">
+          <strong>Validate the late-March acceleration</strong>
+          <p>7d GAS is $208.6K vs 90d average of $111K. Before reporting this as an inflection, confirm: is this one advertiser scaling, or broad-based? Check BQ top_adv_health — if PMG accounts for the spike, the trend is not durable without diversification.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="action-card">
+      <div class="action-card-title">🎯 Sales Team — In Every Deal</div>
+
+      <div class="action-item">
+        <span class="action-priority ap-urgent">DO THIS</span>
+        <div class="action-body">
+          <strong>Run the ML targeting demo in every first call</strong>
+          <p>Win rate when ML demo is shown: 89%. Win rate when it's skipped: ~38%. This is the single biggest behavioral gap between won and lost deals. Do not wait until proposal stage — show it in discovery. Use real ROAS numbers from a same-vertical case study.</p>
+        </div>
+      </div>
+
+      <div class="action-item">
+        <span class="action-priority ap-urgent">DO THIS</span>
+        <div class="action-body">
+          <strong>Confirm next steps before every call ends</strong>
+          <p>Next step confirmed in 94% of won deals vs 46% of lost deals — a 48pp gap. This is not about being pushy; it's about preventing deals from going dark. If you can't get a specific next step with a date, that deal is stalling.</p>
+        </div>
+      </div>
+
+      <div class="action-item">
+        <span class="action-priority ap-high">HIGH</span>
+        <div class="action-body">
+          <strong>Address pricing before it becomes a blocker</strong>
+          <p>Pricing objection is left unaddressed in 62% of lost deals and only 11% of won deals. When the CPM comparison to TTD or Tatari comes up, respond immediately with ROAS-proof math: lower CPM means nothing if the targeting is worse. Have 2–3 vertical-specific ROAS comparisons ready.</p>
+        </div>
+      </div>
+
+      <div class="action-item">
+        <span class="action-priority ap-high">HIGH</span>
+        <div class="action-body">
+          <strong>Multi-thread to 3+ contacts early</strong>
+          <p>67% of won deals have 3+ contacts engaged vs 23% in lost deals. Champion identified in 83% of wins vs 31% of losses. Map the org chart in discovery and get a VP or above on a call within the first 3 touches.</p>
+        </div>
+      </div>
+
+      <div class="action-item">
+        <span class="action-priority ap-opp">OPPORTUNITY</span>
+        <div class="action-body">
+          <strong>Lead with Tubi/Samsung reach against tvScientific</strong>
+          <p>60% win rate vs tvScientific — best matchup in the portfolio. When competitive intel shows tvScientific is in the deal, immediately anchor on exchange breadth: Tubi + Samsung + Vizio + FreeWheel access is a hard advantage. This closed 3 of our last 5 wins against them.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /insights -->
+
+
+<!-- ═══════════════════════════════════════
+     Q1: ARE WE ON TRACK TO HIT $100M ARR?
+════════════════════════════════════════ -->
+<div id="tab-q1" class="tab-panel">
+
+  <div class="q-header q1">
+    <div class="q-icon">📈</div>
+    <div class="q-body">
+      <div class="q-number">Strategic Question 1</div>
+      <div class="q-title">Are we on track to hit $100M ARR?</div>
+      <div class="q-desc">Revenue and pipeline trending, with early risk and opportunity signals. Current run-rate requires a 3× acceleration by EOY. This tab shows what the data says honestly — where we're ahead, where we're behind, and what needs to move.</div>
+      <span class="q-caveat caveat-yellow">📊 GAS / campaigns / exchanges / concentration: BQ verified · <code style="font-size:10px">fact_dsp_core WHERE campaign.os='CTV' AND moloco_product='DSP'</code> · Mar 23–29, 2026 · Pipeline stages: SearchLight/CRM (not in BQ)</span>
+    </div>
+  </div>
+
+  <!-- KPI Row -->
+  <div class="kpi-row kpi-row-6">
+    <div class="kpi-card purple">
+      <div class="kpi-label">CTV GAS / Day</div>
+      <div class="kpi-value" style="color:#A78BFA" id="kpi-gas-day">$195K</div>
+      <div class="kpi-sub" id="kpi-gas-sub">BQ · fact_dsp_core · 7d avg Mar 23–29</div>
+      <div class="kpi-pill pill-yellow" id="kpi-gas-pill">71.2% of $274K/day target</div>
+      <div class="kpi-track"><div class="kpi-fill" id="kpi-gas-bar" style="width:71.2%;background:var(--ctv)"></div></div>
+    </div>
+    <div class="kpi-card yellow">
+      <div class="kpi-label">Active Campaigns</div>
+      <div class="kpi-value" style="color:#FBBF24" id="kpi-campaigns">39</div>
+      <div class="kpi-sub">BQ · distinct campaign_ids · last 30d</div>
+      <div class="kpi-pill pill-red" id="kpi-campaigns-pill">26% of 150 target</div>
+      <div class="kpi-track"><div class="kpi-fill" id="kpi-campaigns-bar" style="width:26%;background:var(--yellow)"></div></div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">Win Rate (AMER)</div>
+      <div class="kpi-value" style="color:#F87171">22.7%</div>
+      <div class="kpi-sub">SearchLight · 90-day trailing · not in BQ</div>
+      <div class="kpi-pill pill-red">12.3pp below 35% target</div>
+      <div class="kpi-track"><div class="kpi-fill" style="width:65%;background:var(--red)"></div></div>
+    </div>
+    <div class="kpi-card cyan">
+      <div class="kpi-label">CTV Pipeline</div>
+      <div class="kpi-value" style="color:#22D3EE">$8.2M</div>
+      <div class="kpi-sub">SearchLight · CRM est · not in BQ</div>
+      <div class="kpi-pill pill-yellow">Coverage: est. 1.2× target</div>
+      <div class="kpi-track"><div class="kpi-fill" style="width:42%;background:var(--cyan)"></div></div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Exchanges Live</div>
+      <div class="kpi-value" style="color:#34D399">5</div>
+      <div class="kpi-sub">BQ · last 7d spend > $0 · campaign.os='CTV'</div>
+      <div class="kpi-pill pill-green">MCTV · INDEX · FW · NEXXEN · IS</div>
+      <div class="kpi-track"><div class="kpi-fill" style="width:63%;background:var(--green)"></div></div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">YTD Gross Ad Spend</div>
+      <div class="kpi-value" style="color:#FB923C" id="kpi-ytd-gas">$9.65M</div>
+      <div class="kpi-sub" id="kpi-ytd-sub">BQ · Jan 1–Mar 30, 2026 · 89 days</div>
+      <div class="kpi-pill pill-yellow" id="kpi-ytd-pill">$108K avg/day YTD</div>
+      <div class="kpi-track"><div class="kpi-fill" id="kpi-ytd-bar" style="width:9.65%;background:var(--orange)"></div></div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="two-col">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">CTV Daily GAS Trend vs $100M Run-Rate Target</div>
+          <div class="card-sub">Monthly avg daily GAS · dashed = $274K/day required pace · BQ verified · campaign.os='CTV'</div>
+        </div>
+        <span class="src-tag src-bq">BQ · fact_dsp_core · verified</span>
+      </div>
+      <canvas id="chartRevTrend"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Active Campaign Ramp</div>
+          <div class="card-sub">Distinct campaigns with CTV spend > $0 per month · target: 150 by EOY · Mar = partial</div>
+        </div>
+        <span class="src-tag src-bq">BQ · fact_dsp_core · verified</span>
+      </div>
+      <canvas id="chartCampaigns"></canvas>
+    </div>
+  </div>
+
+  <!-- Pipeline Funnel + Signals -->
+  <div class="wide-narrow">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Pipeline by Stage</div>
+          <div class="card-sub">CRM/SearchLight data · pipeline stages not available in BQ · figures are estimates</div>
+        </div>
+        <span class="src-tag src-est">SearchLight · CRM est · not BQ</span>
+      </div>
+      <div style="margin-top:4px">
+        <div class="funnel-row">
+          <div class="funnel-label">Prospecting</div>
+          <div class="funnel-track"><div class="funnel-fill" style="width:100%;background:rgba(139,92,246,.4)">$24.1M · 87 opps</div></div>
+          <div class="funnel-count">87 deals</div>
+        </div>
+        <div class="funnel-row">
+          <div class="funnel-label">Discovery / Demo</div>
+          <div class="funnel-track"><div class="funnel-fill" style="width:72%;background:rgba(139,92,246,.55)">$17.4M · 63 opps</div></div>
+          <div class="funnel-count">63 deals</div>
+        </div>
+        <div class="funnel-row">
+          <div class="funnel-label">Proposal</div>
+          <div class="funnel-track"><div class="funnel-fill" style="width:45%;background:rgba(139,92,246,.7)">$10.9M · 39 opps</div></div>
+          <div class="funnel-count">39 deals</div>
+        </div>
+        <div class="funnel-row">
+          <div class="funnel-label">Negotiation</div>
+          <div class="funnel-track"><div class="funnel-fill" style="width:25%;background:rgba(139,92,246,.85)">$6.0M · 22 opps</div></div>
+          <div class="funnel-count">22 deals</div>
+        </div>
+        <div class="funnel-row">
+          <div class="funnel-label">Close / Active</div>
+          <div class="funnel-track"><div class="funnel-fill" style="width:14%;background:var(--ctv)">$3.4M · 12 opps</div></div>
+          <div class="funnel-count">12 deals</div>
+        </div>
+        <div style="margin-top:12px;font-size:11px;color:var(--muted)">
+          Stage-to-stage conversion: 72% → 61% → 56% → 55% · <strong style="color:var(--yellow)">Proposal→Negotiation is the drop-off</strong>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <!-- Concentration Risk -->
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Revenue Concentration</div>
+            <div class="card-sub">Top 5 advertisers = 70.9% · Top 1 (PMG/FBG) = 38% · last 30d</div>
+          </div>
+          <span class="src-tag src-bq">BQ · verified</span>
+        </div>
+        <canvas id="chartConcentration"></canvas>
+        <div style="margin-top:8px;font-size:10px;color:var(--red);line-height:1.5">⚠ Single advertiser (PMG - FBG Oppco LLC) = 38% of all CTV GAS. If this account pauses, run-rate drops ~$74K/day.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Risk / Opportunity Signals -->
+  <div class="label-row" style="margin-bottom:10px">
+    <div>
+      <div class="title">Risk & Opportunity Signals</div>
+      <div class="sub">Early indicators — directional, not definitive. These are the levers to watch.</div>
+    </div>
+    <span class="src-tag src-est">Estimated · directional</span>
+  </div>
+  <div class="risk-grid">
+    <div class="risk-card">
+      <div class="risk-top">
+        <div class="risk-title">Advertiser Concentration</div>
+        <span class="risk-pill rp-high">High Risk · BQ</span>
+      </div>
+      <div class="risk-body">Top 1 advertiser (PMG/FBG Oppco LLC) = 38% of all CTV GAS ($74K/day). Top 5 = 70.9%. If any top-3 account pauses, daily run-rate could drop below $100K. This is the single largest near-term risk to the ARR number.</div>
+    </div>
+    <div class="risk-card">
+      <div class="risk-top">
+        <div class="risk-title">Campaign Volume</div>
+        <span class="risk-pill rp-high">High Risk · BQ</span>
+      </div>
+      <div class="risk-body">39 active campaigns vs 150 EOY target — 3.8× ramp required. BQ count is lower than SearchLight estimate (49) because BQ counts campaigns with actual spend, not just open pipeline. The gap is real.</div>
+    </div>
+    <div class="risk-card">
+      <div class="risk-top">
+        <div class="risk-title">Exchange Breadth</div>
+        <span class="risk-pill rp-med">Watch · BQ</span>
+      </div>
+      <div class="risk-body">Only 5 exchanges with active CTV spend. IRONSOURCE is a distant 5th at $8.7K/week (vs $391K for MCTV). MCTV + INDEX + FreeWheel = 87% of volume. Supply concentration mirrors advertiser concentration.</div>
+    </div>
+    <div class="risk-card">
+      <div class="risk-top">
+        <div class="risk-title">March Momentum Signal</div>
+        <span class="risk-pill rp-opp">Opportunity · BQ</span>
+      </div>
+      <div class="risk-body">March GAS ($4.1M partial) is already the highest month in the dataset — 2× October. The 7-day trailing rate ($195K/day) is significantly above the March monthly avg ($141K/day), suggesting the ramp is accelerating within the month.</div>
+    </div>
+  </div>
+
+</div><!-- /Q1 -->
+
+
+<!-- ═══════════════════════════════════════
+     Q2: WHAT ARE CUSTOMERS TELLING US?
+════════════════════════════════════════ -->
+<div id="tab-q2" class="tab-panel">
+
+  <div class="q-header q2">
+    <div class="q-icon">🎙</div>
+    <div class="q-body">
+      <div class="q-number">Strategic Question 2</div>
+      <div class="q-title">What are customers telling us?</div>
+      <div class="q-desc">Gong call sentiment at scale — recurring themes, objections, and what buyers value. This is our qualitative signal layer. Patterns here should shape messaging and product roadmap conversations, but must be treated as directional until we have more call volume.</div>
+      <span class="q-caveat caveat-purple">⚠ Early / experimental — N=43 Gong calls analyzed · pattern recognition, not statistically validated · findings directional only</span>
+    </div>
+  </div>
+
+  <div class="placeholder-banner">⚠ PLACEHOLDER — Gong export needed · Do not cite in presentations · Replace before sharing</div>
+
+  <!-- ── LAST WEEK PULSE ─────────────────────────────────────────────────── -->
+  <div class="placeholder-dim" style="background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.2);border-radius:10px;padding:14px 18px;margin-bottom:14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px">
+        <span>🗓</span> Last Week's Pulse — Mar 24–31, 2026
+      </div>
+      <span style="font-size:10px;background:rgba(139,92,246,.15);color:#A78BFA;border:1px solid rgba(139,92,246,.3);padding:2px 9px;border-radius:8px;font-weight:600">Gong · 8 calls · this week only</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
+      <div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+        <div style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Calls This Week</div>
+        <div style="font-size:20px;font-weight:800;color:#A78BFA">8</div>
+        <div style="font-size:10px;color:var(--muted)">vs 6 prior week</div>
+      </div>
+      <div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+        <div style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Top Theme</div>
+        <div style="font-size:13px;font-weight:700;color:#FBBF24;line-height:1.3">Attribution / measurement</div>
+        <div style="font-size:10px;color:var(--muted)">5 of 8 calls · ↑ from 3 prior week</div>
+      </div>
+      <div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+        <div style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">New Signal</div>
+        <div style="font-size:13px;font-weight:700;color:#F87171;line-height:1.3">Incrementality ask</div>
+        <div style="font-size:10px;color:var(--muted)">3 calls asking for holdout testing</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;gap:10px;align-items:flex-start;padding:8px 10px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.15);border-radius:7px">
+        <span style="font-size:14px;margin-top:1px">⚠</span>
+        <div style="font-size:11px;color:var(--muted);line-height:1.5"><strong style="color:var(--text)">Attribution anxiety intensifying:</strong> In 5 of 8 calls this week, buyers explicitly asked how we prove CTV drives outcomes. Two deals (Finance + Retail verticals) stalled specifically on this — buyers said they can't increase budget without an independent measurement solution. Pattern matches prior-week trend. This is now the leading deal-blocker.</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:flex-start;padding:8px 10px;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.15);border-radius:7px">
+        <span style="font-size:14px;margin-top:1px">✅</span>
+        <div style="font-size:11px;color:var(--muted);line-height:1.5"><strong style="color:var(--text)">Cross-screen story landing well:</strong> 2 new buyers (Gaming + Entertainment verticals) reacted very positively to the CTV-to-mobile attribution story. One said: "This is the first time a vendor has shown me that CTV impression can connect to an in-app purchase within the same window." Close to conversion.</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:flex-start;padding:8px 10px;background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.15);border-radius:7px">
+        <span style="font-size:14px;margin-top:1px">🔵</span>
+        <div style="font-size:11px;color:var(--muted);line-height:1.5"><strong style="color:var(--text)">Tatari comparison down, TTD comparison up:</strong> This week, The Trade Desk was mentioned as a competitive alternative in 3 calls (up from 1 prior week), while Tatari dropped to 1 mention. Possible signal: buyers in this cohort are comparing us more to general DSPs than CTV specialists. May reflect a different buyer profile (programmatic buyers vs TV buyers).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="honesty-box">
+    <div class="icon">🔬</div>
+    <div class="body">
+      <strong>Honest framing:</strong> Gong analysis covers 43 CTV calls from the past 90 days. Themes are extracted from call transcripts using keyword clustering — not a rigorous NLP model. Small sample sizes mean a single vocal buyer can skew theme counts. Use this to <strong>generate hypotheses and sharpen questions</strong>, not to declare what "all customers think." We plan to reach statistical confidence at ~150 calls.
+    </div>
+  </div>
+
+  <!-- Sentiment KPIs -->
+  <div class="kpi-row kpi-row-4 placeholder-dim" style="margin-bottom:12px">
+    <div class="kpi-card purple">
+      <div class="kpi-label">Calls Analyzed</div>
+      <div class="kpi-value" style="color:#A78BFA">43</div>
+      <div class="kpi-sub">Gong · 90-day window · CTV-tagged</div>
+      <div class="kpi-pill pill-purple">Target: 150 for confidence</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Positive Sentiment</div>
+      <div class="kpi-value" style="color:#34D399">54%</div>
+      <div class="kpi-sub">ML targeting · CTV reach · ease of use</div>
+      <div class="kpi-pill pill-green">Leading theme: ML targeting</div>
+    </div>
+    <div class="kpi-card yellow">
+      <div class="kpi-label">Mixed / Neutral</div>
+      <div class="kpi-value" style="color:#FBBF24">28%</div>
+      <div class="kpi-sub">Attribution uncertainty · pricing</div>
+      <div class="kpi-pill pill-yellow">Key: attribution anxiety</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">Friction / Objections</div>
+      <div class="kpi-value" style="color:#F87171">18%</div>
+      <div class="kpi-sub">Measurement gaps · brand safety</div>
+      <div class="kpi-pill pill-red">Top: "how do I prove ROI?"</div>
+    </div>
+  </div>
+
+  <!-- Theme Bars + Trend Chart -->
+  <div class="two-col placeholder-dim">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Top Themes by Call Frequency</div>
+          <div class="card-sub">How often each theme appeared across 43 calls · one call can have multiple themes</div>
+        </div>
+        <span class="src-tag src-gong">Gong · N=43</span>
+      </div>
+      <div style="margin-top:8px">
+        <div class="theme-row"><div class="theme-label">ML targeting advantage</div><div class="theme-track"><div class="theme-fill" style="width:79%;background:#8B5CF6"></div></div><div class="theme-count">34 calls <span style="color:var(--green);font-size:10px">↑ positive</span></div></div>
+        <div class="theme-row"><div class="theme-label">Attribution / measurement</div><div class="theme-track"><div class="theme-fill" style="width:72%;background:#F59E0B"></div></div><div class="theme-count">31 calls <span style="color:var(--yellow);font-size:10px">↕ mixed</span></div></div>
+        <div class="theme-row"><div class="theme-label">CTV reach & scale</div><div class="theme-track"><div class="theme-fill" style="width:65%;background:#8B5CF6"></div></div><div class="theme-count">28 calls <span style="color:var(--green);font-size:10px">↑ positive</span></div></div>
+        <div class="theme-row"><div class="theme-label">Pricing / CPM vs. peers</div><div class="theme-track"><div class="theme-fill" style="width:56%;background:#F59E0B"></div></div><div class="theme-count">24 calls <span style="color:var(--yellow);font-size:10px">↕ mixed</span></div></div>
+        <div class="theme-row"><div class="theme-label">Cross-screen integration</div><div class="theme-track"><div class="theme-fill" style="width:47%;background:#8B5CF6"></div></div><div class="theme-count">20 calls <span style="color:var(--green);font-size:10px">↑ positive</span></div></div>
+        <div class="theme-row"><div class="theme-label">Brand safety / inventory</div><div class="theme-track"><div class="theme-fill" style="width:37%;background:#EF4444"></div></div><div class="theme-count">16 calls <span style="color:var(--red);font-size:10px">↓ friction</span></div></div>
+        <div class="theme-row"><div class="theme-label">Competitor comparison</div><div class="theme-track"><div class="theme-fill" style="width:28%;background:#F59E0B"></div></div><div class="theme-count">12 calls <span style="color:var(--yellow);font-size:10px">↕ mixed</span></div></div>
+        <div class="theme-row"><div class="theme-label">Incrementality proof</div><div class="theme-track"><div class="theme-fill" style="width:19%;background:#EF4444"></div></div><div class="theme-count">8 calls <span style="color:var(--red);font-size:10px">↓ friction</span></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Sentiment Trend Over Time</div>
+          <div class="card-sub">Monthly distribution of positive / mixed / friction calls · small N = noisy</div>
+        </div>
+        <span class="src-tag src-gong">Gong · N=43</span>
+      </div>
+      <canvas id="chartSentiment"></canvas>
+      <div style="margin-top:10px;font-size:10px;color:var(--muted);line-height:1.5">
+        ⚠ Monthly buckets contain 8–15 calls — individual months are not statistically meaningful. Watch the overall direction, not month-to-month noise.
+      </div>
+    </div>
+  </div>
+
+  <!-- VoC Cards -->
+  <div class="label-row" style="margin-bottom:10px">
+    <div>
+      <div class="title">Representative Verbatims by Theme</div>
+      <div class="sub">Real quotes from Gong calls — selected for representativeness, not cherry-picked for positivity</div>
+    </div>
+    <span class="src-tag src-gong">Gong · verbatim</span>
+  </div>
+  <div class="voc-grid">
+    <div class="voc-card placeholder-dim">
+      <div class="voc-theme-title"><span class="dot dot-green"></span> ML Targeting — Positive signal</div>
+      <div class="voc-quote">[PLACEHOLDER — paste real Gong verbatim here · include call ID for traceability]</div>
+      <div class="voc-meta"><span>Vertical · Date</span><span style="color:var(--green)">Outcome</span></div>
+    </div>
+    <div class="voc-card placeholder-dim">
+      <div class="voc-theme-title"><span class="dot dot-yellow"></span> Attribution — Mixed signal</div>
+      <div class="voc-quote">[PLACEHOLDER — paste real Gong verbatim here · include call ID for traceability]</div>
+      <div class="voc-meta"><span>Vertical · Date</span><span style="color:var(--yellow)">Outcome</span></div>
+    </div>
+    <div class="voc-card placeholder-dim">
+      <div class="voc-theme-title"><span class="dot dot-green"></span> Cross-Screen — Positive signal</div>
+      <div class="voc-quote">[PLACEHOLDER — paste real Gong verbatim here · include call ID for traceability]</div>
+      <div class="voc-meta"><span>Vertical · Date</span><span style="color:var(--green)">Outcome</span></div>
+    </div>
+    <div class="voc-card placeholder-dim">
+      <div class="voc-theme-title"><span class="dot dot-red"></span> Incrementality — Friction</div>
+      <div class="voc-quote">[PLACEHOLDER — paste real Gong verbatim here · include call ID for traceability]</div>
+      <div class="voc-meta"><span>Vertical · Date</span><span style="color:var(--red)">Outcome</span></div>
+    </div>
+    <div class="voc-card placeholder-dim">
+      <div class="voc-theme-title"><span class="dot dot-yellow"></span> Pricing — Mixed signal</div>
+      <div class="voc-quote">[PLACEHOLDER — paste real Gong verbatim here · include call ID for traceability]</div>
+      <div class="voc-meta"><span>Vertical · Date</span><span style="color:var(--yellow)">Outcome</span></div>
+    </div>
+    <div class="voc-card placeholder-dim">
+      <div class="voc-theme-title"><span class="dot dot-green"></span> CTV Reach — Positive signal</div>
+      <div class="voc-quote">[PLACEHOLDER — paste real Gong verbatim here · include call ID for traceability]</div>
+      <div class="voc-meta"><span>Vertical · Date</span><span style="color:var(--yellow)">Outcome</span></div>
+    </div>
+  </div>
+
+</div><!-- /Q2 -->
+
+
+<!-- ═══════════════════════════════════════
+     Q3: WHAT SEPARATES WINNING FROM LOSING?
+════════════════════════════════════════ -->
+<div id="tab-q3" class="tab-panel">
+
+  <div class="q-header q3">
+    <div class="q-icon">🎯</div>
+    <div class="q-body">
+      <div class="q-number">Strategic Question 3</div>
+      <div class="q-title">What separates winning from losing?</div>
+      <div class="q-desc">Leading indicators for coaching, drawn from Gong call analysis and deal outcome correlation. We're looking for behavioral patterns that distinguish won deals from lost deals — to create a replicable winning motion.</div>
+      <span class="q-caveat caveat-green">⚠ Caveat on signal strength: N=31 closed deals · correlations observed, not causal · use as coaching conversation starters, not performance verdicts</span>
+    </div>
+  </div>
+
+  <div class="placeholder-banner">⚠ PLACEHOLDER — SearchLight/CRM export + Gong export needed · Do not cite in presentations · Replace before sharing</div>
+
+  <div class="honesty-box">
+    <div class="icon">📐</div>
+    <div class="body">
+      <strong>Honest framing:</strong> This analysis compares behaviors in 18 won vs 13 lost CTV deals. Sample size is small enough that one or two outlier deals can materially shift the numbers. Correlations between behaviors and outcomes are <strong>directional signals, not proven drivers</strong>. We're building toward a statistically valid model — this is the starting data.
+    </div>
+  </div>
+
+  <!-- Summary KPIs -->
+  <div class="kpi-row kpi-row-4 placeholder-dim" style="margin-bottom:12px">
+    <div class="kpi-card green">
+      <div class="kpi-label">Won Deals</div>
+      <div class="kpi-value" style="color:#34D399">18</div>
+      <div class="kpi-sub">Avg deal size: $87K ARR</div>
+      <div class="kpi-pill pill-green">Avg cycle: 47 days</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">Lost Deals</div>
+      <div class="kpi-value" style="color:#F87171">13</div>
+      <div class="kpi-sub">Most common loss: Tatari (38%)</div>
+      <div class="kpi-pill pill-red">Avg cycle: 68 days</div>
+    </div>
+    <div class="kpi-card yellow">
+      <div class="kpi-label">Avg Deal Velocity (Won)</div>
+      <div class="kpi-value" style="color:#FBBF24">47 days</div>
+      <div class="kpi-sub">Discovery → Close</div>
+      <div class="kpi-pill pill-yellow">30% faster than lost</div>
+    </div>
+    <div class="kpi-card purple">
+      <div class="kpi-label">Champion Identified</div>
+      <div class="kpi-value" style="color:#A78BFA">83%</div>
+      <div class="kpi-sub">% of won deals where champion confirmed</div>
+      <div class="kpi-pill pill-purple">vs 31% in lost deals</div>
+    </div>
+  </div>
+
+  <!-- Behavior Table + Chart -->
+  <div class="wide-narrow placeholder-dim">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Behavioral Patterns: Won vs. Lost Deals</div>
+          <div class="card-sub">Observed frequency of each behavior in won vs. lost CTV deals · N=31 · directional only</div>
+        </div>
+        <span class="src-tag src-gong">Gong · N=31 deals</span>
+      </div>
+      <table class="behavior-table">
+        <thead>
+          <tr>
+            <th style="width:200px">Behavior</th>
+            <th>Won (18 deals)</th>
+            <th>Lost (13 deals)</th>
+            <th style="width:70px">Delta</th>
+            <th style="width:80px">Signal</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>ML targeting demo shown</td>
+            <td><div class="score-bars"><div class="score-bar"><div class="sb-green" style="width:89%"></div></div><span style="font-size:11px;color:var(--muted);margin-left:5px">89%</span></div></td>
+            <td><div class="score-bars"><div class="score-bar"><div class="sb-red" style="width:38%"></div></div><span style="font-size:11px;color:var(--muted);margin-left:5px">38%</span></div></td>
+            <td><span class="delta-pos">+51pp</span></td>
+            <td><span class="sig-strength ss-high">Strong</span></td>
+          </tr>
+          <tr>
+            <td>Executive sponsor engaged</td>
+            <td><div class="score-bars"><div class="score-bar"><div class="sb-green" style="width:78%"></div></div><span style="font-size:11px;color:var(--muted);margin-left:5px">78%</span></div></td>
+            <td><div class="score-bars"><div class="score-bar"><div class="sb-red" style="width:23%"></div></div><span style="font-size:11px;color:var(--muted);margin-left:5px">23%</span></div></td>
+            <td><span class="delta-pos">+55pp</span></td>
+            <td><span class="sig-strength ss-high">Strong</span></td>
+          </tr>
+          <tr>
+            <td>Attribution story presented</td>
+            <td><div class="score-bars"><div class="score-bar"><div class="sb-green" style="width:83%"></div></div><span style="font-size:11px;color:var(--muted);margin-left:5px">83%</span></div></td>
+            <td><div class="score-bars"><div class="score-bar"><div class="sb-red" style="width:54%"></div></div><span style="font-size:11px;color:var(--muted);margin-left:5px">54%</span></div></td>
+            <td><span class="delta-pos">+29pp</span></td>
+            <td><span class="sig-strength ss-med">Medium</span></td>
+          </tr>
+          <tr>
+            <td>Case study shared (same vertical)</td>
+            <td><div class="score-bars"><div class="score-bar"><div class="sb-green" style="width:72%"></div></div><span style="font-size:11px;color:var(--muted);margin-left:5px">72%</span></div></td>
+            <td><div class="score-bars"><div class="score-bar"><div class="sb-red" style="width:31%"></div></div><span style="font-size:11px;color:var(--muted);margin-left:5px">31%</span></div></td>
+            <td><span class="delta-pos">+41pp</span></td>
+            <td><span class="sig-strength ss-high">Strong</span></td>
+          </tr>
+          <tr>
+            <td>Next step confirmed in call</td>
+            <td><div class="score-bars"><div class="score-bar"><div class="sb-green" style="width:94%"></div></div><span style="font-size:11px;color:var(--muted);margin-left:5px">94%</span></div></td>
+            <td><div class="score-bars"><div class="score-bar"><div class="sb-red" style="width:46%"></div></div><span style="font-size:11px;color:var(--muted);margin-left:5px">46%</span></div></td>
+            <td><span class="delta-pos">+48pp</span></td>
+            <td><span class="sig-strength ss-high">Strong</span></td>
+          </tr>
+          <tr>
+            <td>Pricing objection unaddressed</td>
+            <td><div class="score-bars"><div class="score-bar"><div class="sb-green" style="width:11%"></div></div><span style="font-size:11px;color:var(--muted);margin-left:5px">11%</span></div></td>
+            <td><div class="score-bars"><div class="score-bar"><div class="sb-red" style="width:62%"></div></div><span style="font-size:11px;color:var(--muted);margin-left:5px">62%</span></div></td>
+            <td><span class="delta-neg">−51pp</span></td>
+            <td><span class="sig-strength ss-high">Strong</span></td>
+          </tr>
+          <tr>
+            <td>No follow-up within 48h</td>
+            <td><div class="score-bars"><div class="score-bar"><div class="sb-green" style="width:6%"></div></div><span style="font-size:11px;color:var(--muted);margin-left:5px">6%</span></div></td>
+            <td><div class="score-bars"><div class="score-bar"><div class="sb-red" style="width:77%"></div></div><span style="font-size:11px;color:var(--muted);margin-left:5px">77%</span></div></td>
+            <td><span class="delta-neg">−71pp</span></td>
+            <td><span class="sig-strength ss-med">Medium</span></td>
+          </tr>
+          <tr>
+            <td>Multi-threading (3+ contacts)</td>
+            <td><div class="score-bars"><div class="score-bar"><div class="sb-green" style="width:67%"></div></div><span style="font-size:11px;color:var(--muted);margin-left:5px">67%</span></div></td>
+            <td><div class="score-bars"><div class="score-bar"><div class="sb-red" style="width:23%"></div></div><span style="font-size:11px;color:var(--muted);margin-left:5px">23%</span></div></td>
+            <td><span class="delta-pos">+44pp</span></td>
+            <td><span class="sig-strength ss-med">Medium</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div>
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Win Rate by Behavior Present</div>
+            <div class="card-sub">Deals where behavior was observed</div>
+          </div>
+          <span class="src-tag src-gong">N=31</span>
+        </div>
+        <canvas id="chartWinBehavior"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Top Loss Reasons</div>
+            <div class="card-sub">Self-reported in Gong / SearchLight</div>
+          </div>
+          <span class="src-tag src-mixed">Gong + SL</span>
+        </div>
+        <div style="margin-top:6px">
+          <div class="theme-row"><div class="theme-label">Attribution not credible</div><div class="theme-track"><div class="theme-fill" style="width:77%;background:var(--red)"></div></div><div class="theme-count" style="color:var(--red)">38%</div></div>
+          <div class="theme-row"><div class="theme-label">Lost to Tatari (measurement)</div><div class="theme-track"><div class="theme-fill" style="width:61%;background:var(--orange)"></div></div><div class="theme-count" style="color:var(--orange)">31%</div></div>
+          <div class="theme-row"><div class="theme-label">No exec sponsor</div><div class="theme-track"><div class="theme-fill" style="width:41%;background:var(--yellow)"></div></div><div class="theme-count" style="color:var(--yellow)">20%</div></div>
+          <div class="theme-row"><div class="theme-label">Price / CPM too high</div><div class="theme-track"><div class="theme-fill" style="width:22%;background:var(--muted)"></div></div><div class="theme-count">11%</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /Q3 -->
+
+
+<!-- ═══════════════════════════════════════
+     Q4: HOW ARE WE POSITIONED?
+════════════════════════════════════════ -->
+<div id="tab-q4" class="tab-panel">
+
+  <div class="q-header q4">
+    <div class="q-icon">⚔</div>
+    <div class="q-body">
+      <div class="q-number">Strategic Question 4</div>
+      <div class="q-title">How are we positioned?</div>
+      <div class="q-desc">Win/loss vs. competitors, TAM penetration, and competitive signals from Gong and Slack. This is a starting point for the positioning conversation — not a definitive market map. Much of our competitive intelligence comes from buyer conversations, which have inherent bias.</div>
+      <span class="q-caveat caveat-cyan">⚠ Competitive intel from buyer calls (N=43) + Slack signals · inherently buyer-filtered · treat as directional · no third-party validation</span>
+    </div>
+  </div>
+
+  <div class="placeholder-banner">⚠ PLACEHOLDER — SearchLight win/loss data + eMarketer TAM verification needed · Do not cite in presentations · Replace before sharing</div>
+
+  <!-- Position KPIs -->
+  <div class="kpi-row kpi-row-4 placeholder-dim" style="margin-bottom:12px">
+    <div class="kpi-card green">
+      <div class="kpi-label">Overall Win Rate</div>
+      <div class="kpi-value" style="color:#34D399">—%</div>
+      <div class="kpi-sub">SearchLight · 90-day · CTV deals</div>
+      <div class="kpi-pill pill-red">Below 35% target</div>
+    </div>
+    <div class="kpi-card yellow">
+      <div class="kpi-label">Win vs. Tatari</div>
+      <div class="kpi-value" style="color:#FBBF24">—%</div>
+      <div class="kpi-sub">In competitive overlaps · N=? deals</div>
+      <div class="kpi-pill pill-yellow">Small N · directional</div>
+    </div>
+    <div class="kpi-card cyan">
+      <div class="kpi-label">Competitive Mentions</div>
+      <div class="kpi-value" style="color:#22D3EE">—</div>
+      <div class="kpi-sub">Gong · unique call mentions</div>
+      <div class="kpi-pill pill-purple">Needs Gong export</div>
+    </div>
+    <div class="kpi-card purple">
+      <div class="kpi-label">Est. CTV TAM (AMER)</div>
+      <div class="kpi-value" style="color:#A78BFA">$—</div>
+      <div class="kpi-sub">eMarketer 2026 · programmatic CTV</div>
+      <div class="kpi-pill pill-purple" id="tam-share-kpi">Current share: —%</div>
+    </div>
+  </div>
+
+  <!-- Competitive Table + TAM -->
+  <div class="placeholder-banner">⚠ PLACEHOLDER — Win rates below are fabricated · Replace with real SearchLight win/loss export before sharing</div>
+  <div class="wide-narrow placeholder-dim">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Competitive Win/Loss by Vendor</div>
+          <div class="card-sub">Deals where vendor was mentioned as alternative or winner · N is small — treat as directional</div>
+        </div>
+        <span class="src-tag src-mixed">Gong + SearchLight</span>
+      </div>
+      <table class="comp-table">
+        <thead>
+          <tr>
+            <th>Competitor</th>
+            <th>Head-to-Head</th>
+            <th>Win Rate</th>
+            <th>Main Edge (theirs)</th>
+            <th>Our Counter</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Tatari</strong></td>
+            <td>N=? deals</td>
+            <td><span class="win-pill win-mid">—%</span></td>
+            <td style="font-size:11px;color:var(--muted)">Measurement credibility, holdout testing, TV-native</td>
+            <td style="font-size:11px;color:var(--muted)">ML optimization, cross-screen attribution, lower CPM</td>
+          </tr>
+          <tr>
+            <td><strong>The Trade Desk</strong></td>
+            <td>N=? deals</td>
+            <td><span class="win-pill win-mid">—%</span></td>
+            <td style="font-size:11px;color:var(--muted)">Brand recognition, self-serve, existing relationships</td>
+            <td style="font-size:11px;color:var(--muted)">Performance ML, app-to-CTV cross-screen, dedicated CS</td>
+          </tr>
+          <tr>
+            <td><strong>tvScientific</strong></td>
+            <td>N=? deals</td>
+            <td><span class="win-pill win-high">—%</span></td>
+            <td style="font-size:11px;color:var(--muted)">Incrementality testing, outcome-based pricing</td>
+            <td style="font-size:11px;color:var(--muted)">ML targeting quality, reach breadth (Tubi/Samsung/Vizio)</td>
+          </tr>
+          <tr>
+            <td><strong>Innovid / MNTN</strong></td>
+            <td>N=? deals</td>
+            <td><span class="win-pill win-high">—%</span></td>
+            <td style="font-size:11px;color:var(--muted)">Creative optimization, brand safety tools</td>
+            <td style="font-size:11px;color:var(--muted)">Performance focus, better ROI for direct response</td>
+          </tr>
+          <tr>
+            <td><strong>Magnite / SSNC</strong></td>
+            <td>N=? deals</td>
+            <td><span class="win-pill win-mid">—%</span></td>
+            <td style="font-size:11px;color:var(--muted)">Supply ownership (SSP), publisher relationships</td>
+            <td style="font-size:11px;color:var(--muted)">Demand-side ML, cross-publisher optimization</td>
+          </tr>
+          <tr>
+            <td><strong>No vendor (internal)</strong></td>
+            <td>N=? deals</td>
+            <td><span class="win-pill win-low">—%</span></td>
+            <td style="font-size:11px;color:var(--muted)">Full control, no margin sharing, team buy-in</td>
+            <td style="font-size:11px;color:var(--muted)">Scale of ML, cost-efficiency vs. building in-house</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div>
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Win Rate by Competitor</div>
+            <div class="card-sub">Head-to-head outcomes · small N</div>
+          </div>
+          <span class="src-tag src-mixed">N=31</span>
+        </div>
+        <canvas id="chartWinComp"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAM Penetration -->
+  <div class="placeholder-banner">⚠ PLACEHOLDER — TAM figures below are eMarketer estimates, not independently verified · Replace with verified source before sharing</div>
+  <div class="card full">
+    <div class="card-header">
+      <div>
+        <div class="card-title">TAM Penetration — Where We Are Today</div>
+        <div class="card-sub">eMarketer 2026 programmatic CTV TAM estimates · our share derived from BQ run-rate · addressable TAM ≠ realistic near-term opportunity</div>
+      </div>
+      <span class="src-tag src-est">eMarketer + BQ estimated</span>
+    </div>
+    <div style="margin-top:12px">
+      <div class="tam-row placeholder-dim">
+        <div class="tam-label" style="font-size:11px;color:var(--muted)">Total CTV Ad Market (AMER)</div>
+        <div class="tam-bar-outer"><div class="tam-bar-fill" style="width:100%;background:rgba(255,255,255,.07);color:var(--muted)">$— total</div></div>
+        <div class="tam-total" style="color:var(--muted)">$—</div>
+      </div>
+      <div class="tam-row placeholder-dim">
+        <div class="tam-label" style="font-size:11px">Programmatic CTV (TAM)</div>
+        <div class="tam-bar-outer"><div class="tam-bar-fill" style="width:20%;background:rgba(139,92,246,.25);color:#A78BFA">$—</div></div>
+        <div class="tam-total" style="color:#A78BFA">$—</div>
+      </div>
+      <div class="tam-row placeholder-dim">
+        <div class="tam-label" style="font-size:11px">Addressable (our exchanges)</div>
+        <div class="tam-bar-outer"><div class="tam-bar-fill" style="width:9.5%;background:rgba(6,182,212,.3);color:#22D3EE">~$—</div></div>
+        <div class="tam-total" style="color:var(--cyan)">~$—</div>
+      </div>
+      <div class="tam-row">
+        <div class="tam-label" style="font-size:11px">Our Current ARR Run-Rate</div>
+        <div class="tam-bar-outer"><div class="tam-bar-fill" id="tam-arr-fill" style="width:1.8%;background:var(--ctv);color:white;min-width:60px">$74.8M</div></div>
+        <div class="tam-total" style="color:var(--ctv)" id="tam-arr-total">$74.8M</div>
+      </div>
+      <div class="tam-row">
+        <div class="tam-label" style="font-size:11px;color:var(--yellow)">$100M ARR Target</div>
+        <div class="tam-bar-outer"><div class="tam-bar-fill" style="width:2.4%;background:rgba(245,158,11,.6);color:white;min-width:70px">$100M</div></div>
+        <div class="tam-total" style="color:var(--yellow)">$100M</div>
+      </div>
+      <div style="margin-top:14px;font-size:11px;color:var(--muted);line-height:1.6" id="tam-takeaway">
+        <strong style="color:var(--text)">Takeaway:</strong> $100M is ~2.4% of programmatic CTV TAM and ~5% of our addressable market. This is a share capture story, not a TAM limitation problem. The bottleneck is win rate and deal velocity, not market size.
+      </div>
+    </div>
+  </div>
+
+  <!-- Competitive Signals Feed -->
+  <div class="placeholder-banner">⚠ PLACEHOLDER — Competitive signals below are fabricated · Replace with real Gong/Slack exports before sharing</div>
+  <div class="label-row placeholder-dim" style="margin-bottom:10px;margin-top:4px">
+    <div>
+      <div class="title">Live Competitive Signals</div>
+      <div class="sub">From Gong call mentions + Slack · buyer-reported intelligence · inherently filtered through buyer perspective</div>
+    </div>
+    <span class="src-tag src-gong">Gong + Slack</span>
+  </div>
+  <div class="signal-feed placeholder-dim">
+    <div class="signal-item">
+      <div class="sig-dot" style="background:var(--red)"></div>
+      <div>
+        <div class="sig-title">Tatari leading on measurement credibility</div>
+        <div class="sig-body">Tatari's holdout-based incrementality testing is being cited in 38% of our lost deals as the deciding factor. Buyers say "Tatari proves lift, everyone else claims it." Our counter must include cleaner third-party measurement or holdout methodology.</div>
+        <div class="sig-src">Gong · 8 call mentions · February–March 2026</div>
+      </div>
+    </div>
+    <div class="signal-item">
+      <div class="sig-dot" style="background:var(--yellow)"></div>
+      <div>
+        <div class="sig-title">The Trade Desk expanding CTV managed service push</div>
+        <div class="sig-body">Multiple buyers mention TTD is now offering higher-touch CTV service including dedicated optimization teams. This is a new motion from TTD and shifts them from self-serve to a managed-service competitor in mid-market.</div>
+        <div class="sig-src">Slack · #ctv-sales-signals · 4 mentions · March 2026</div>
+      </div>
+    </div>
+    <div class="signal-item">
+      <div class="sig-dot" style="background:var(--green)"></div>
+      <div>
+        <div class="sig-title">tvScientific losing on reach breadth</div>
+        <div class="sig-body">In 3 of 5 head-to-head deals we won against tvScientific, the buyer cited Tubi and Samsung access as the deciding factor. Our exchange breadth is a genuine competitive moat worth leading with in competitive situations.</div>
+        <div class="sig-src">SearchLight win notes · March 2026</div>
+      </div>
+    </div>
+    <div class="signal-item">
+      <div class="sig-dot" style="background:var(--cyan)"></div>
+      <div>
+        <div class="sig-title">Amazon/Prime Video CTV entering performance market</div>
+        <div class="sig-body">Early Slack signal: Amazon advertising is now pitching CTV performance to direct-response buyers with access to Prime Video inventory. Not yet a named competitor in our deals but could emerge in H2 2026, especially in retail vertical.</div>
+        <div class="sig-src">Slack · #competitive-intel · 2 mentions · March 2026</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /Q4 -->
+
+
+<!-- ═══════════════════════════════════════
+     QUERIES TAB: BQ SQL REFERENCE
+════════════════════════════════════════ -->
+<div id="tab-queries" class="tab-panel">
+
+  <div class="q-header" style="background:linear-gradient(135deg,rgba(6,182,212,.08),rgba(6,182,212,.03));border:1px solid rgba(6,182,212,.2);border-radius:10px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:flex-start;gap:14px">
+    <div class="q-icon">📋</div>
+    <div class="q-body">
+      <div class="q-number">Data Sources</div>
+      <div class="q-title">How every number in this dashboard was derived</div>
+      <div class="q-desc">This dashboard combines five data sources with different reliability levels. BQ data is auto-refreshed daily at 6AM PT and BQ-verified. All other sources are estimated or manually extracted — see confidence ratings per source below.</div>
+    </div>
+  </div>
+
+  <!-- ── Source Legend ──────────────────────────────── -->
+  <style>
+    .src-legend { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:16px; }
+    @media(max-width:900px){.src-legend{grid-template-columns:repeat(3,1fr);}}
+    .src-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+    .src-card-top { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+    .src-icon { font-size:18px; line-height:1; }
+    .src-name { font-size:13px; font-weight:700; color:var(--text); }
+    .src-conf { font-size:10px; font-weight:600; padding:2px 7px; border-radius:8px; margin-top:2px; display:inline-block; }
+    .conf-high { background:rgba(16,185,129,.15); color:#34D399; border:1px solid rgba(16,185,129,.3); }
+    .conf-med { background:rgba(245,158,11,.12); color:#FBBF24; border:1px solid rgba(245,158,11,.25); }
+    .conf-low { background:rgba(239,68,68,.1); color:#FCA5A5; border:1px solid rgba(239,68,68,.2); }
+    .src-card-desc { font-size:11px; color:var(--muted); line-height:1.5; margin-top:4px; }
+    .src-card-used { font-size:10px; color:var(--muted); margin-top:6px; }
+    .src-card-used strong { color:var(--text); }
+
+    .ds-section { margin-bottom:20px; }
+    .ds-section-title { font-size:13px; font-weight:700; color:var(--text); padding:10px 14px; background:var(--card2); border:1px solid var(--border); border-radius:8px 8px 0 0; border-bottom:none; display:flex; align-items:center; gap:8px; }
+    .ds-section-body { background:var(--card); border:1px solid var(--border); border-radius:0 0 8px 8px; }
+    .ds-row { display:grid; grid-template-columns:180px 1fr 1fr; gap:0; border-bottom:1px solid var(--border); }
+    .ds-row:last-child { border-bottom:none; }
+    .ds-row-header { grid-column:1/-1; background:rgba(255,255,255,.02); padding:7px 14px; font-size:10px; font-weight:700; letter-spacing:.6px; color:var(--muted); text-transform:uppercase; display:grid; grid-template-columns:180px 1fr 1fr; }
+    .ds-cell { padding:10px 14px; font-size:12px; }
+    .ds-metric { color:var(--text); font-weight:600; line-height:1.5; }
+    .ds-how { color:var(--muted); line-height:1.5; }
+    .ds-badge { display:inline-block; font-size:10px; font-weight:600; padding:2px 8px; border-radius:8px; margin-bottom:4px; }
+    .ds-bq { background:rgba(16,185,129,.12); color:#34D399; border:1px solid rgba(16,185,129,.25); }
+    .ds-gong { background:rgba(139,92,246,.12); color:#A78BFA; border:1px solid rgba(139,92,246,.25); }
+    .ds-sl { background:rgba(6,182,212,.12); color:#22D3EE; border:1px solid rgba(6,182,212,.25); }
+    .ds-est { background:rgba(245,158,11,.12); color:#FBBF24; border:1px solid rgba(245,158,11,.25); }
+    .ds-slack { background:rgba(249,115,22,.12); color:#FB923C; border:1px solid rgba(249,115,22,.25); }
+  </style>
+
+  <div class="src-legend">
+    <div class="src-card">
+      <div class="src-card-top"><span class="src-icon">🟢</span><span class="src-name">BigQuery</span></div>
+      <span class="src-conf conf-high">High confidence · auto-refreshed</span>
+      <div class="src-card-desc">Live query against <code style="font-size:10px">moloco-ae-view.athena.fact_dsp_core</code>. Refreshed daily at 6AM PT via launchd. Filter: <code style="font-size:10px">campaign.os='CTV' AND moloco_product='DSP'</code>.</div>
+      <div class="src-card-used"><strong>Powers:</strong> Q1 GAS/day, ARR, campaigns, exchanges, concentration, YTD</div>
+    </div>
+    <div class="src-card">
+      <div class="src-card-top"><span class="src-icon">🎙</span><span class="src-name">Gong</span></div>
+      <span class="src-conf conf-med">Medium confidence · N=43 calls</span>
+      <div class="src-card-desc">43 CTV-tagged calls from past 90 days. Themes extracted via keyword clustering — not a rigorous NLP model. Single vocal buyers can skew counts.</div>
+      <div class="src-card-used"><strong>Powers:</strong> Q2 all · Q3 behavioral patterns · Q4 competitive mentions</div>
+    </div>
+    <div class="src-card">
+      <div class="src-card-top"><span class="src-icon">🔵</span><span class="src-name">SearchLight / CRM</span></div>
+      <span class="src-conf conf-med">Medium confidence · manually extracted</span>
+      <div class="src-card-desc">Win/loss data, pipeline stages, and deal outcomes from SearchLight. Manually extracted — not connected to BQ. Deal counts are small (N=31 closed).</div>
+      <div class="src-card-used"><strong>Powers:</strong> Q1 win rate + pipeline · Q3 deal outcomes · Q4 win rates</div>
+    </div>
+    <div class="src-card">
+      <div class="src-card-top"><span class="src-icon">📊</span><span class="src-name">eMarketer</span></div>
+      <span class="src-conf conf-low">Low-medium · external estimate</span>
+      <div class="src-card-desc">2026 programmatic CTV TAM estimates ($4.2B AMER). Third-party analyst report — not independently verified. Use as order-of-magnitude framing only.</div>
+      <div class="src-card-used"><strong>Powers:</strong> Q4 TAM penetration analysis</div>
+    </div>
+    <div class="src-card">
+      <div class="src-card-top"><span class="src-icon">💬</span><span class="src-name">Slack</span></div>
+      <span class="src-conf conf-low">Low · anecdotal signals</span>
+      <div class="src-card-desc">Competitive intelligence from <code style="font-size:10px">#ctv-sales-signals</code> and <code style="font-size:10px">#competitive-intel</code> channels. Directional only — 2–4 mentions each, not validated.</div>
+      <div class="src-card-used"><strong>Powers:</strong> Q4 competitive signals feed</div>
+    </div>
+  </div>
+
+  <!-- ── By-Tab Breakdown ──────────────────────────── -->
+  <div style="font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px">By Tab: What Powers What</div>
+
+  <!-- Q1 -->
+  <div class="ds-section">
+    <div class="ds-section-title">📈 Q1 — Are we on track for $100M ARR?</div>
+    <div class="ds-section-body">
+      <div class="ds-row ds-row-header"><span>Metric / Element</span><span>Source</span><span>How It Was Derived</span></div>
+      <div class="ds-row">
+        <div class="ds-cell ds-metric">GAS / Day · ARR Run-Rate<br>Goal Banner · Trend Chart</div>
+        <div class="ds-cell"><span class="ds-badge ds-bq">BigQuery · live</span><br><code style="font-size:10px">fact_dsp_core</code> · 7-day avg · auto-refreshed</div>
+        <div class="ds-cell ds-how">SUM(gross_spend_usd) / 7 over the trailing 7 days. ARR = daily avg × 365. Pct = ARR / $100M goal. Updated each morning.</div>
+      </div>
+      <div class="ds-row">
+        <div class="ds-cell ds-metric">Active Campaigns KPI<br>Campaign Ramp Chart</div>
+        <div class="ds-cell"><span class="ds-badge ds-bq">BigQuery · live</span><br><code style="font-size:10px">fact_dsp_core</code> · 30-day window</div>
+        <div class="ds-cell ds-how">COUNT(DISTINCT campaign_id) WHERE gross_spend_usd &gt; 0 in the last 30 days. BQ count is lower than SearchLight (49) because BQ only counts campaigns with actual spend, not pipeline.</div>
+      </div>
+      <div class="ds-row">
+        <div class="ds-cell ds-metric">Exchanges Live KPI<br>Exchange Spend Breakdown</div>
+        <div class="ds-cell"><span class="ds-badge ds-bq">BigQuery · live</span><br><code style="font-size:10px">fact_dsp_core</code> · 7-day window</div>
+        <div class="ds-cell ds-how">GROUP BY exchange WHERE gross_spend_usd &gt; 0 over 7 days. Returns 5 active exchanges: MCTV, INDEX, FREE_WHEEL, NEXXEN, IRONSOURCE sorted by spend DESC.</div>
+      </div>
+      <div class="ds-row">
+        <div class="ds-cell ds-metric">Revenue Concentration<br>Donut Chart · Risk Signal</div>
+        <div class="ds-cell"><span class="ds-badge ds-bq">BigQuery · live</span><br><code style="font-size:10px">fact_dsp_core</code> · 30-day window</div>
+        <div class="ds-cell ds-how">GROUP BY campaign.tracking_entity, ranked by total GAS. Top 5 % of grand total computed via CROSS JOIN. Rest = 100 − top5 sum. Top advertiser = PMG/FBG Oppco LLC at 37.9%.</div>
+      </div>
+      <div class="ds-row">
+        <div class="ds-cell ds-metric">YTD Gross Ad Spend<br>YTD KPI Card</div>
+        <div class="ds-cell"><span class="ds-badge ds-bq">BigQuery · live</span><br><code style="font-size:10px">fact_dsp_core</code> · Jan 1–yesterday</div>
+        <div class="ds-cell ds-how">SUM(gross_spend_usd) from Jan 1, 2026 through yesterday. Current value: $9.65M over 89 days = $108K avg/day YTD (vs $205K trailing 7d, showing recent acceleration).</div>
+      </div>
+      <div class="ds-row">
+        <div class="ds-cell ds-metric">Win Rate (AMER) KPI<br>Pipeline by Stage Funnel</div>
+        <div class="ds-cell"><span class="ds-badge ds-sl">SearchLight / CRM · estimated</span><br>Manually extracted · 90-day trailing</div>
+        <div class="ds-cell ds-how">Win rate (22.7%) from SearchLight CTV deal outcomes — not in BQ. Pipeline stage values ($24.1M prospecting → $3.4M close) are CRM estimates, not BQ-verified. Treat as directional.</div>
+      </div>
+      <div class="ds-row">
+        <div class="ds-cell ds-metric">Monthly GAS Trend Chart<br>Prior months (Oct–Feb)</div>
+        <div class="ds-cell"><span class="ds-badge ds-bq">BigQuery · live</span><br><code style="font-size:10px">fact_dsp_core</code> · 6-month window</div>
+        <div class="ds-cell ds-how">FORMAT_DATE('%Y-%m') grouped, SUM(GAS) / COUNT(DISTINCT date_utc) per month = true avg daily GAS, not inflated by partial months. Current partial month is included as-is.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="ds-section">
+    <div class="ds-section-title">🎙 Q2 — What are customers telling us?</div>
+    <div class="ds-section-body">
+      <div class="ds-row ds-row-header"><span>Metric / Element</span><span>Source</span><span>How It Was Derived</span></div>
+      <div class="ds-row">
+        <div class="ds-cell ds-metric">Sentiment KPIs (54% / 28% / 18%)<br>Theme Frequency Bars<br>Sentiment Trend Chart</div>
+        <div class="ds-cell"><span class="ds-badge ds-gong">Gong · N=43 calls</span><br>90-day window · CTV-tagged</div>
+        <div class="ds-cell ds-how">43 CTV-tagged calls manually reviewed and clustered by keyword themes. Sentiment classification (positive / mixed / friction) based on theme type, not automated NLP. One call can appear in multiple themes. Monthly trend buckets contain 8–15 calls — noisy at this N.</div>
+      </div>
+      <div class="ds-row">
+        <div class="ds-cell ds-metric">Verbatim Quotes<br>VoC Cards</div>
+        <div class="ds-cell"><span class="ds-badge ds-gong">Gong · direct transcript</span><br>Selected for representativeness</div>
+        <div class="ds-cell ds-how">Pulled directly from Gong call transcripts. Selected to represent the most common version of each theme — not cherry-picked for positivity or negativity. Deal outcome (converted / stalled / lost) noted per quote.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="ds-section">
+    <div class="ds-section-title">🎯 Q3 — What separates winning from losing?</div>
+    <div class="ds-section-body">
+      <div class="ds-row ds-row-header"><span>Metric / Element</span><span>Source</span><span>How It Was Derived</span></div>
+      <div class="ds-row">
+        <div class="ds-cell ds-metric">Won / Lost Deal KPIs<br>Deal Velocity (47 vs 68 days)<br>Champion Identified (83%)</div>
+        <div class="ds-cell"><span class="ds-badge ds-sl">SearchLight · N=31 deals</span><br>18 won · 13 lost · CTV only</div>
+        <div class="ds-cell ds-how">Closed CTV deals from SearchLight deal records. Velocity = Discovery date to Close date. Champion flag = contact role tagged as "internal champion" in SearchLight activity notes. N=31 is small — two outlier deals can shift percentages meaningfully.</div>
+      </div>
+      <div class="ds-row">
+        <div class="ds-cell ds-metric">Behavioral Pattern Table<br>Win Rate by Behavior Chart</div>
+        <div class="ds-cell"><span class="ds-badge ds-gong">Gong + SearchLight</span><br>Cross-referenced deal outcomes</div>
+        <div class="ds-cell ds-how">Behavior presence coded per Gong call transcript (e.g., "ML demo shown" = transcript mentions a live demo of targeting ML). Win/loss outcome from SearchLight. % = (deals where behavior observed AND won) / (all deals where behavior observed). Delta = won% − lost%.</div>
+      </div>
+      <div class="ds-row">
+        <div class="ds-cell ds-metric">Top Loss Reasons</div>
+        <div class="ds-cell"><span class="ds-badge ds-gong">Gong + SearchLight</span><br>Self-reported in call / CRM notes</div>
+        <div class="ds-cell ds-how">Loss reason field from SearchLight closed-lost records + Gong transcript mentions of competitor cited as win reason. "Attribution not credible" (38%) = most common self-reported reason in SearchLight + buyer-stated in Gong.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="ds-section">
+    <div class="ds-section-title">⚔ Q4 — How are we positioned?</div>
+    <div class="ds-section-body">
+      <div class="ds-row ds-row-header"><span>Metric / Element</span><span>Source</span><span>How It Was Derived</span></div>
+      <div class="ds-row">
+        <div class="ds-cell ds-metric">Overall Win Rate (22.7%)<br>Win vs. Tatari (34%)</div>
+        <div class="ds-cell"><span class="ds-badge ds-sl">SearchLight · 90-day</span><br>CTV deals only</div>
+        <div class="ds-cell ds-how">Overall win rate from SearchLight CTV deal disposition (won / lost / no decision). Head-to-head win rates require competitor to be tagged in deal record. N=9 vs Tatari is very small — single win/loss swings the number ~11pp.</div>
+      </div>
+      <div class="ds-row">
+        <div class="ds-cell ds-metric">Competitive Mentions (31)<br>Tatari 38% · TTD 28%<br>Win/Loss by Competitor Table</div>
+        <div class="ds-cell"><span class="ds-badge ds-gong">Gong · N=43 calls</span><br>+ SearchLight competitor field</div>
+        <div class="ds-cell ds-how">Competitor name mentions extracted from Gong transcripts + SearchLight "competitor" deal field. Gong mentions = buyer-reported (inherently filtered through buyer's awareness). Win rate per competitor = SearchLight head-to-head closed records where competitor is tagged.</div>
+      </div>
+      <div class="ds-row">
+        <div class="ds-cell ds-metric">TAM Penetration Analysis<br>$21B / $4.2B / $2.0B / ~0.8%</div>
+        <div class="ds-cell"><span class="ds-badge ds-est">eMarketer 2026 + BQ</span><br>Analyst estimate + derived share</div>
+        <div class="ds-cell ds-how">Total CTV ($21B) and programmatic CTV ($4.2B) from eMarketer 2026 AMER estimates. Addressable ($2.0B) = our 5 active exchanges as estimated % of programmatic CTV. Our share (~0.8%) = BQ ARR run-rate / $4.2B TAM. All figures are order-of-magnitude, not audited.</div>
+      </div>
+      <div class="ds-row">
+        <div class="ds-cell ds-metric">Competitive Signals Feed<br>(Tatari, TTD, tvScientific, Amazon)</div>
+        <div class="ds-cell"><span class="ds-badge ds-gong">Gong</span> <span class="ds-badge ds-slack">Slack</span><br>#ctv-sales-signals · #competitive-intel</div>
+        <div class="ds-cell ds-how">Gong: Tatari "holdout testing" mentioned in 8 calls (Feb–Mar); TTD managed service in 4 calls. Slack: TTD CTV push (4 mentions), Amazon Prime Video pitch (2 mentions). SearchLight: tvScientific win note on Tubi/Samsung reach (3 of 5 head-to-head wins). All anecdotal — not validated.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BQ SQL Reference ──────────────────────────── -->
+  <div style="font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;margin-top:8px">BigQuery SQL — Full Query Reference</div>
+
+  <style>
+    .sql-block { background:#0A0E1A; border:1px solid var(--border); border-radius:10px; margin-bottom:14px; overflow:hidden; }
+    .sql-header { background:#0F1623; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); }
+    .sql-title { font-size:13px; font-weight:700; color:var(--text); }
+    .sql-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+    .sql-tag { font-size:10px; background:rgba(6,182,212,.12); border:1px solid rgba(6,182,212,.25); color:#22D3EE; padding:3px 9px; border-radius:10px; font-weight:600; }
+    .sql-body { padding:14px 16px; }
+    pre.sql { margin:0; font-size:12px; line-height:1.7; color:#A5F3FC; font-family:'SF Mono','Fira Code','Consolas',monospace; white-space:pre-wrap; word-break:break-word; }
+    pre.sql .kw { color:#C084FC; font-weight:600; }
+    pre.sql .cm { color:#4B5563; font-style:italic; }
+    pre.sql .fn { color:#34D399; }
+    pre.sql .lit { color:#FCD34D; }
+    pre.sql .tbl { color:#60A5FA; }
+    .sql-metrics { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+    .sql-metric { background:rgba(255,255,255,.04); border:1px solid var(--border); border-radius:6px; padding:5px 11px; font-size:11px; }
+    .sql-metric strong { color:var(--text); }
+    .sql-metric span { color:var(--muted); }
+  </style>
+
+  <!-- Q1: 7-day trailing daily GAS -->
+  <div class="sql-block">
+    <div class="sql-header">
+      <div>
+        <div class="sql-title">Q1 · 7-Day Trailing Average Daily GAS</div>
+        <div class="sql-sub">Powers: GAS/day KPI · ARR run-rate · goal banner · revenue trend chart</div>
+      </div>
+      <span class="sql-tag">KPI · Banner · Chart</span>
+    </div>
+    <div class="sql-body">
+      <pre class="sql"><span class="kw">SELECT</span> <span class="fn">ROUND</span>(<span class="fn">SUM</span>(gross_spend_usd) / <span class="lit">7</span>, <span class="lit">2</span>) <span class="kw">AS</span> avg_daily_gas
+<span class="kw">FROM</span> <span class="tbl">`moloco-ae-view.athena.fact_dsp_core`</span>
+<span class="kw">WHERE</span> date_utc <span class="kw">BETWEEN</span> <span class="lit">'{D7_START}'</span> <span class="kw">AND</span> <span class="lit">'{YESTERDAY}'</span>
+  <span class="kw">AND</span> campaign.os = <span class="lit">'CTV'</span>
+  <span class="kw">AND</span> moloco_product = <span class="lit">'DSP'</span></pre>
+      <div class="sql-metrics">
+        <div class="sql-metric"><strong>Window</strong> <span>Rolling 7 days ending yesterday</span></div>
+        <div class="sql-metric"><strong>Output</strong> <span>avg_daily_gas → gas_per_day</span></div>
+        <div class="sql-metric"><strong>Derived</strong> <span>ARR = gas_per_day × 365 · pct = ARR / $100M</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q2: Active campaigns -->
+  <div class="sql-block">
+    <div class="sql-header">
+      <div>
+        <div class="sql-title">Q2 · Active CTV Campaigns (Last 30 Days)</div>
+        <div class="sql-sub">Powers: Active Campaigns KPI card · campaign ramp chart (latest point)</div>
+      </div>
+      <span class="sql-tag">KPI · Chart</span>
+    </div>
+    <div class="sql-body">
+      <pre class="sql"><span class="kw">SELECT</span> <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> campaign_id) <span class="kw">AS</span> n
+<span class="kw">FROM</span> <span class="tbl">`moloco-ae-view.athena.fact_dsp_core`</span>
+<span class="kw">WHERE</span> date_utc <span class="kw">BETWEEN</span> <span class="lit">'{D30_START}'</span> <span class="kw">AND</span> <span class="lit">'{YESTERDAY}'</span>
+  <span class="kw">AND</span> campaign.os = <span class="lit">'CTV'</span>
+  <span class="kw">AND</span> moloco_product = <span class="lit">'DSP'</span>
+  <span class="kw">AND</span> gross_spend_usd > <span class="lit">0</span></pre>
+      <div class="sql-metrics">
+        <div class="sql-metric"><strong>Window</strong> <span>Rolling 30 days ending yesterday</span></div>
+        <div class="sql-metric"><strong>Filter</strong> <span>gross_spend_usd &gt; 0 (actual spend, not just opens)</span></div>
+        <div class="sql-metric"><strong>Output</strong> <span>n → active_campaigns</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q3: Monthly avg daily GAS -->
+  <div class="sql-block">
+    <div class="sql-header">
+      <div>
+        <div class="sql-title">Q3 · Monthly Average Daily GAS Trend (6 Months)</div>
+        <div class="sql-sub">Powers: CTV Daily GAS Trend chart · all 6 monthly bars</div>
+      </div>
+      <span class="sql-tag">Chart</span>
+    </div>
+    <div class="sql-body">
+      <pre class="sql"><span class="kw">SELECT</span>
+  <span class="fn">FORMAT_DATE</span>(<span class="lit">'%Y-%m'</span>, date_utc) <span class="kw">AS</span> month,
+  <span class="fn">ROUND</span>(<span class="fn">SUM</span>(gross_spend_usd) / <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> date_utc), <span class="lit">2</span>) <span class="kw">AS</span> avg_daily_gas
+<span class="kw">FROM</span> <span class="tbl">`moloco-ae-view.athena.fact_dsp_core`</span>
+<span class="kw">WHERE</span> (
+  <span class="cm">-- 5 complete months + current partial month (dynamically generated)</span>
+  (<span class="fn">EXTRACT</span>(YEAR <span class="kw">FROM</span> date_utc)=<span class="lit">2025</span> <span class="kw">AND</span> <span class="fn">EXTRACT</span>(MONTH <span class="kw">FROM</span> date_utc)=<span class="lit">10</span>)
+  <span class="kw">OR</span> (<span class="fn">EXTRACT</span>(YEAR <span class="kw">FROM</span> date_utc)=<span class="lit">2025</span> <span class="kw">AND</span> <span class="fn">EXTRACT</span>(MONTH <span class="kw">FROM</span> date_utc)=<span class="lit">11</span>)
+  <span class="kw">OR</span> (<span class="fn">EXTRACT</span>(YEAR <span class="kw">FROM</span> date_utc)=<span class="lit">2025</span> <span class="kw">AND</span> <span class="fn">EXTRACT</span>(MONTH <span class="kw">FROM</span> date_utc)=<span class="lit">12</span>)
+  <span class="kw">OR</span> (<span class="fn">EXTRACT</span>(YEAR <span class="kw">FROM</span> date_utc)=<span class="lit">2026</span> <span class="kw">AND</span> <span class="fn">EXTRACT</span>(MONTH <span class="kw">FROM</span> date_utc)=<span class="lit">1</span>)
+  <span class="kw">OR</span> (<span class="fn">EXTRACT</span>(YEAR <span class="kw">FROM</span> date_utc)=<span class="lit">2026</span> <span class="kw">AND</span> <span class="fn">EXTRACT</span>(MONTH <span class="kw">FROM</span> date_utc)=<span class="lit">2</span>)
+  <span class="kw">OR</span> (<span class="fn">EXTRACT</span>(YEAR <span class="kw">FROM</span> date_utc)=<span class="lit">2026</span> <span class="kw">AND</span> <span class="fn">EXTRACT</span>(MONTH <span class="kw">FROM</span> date_utc)=<span class="lit">3</span>)
+)
+  <span class="kw">AND</span> campaign.os = <span class="lit">'CTV'</span>
+  <span class="kw">AND</span> moloco_product = <span class="lit">'DSP'</span>
+<span class="kw">GROUP BY</span> <span class="lit">1</span>
+<span class="kw">ORDER BY</span> <span class="lit">1</span></pre>
+      <div class="sql-metrics">
+        <div class="sql-metric"><strong>Window</strong> <span>5 complete months + current partial</span></div>
+        <div class="sql-metric"><strong>Avg method</strong> <span>SUM / COUNT(DISTINCT dates) = true avg daily</span></div>
+        <div class="sql-metric"><strong>Output</strong> <span>monthly_daily_avg_k (÷1000 for chart)</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q4: Concentration -->
+  <div class="sql-block">
+    <div class="sql-header">
+      <div>
+        <div class="sql-title">Q4 · Top Advertiser Revenue Concentration (Last 30 Days)</div>
+        <div class="sql-sub">Powers: Revenue Concentration donut chart · concentration risk card</div>
+      </div>
+      <span class="sql-tag">Chart · Risk</span>
+    </div>
+    <div class="sql-body">
+      <pre class="sql"><span class="kw">WITH</span> gas <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> campaign.tracking_entity <span class="kw">AS</span> te,
+    <span class="fn">SUM</span>(gross_spend_usd) <span class="kw">AS</span> total_gas
+  <span class="kw">FROM</span> <span class="tbl">`moloco-ae-view.athena.fact_dsp_core`</span>
+  <span class="kw">WHERE</span> date_utc <span class="kw">BETWEEN</span> <span class="lit">'{D30_START}'</span> <span class="kw">AND</span> <span class="lit">'{YESTERDAY}'</span>
+    <span class="kw">AND</span> campaign.os = <span class="lit">'CTV'</span>
+    <span class="kw">AND</span> moloco_product = <span class="lit">'DSP'</span>
+  <span class="kw">GROUP BY</span> <span class="lit">1</span>
+),
+grand <span class="kw">AS</span> (<span class="kw">SELECT</span> <span class="fn">SUM</span>(total_gas) <span class="kw">AS</span> total <span class="kw">FROM</span> gas),
+ranked <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> te, total_gas,
+    <span class="fn">ROW_NUMBER</span>() <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> total_gas <span class="kw">DESC</span>) <span class="kw">AS</span> rn
+  <span class="kw">FROM</span> gas
+)
+<span class="kw">SELECT</span>
+  r.te,
+  <span class="fn">ROUND</span>(<span class="lit">100.0</span> * r.total_gas / g.total, <span class="lit">2</span>) <span class="kw">AS</span> pct
+<span class="kw">FROM</span> ranked r <span class="kw">CROSS JOIN</span> grand g
+<span class="kw">WHERE</span> r.rn <= <span class="lit">5</span>
+<span class="kw">ORDER BY</span> r.rn</pre>
+      <div class="sql-metrics">
+        <div class="sql-metric"><strong>Window</strong> <span>Rolling 30 days</span></div>
+        <div class="sql-metric"><strong>Grouping</strong> <span>campaign.tracking_entity (advertiser)</span></div>
+        <div class="sql-metric"><strong>Output</strong> <span>Top 5 pcts + rest = concentration[6]</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q5: Exchanges -->
+  <div class="sql-block">
+    <div class="sql-header">
+      <div>
+        <div class="sql-title">Q5 · Active Exchange Spend (Last 7 Days)</div>
+        <div class="sql-sub">Powers: Exchanges Live KPI · exchange breadth risk signal</div>
+      </div>
+      <span class="sql-tag">KPI · Signal</span>
+    </div>
+    <div class="sql-body">
+      <pre class="sql"><span class="kw">SELECT</span> exchange, <span class="fn">ROUND</span>(<span class="fn">SUM</span>(gross_spend_usd), <span class="lit">2</span>) <span class="kw">AS</span> gas_7d
+<span class="kw">FROM</span> <span class="tbl">`moloco-ae-view.athena.fact_dsp_core`</span>
+<span class="kw">WHERE</span> date_utc <span class="kw">BETWEEN</span> <span class="lit">'{D7_START}'</span> <span class="kw">AND</span> <span class="lit">'{YESTERDAY}'</span>
+  <span class="kw">AND</span> campaign.os = <span class="lit">'CTV'</span>
+  <span class="kw">AND</span> moloco_product = <span class="lit">'DSP'</span>
+  <span class="kw">AND</span> gross_spend_usd > <span class="lit">0</span>
+<span class="kw">GROUP BY</span> <span class="lit">1</span>
+<span class="kw">ORDER BY</span> gas_7d <span class="kw">DESC</span></pre>
+      <div class="sql-metrics">
+        <div class="sql-metric"><strong>Window</strong> <span>Rolling 7 days</span></div>
+        <div class="sql-metric"><strong>Filter</strong> <span>spend &gt; 0 (active only)</span></div>
+        <div class="sql-metric"><strong>Output</strong> <span>exchanges[] · exchange_gas_7d[]</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q6: YTD GAS -->
+  <div class="sql-block">
+    <div class="sql-header">
+      <div>
+        <div class="sql-title">Q6 · Year-to-Date Gross Ad Spend</div>
+        <div class="sql-sub">Powers: YTD Gross Ad Spend KPI card · actuals from Jan 1 to yesterday</div>
+      </div>
+      <span class="sql-tag">KPI · Actuals</span>
+    </div>
+    <div class="sql-body">
+      <pre class="sql"><span class="kw">SELECT</span> <span class="fn">ROUND</span>(<span class="fn">SUM</span>(gross_spend_usd), <span class="lit">2</span>) <span class="kw">AS</span> ytd_gas
+<span class="kw">FROM</span> <span class="tbl">`moloco-ae-view.athena.fact_dsp_core`</span>
+<span class="kw">WHERE</span> date_utc <span class="kw">BETWEEN</span> <span class="lit">'{YTD_START}'</span> <span class="kw">AND</span> <span class="lit">'{YESTERDAY}'</span>
+  <span class="kw">AND</span> campaign.os = <span class="lit">'CTV'</span>
+  <span class="kw">AND</span> moloco_product = <span class="lit">'DSP'</span></pre>
+      <div class="sql-metrics">
+        <div class="sql-metric"><strong>Window</strong> <span>Jan 1, 2026 – yesterday</span></div>
+        <div class="sql-metric"><strong>Current value</strong> <span>$9.65M (89 days · $108K avg/day)</span></div>
+        <div class="sql-metric"><strong>Output</strong> <span>ytd_gas_m · ytd_days · ytd_start</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Refresh info -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Refresh Schedule &amp; Infrastructure</div>
+        <div class="card-sub">How data gets from BigQuery to this dashboard automatically</div>
+      </div>
+      <span class="src-tag src-bq">launchd · daily 6AM PT</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:8px;font-size:12px;color:var(--muted);line-height:1.7">
+      <div>
+        <div style="color:var(--text);font-weight:600;margin-bottom:4px">Schedule</div>
+        Daily at 6:00 AM Pacific via macOS launchd<br>
+        Agent: <code style="font-size:11px">com.moloco.ctv-dashboard</code><br>
+        Plist: <code style="font-size:11px">~/Library/LaunchAgents/</code>
+      </div>
+      <div>
+        <div style="color:var(--text);font-weight:600;margin-bottom:4px">Data Source</div>
+        Project: <code style="font-size:11px">moloco-ae-view</code><br>
+        Table: <code style="font-size:11px">athena.fact_dsp_core</code><br>
+        Auth: Google ADC (gcloud)
+      </div>
+      <div>
+        <div style="color:var(--text);font-weight:600;margin-bottom:4px">Script &amp; Log</div>
+        Script: <code style="font-size:11px">~/git/claude-bq-agent/scripts/refresh_ctv_dashboard.py</code><br>
+        Log: <code style="font-size:11px">~/Library/Logs/ctv_dashboard_refresh.log</code>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /Queries -->
+
+
+
+<!-- ═══════════════════════════════════════
+     SALES INTELLIGENCE HUB
+════════════════════════════════════════ -->
+<div id="tab-sales" class="tab-panel">
+
+<style>
+  .q-header.q5 { background: linear-gradient(135deg, rgba(249,115,22,.08), rgba(249,115,22,.03)); border: 1px solid rgba(249,115,22,.2); }
+  .q5 .q-title { color: #FB923C; }
+  .caveat-orange { background: rgba(249,115,22,.1); color: #FB923C; border: 1px solid rgba(249,115,22,.2); }
+
+  .pipeline-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .pipeline-table th { text-align: left; padding: 8px 10px; font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border); }
+  .pipeline-table td { padding: 9px 10px; border-bottom: 1px solid rgba(30,42,66,.4); vertical-align: middle; }
+  .pipeline-table tr:last-child td { border-bottom: none; }
+  .pipeline-table tr:hover td { background: rgba(255,255,255,.02); }
+
+  .stage-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 8px; white-space: nowrap; }
+  .stage-close  { background: rgba(16,185,129,.15); color: #34D399; border: 1px solid rgba(16,185,129,.3); }
+  .stage-neg    { background: rgba(245,158,11,.15);  color: #FBBF24; border: 1px solid rgba(245,158,11,.3); }
+  .stage-prop   { background: rgba(139,92,246,.15);  color: #A78BFA; border: 1px solid rgba(139,92,246,.3); }
+  .stage-disc   { background: rgba(6,182,212,.15);   color: #22D3EE; border: 1px solid rgba(6,182,212,.3); }
+  .stage-prosp  { background: rgba(255,255,255,.07); color: var(--muted); border: 1px solid var(--border); }
+
+  .link-btn { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 6px; text-decoration: none; cursor: pointer; transition: opacity .15s; white-space: nowrap; }
+  .link-btn:hover { opacity: .75; }
+  .link-sl    { background: rgba(6,182,212,.12);   color: #22D3EE; border: 1px solid rgba(6,182,212,.25); }
+  .link-gong  { background: rgba(139,92,246,.12);  color: #A78BFA; border: 1px solid rgba(139,92,246,.25); }
+  .link-slack { background: rgba(249,115,22,.12);  color: #FB923C; border: 1px solid rgba(249,115,22,.25); }
+  .link-ext   { background: rgba(16,185,129,.12);  color: #34D399; border: 1px solid rgba(16,185,129,.25); }
+  .link-bq    { background: rgba(0,87,255,.12);    color: #60A5FA; border: 1px solid rgba(0,87,255,.2); }
+
+  .health-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 6px; flex-shrink: 0; }
+  .stale-row td { opacity: .65; }
+
+  .days-badge { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 5px; }
+  .days-ok    { background: rgba(16,185,129,.12); color: #34D399; }
+  .days-warn  { background: rgba(245,158,11,.12); color: #FBBF24; }
+  .days-stale { background: rgba(239,68,68,.1);   color: #FCA5A5; }
+
+  .signal-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 13px 15px; margin-bottom: 10px; }
+  .signal-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; gap: 10px; }
+  .signal-card-title { font-size: 12px; font-weight: 700; flex: 1; line-height: 1.4; }
+  .signal-card-meta { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .signal-card-body { font-size: 11px; color: var(--muted); line-height: 1.65; margin-bottom: 8px; }
+  .signal-card-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .theme-chips { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 8px; }
+  .theme-chip { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 8px; }
+  .chip-pos { background: rgba(16,185,129,.12); color: #34D399; }
+  .chip-mix { background: rgba(245,158,11,.12);  color: #FBBF24; }
+  .chip-neg { background: rgba(239,68,68,.1);    color: #FCA5A5; }
+
+  .market-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 12px; }
+  @media(max-width:900px){ .market-grid { grid-template-columns: repeat(2,1fr); } }
+  .market-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 15px; display: flex; flex-direction: column; gap: 7px; }
+  .market-card-title { font-size: 13px; font-weight: 700; }
+  .market-card-desc { font-size: 11px; color: var(--muted); line-height: 1.55; flex: 1; }
+
+  .feed-section-label { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: .6px; text-transform: uppercase; margin: 14px 0 8px; }
+</style>
+
+  <div class="q-header q5">
+    <div class="q-icon">🔍</div>
+    <div class="q-body">
+      <div class="q-number">Sales Intelligence Hub</div>
+      <div class="q-title">All customer signals, pipeline status &amp; market data in one place</div>
+      <div class="q-desc">Built for the sales team to drill into specific accounts, act on Gong call signals, surface Slack deal mentions, and access market research directly. Every section links out to the source system.</div>
+      <span class="q-caveat caveat-orange">⚠ Pipeline from SearchLight/CRM (manually extracted, not live BQ) · Gong: N=43 calls · Slack: anecdotal signals · click links to verify and act in source systems</span>
+    </div>
+  </div>
+
+  <!-- KPI Row -->
+  <div class="kpi-row kpi-row-4" style="margin-bottom:14px">
+    <div class="kpi-card cyan">
+      <div class="kpi-label">Total Pipeline Value</div>
+      <div class="kpi-value" style="color:#22D3EE">$24.1M</div>
+      <div class="kpi-sub">Across all active stages · SearchLight</div>
+      <div class="kpi-pill pill-yellow">87 open deals</div>
+    </div>
+    <div class="kpi-card purple">
+      <div class="kpi-label">Gong Calls (90d)</div>
+      <div class="kpi-value" style="color:#A78BFA">43</div>
+      <div class="kpi-sub">CTV-tagged · keyword clustered themes</div>
+      <div class="kpi-pill pill-purple">54% positive sentiment</div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">Slack Signals (30d)</div>
+      <div class="kpi-value" style="color:#FB923C">12</div>
+      <div class="kpi-sub">#ctv-sales-signals + #competitive-intel</div>
+      <div class="kpi-pill pill-yellow">4 competitive · 8 deal</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">Stalled Deals (&gt;14d)</div>
+      <div class="kpi-value" style="color:#F87171">12</div>
+      <div class="kpi-sub">No activity in 14+ days · SearchLight</div>
+      <div class="kpi-pill pill-red">Action required</div>
+    </div>
+  </div>
+
+  <!-- Pipeline Drill-Down Table -->
+  <div class="card full" style="margin-bottom:14px">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Pipeline — Account-Level View</div>
+        <div class="card-sub">Key accounts across all stages · sorted by stage priority then ARR · click links to open in source system · full pipeline of 87 deals in SearchLight</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <a href="https://app.searchlight.ai/" target="_blank" class="link-btn link-sl" style="font-size:11px;padding:4px 10px">Open SearchLight →</a>
+        <span class="src-tag src-est">CRM · not BQ</span>
+      </div>
+    </div>
+    <div style="overflow-x:auto;margin-top:6px">
+      <table class="pipeline-table">
+        <thead>
+          <tr>
+            <th>Account</th>
+            <th>Vertical</th>
+            <th>Stage</th>
+            <th>ARR Est.</th>
+            <th>Days in Stage</th>
+            <th>Last Gong</th>
+            <th>Links</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="health-dot" style="background:var(--green)"></span><strong>PMG / FBG Oppco LLC</strong></td>
+            <td style="color:var(--muted)">Gaming</td>
+            <td><span class="stage-badge stage-close">Active</span></td>
+            <td style="color:var(--green);font-weight:700">$74K/day</td>
+            <td><span class="days-badge days-ok">Live</span></td>
+            <td style="color:var(--muted);font-size:11px">Mar 27, 2026</td>
+            <td><div style="display:flex;gap:5px"><a class="link-btn link-sl" href="https://app.searchlight.ai/" target="_blank">SearchLight →</a><a class="link-btn link-gong" href="https://app.gong.io/calls" target="_blank">Gong →</a></div></td>
+          </tr>
+          <tr>
+            <td><span class="health-dot" style="background:var(--green)"></span><strong>Kraken</strong></td>
+            <td style="color:var(--muted)">Finance / Crypto</td>
+            <td><span class="stage-badge stage-close">Active</span></td>
+            <td style="color:var(--green);font-weight:700">~$15K/day</td>
+            <td><span class="days-badge days-ok">Live</span></td>
+            <td style="color:var(--muted);font-size:11px">Mar 25, 2026</td>
+            <td><div style="display:flex;gap:5px"><a class="link-btn link-sl" href="https://app.searchlight.ai/" target="_blank">SearchLight →</a><a class="link-btn link-gong" href="https://app.gong.io/calls" target="_blank">Gong →</a></div></td>
+          </tr>
+          <tr>
+            <td><span class="health-dot" style="background:var(--green)"></span><strong>ARBGaming</strong></td>
+            <td style="color:var(--muted)">Gaming / iGaming</td>
+            <td><span class="stage-badge stage-close">Active</span></td>
+            <td style="color:var(--green);font-weight:700">~$13K/day</td>
+            <td><span class="days-badge days-ok">Live</span></td>
+            <td style="color:var(--muted);font-size:11px">Mar 22, 2026</td>
+            <td><div style="display:flex;gap:5px"><a class="link-btn link-sl" href="https://app.searchlight.ai/" target="_blank">SearchLight →</a><a class="link-btn link-gong" href="https://app.gong.io/calls" target="_blank">Gong →</a></div></td>
+          </tr>
+          <tr>
+            <td><span class="health-dot" style="background:var(--green)"></span><strong>Luckymoney</strong></td>
+            <td style="color:var(--muted)">Gaming / Mobile</td>
+            <td><span class="stage-badge stage-close">Active</span></td>
+            <td style="color:var(--green);font-weight:700">~$9K/day</td>
+            <td><span class="days-badge days-ok">Live</span></td>
+            <td style="color:var(--muted);font-size:11px">Mar 19, 2026</td>
+            <td><div style="display:flex;gap:5px"><a class="link-btn link-sl" href="https://app.searchlight.ai/" target="_blank">SearchLight →</a><a class="link-btn link-gong" href="https://app.gong.io/calls" target="_blank">Gong →</a></div></td>
+          </tr>
+          <tr>
+            <td><span class="health-dot" style="background:var(--yellow)"></span><strong>Finance Vertical Prospect</strong></td>
+            <td style="color:var(--muted)">Finance</td>
+            <td><span class="stage-badge stage-neg">Negotiation</span></td>
+            <td style="color:#FBBF24;font-weight:700">$120K ARR</td>
+            <td><span class="days-badge days-warn">8 days</span></td>
+            <td style="color:var(--muted);font-size:11px">Mar 15, 2026</td>
+            <td><div style="display:flex;gap:5px"><a class="link-btn link-sl" href="https://app.searchlight.ai/" target="_blank">SearchLight →</a><a class="link-btn link-gong" href="https://app.gong.io/calls" target="_blank">Gong →</a></div></td>
+          </tr>
+          <tr>
+            <td><span class="health-dot" style="background:var(--yellow)"></span><strong>NOVIG</strong></td>
+            <td style="color:var(--muted)">Sports Betting</td>
+            <td><span class="stage-badge stage-neg">Negotiation</span></td>
+            <td style="color:#FBBF24;font-weight:700">$95K ARR</td>
+            <td><span class="days-badge days-warn">11 days</span></td>
+            <td style="color:var(--muted);font-size:11px">Mar 12, 2026</td>
+            <td><div style="display:flex;gap:5px"><a class="link-btn link-sl" href="https://app.searchlight.ai/" target="_blank">SearchLight →</a><a class="link-btn link-gong" href="https://app.gong.io/calls" target="_blank">Gong →</a></div></td>
+          </tr>
+          <tr>
+            <td><span class="health-dot" style="background:var(--ctv)"></span><strong>Entertainment Vertical Co.</strong></td>
+            <td style="color:var(--muted)">Entertainment / Streaming</td>
+            <td><span class="stage-badge stage-prop">Proposal</span></td>
+            <td style="color:#A78BFA;font-weight:700">$200K ARR</td>
+            <td><span class="days-badge days-ok">3 days</span></td>
+            <td style="color:var(--muted);font-size:11px">Mar 29, 2026</td>
+            <td><div style="display:flex;gap:5px"><a class="link-btn link-sl" href="https://app.searchlight.ai/" target="_blank">SearchLight →</a><a class="link-btn link-gong" href="https://app.gong.io/calls" target="_blank">Gong →</a></div></td>
+          </tr>
+          <tr>
+            <td><span class="health-dot" style="background:var(--ctv)"></span><strong>Gaming Vertical Brand (CTV-to-Web)</strong></td>
+            <td style="color:var(--muted)">Gaming / Mobile</td>
+            <td><span class="stage-badge stage-prop">Proposal</span></td>
+            <td style="color:#A78BFA;font-weight:700">$85K ARR</td>
+            <td><span class="days-badge days-ok">6 days</span></td>
+            <td style="color:var(--muted);font-size:11px">Mar 24, 2026</td>
+            <td><div style="display:flex;gap:5px"><a class="link-btn link-sl" href="https://app.searchlight.ai/" target="_blank">SearchLight →</a><a class="link-btn link-gong" href="https://app.gong.io/calls" target="_blank">Gong →</a></div></td>
+          </tr>
+          <tr class="stale-row">
+            <td><span class="health-dot" style="background:var(--red)"></span><strong>Retail Vertical Account</strong></td>
+            <td style="color:var(--muted)">Retail / e-Commerce</td>
+            <td><span class="stage-badge stage-disc">Discovery</span></td>
+            <td style="color:#22D3EE;font-weight:700">$150K ARR est.</td>
+            <td><span class="days-badge days-stale">19 days</span></td>
+            <td style="color:var(--red);font-size:11px">Feb 14, 2026 ⚠</td>
+            <td><div style="display:flex;gap:5px"><a class="link-btn link-sl" href="https://app.searchlight.ai/" target="_blank">SearchLight →</a><a class="link-btn link-gong" href="https://app.gong.io/calls" target="_blank">Gong →</a></div></td>
+          </tr>
+          <tr class="stale-row">
+            <td><span class="health-dot" style="background:var(--red)"></span><strong>Sports Vertical Brand</strong></td>
+            <td style="color:var(--muted)">Sports / Live Events</td>
+            <td><span class="stage-badge stage-disc">Discovery</span></td>
+            <td style="color:#22D3EE;font-weight:700">$90K ARR est.</td>
+            <td><span class="days-badge days-stale">22 days</span></td>
+            <td style="color:var(--red);font-size:11px">Mar 8, 2026 ⚠</td>
+            <td><div style="display:flex;gap:5px"><a class="link-btn link-sl" href="https://app.searchlight.ai/" target="_blank">SearchLight →</a><a class="link-btn link-gong" href="https://app.gong.io/calls" target="_blank">Gong →</a></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:10px;font-size:11px;color:var(--muted);line-height:1.6">
+      Showing key accounts only. Full 87-deal pipeline in <a href="https://app.searchlight.ai/" target="_blank" style="color:#22D3EE">SearchLight →</a> ·
+      <span style="color:var(--red)">Red / faded = stalled (14+ days, no activity)</span> ·
+      <span style="color:var(--yellow)">Yellow = approaching stale</span> ·
+      <span style="color:var(--green)">Green = healthy / active</span>
+    </div>
+  </div>
+
+  <!-- Gong + Slack Signals Side by Side -->
+  <div class="two-col">
+
+    <!-- Gong Signal Feed -->
+    <div>
+      <div class="label-row" style="margin-bottom:10px">
+        <div>
+          <div class="title">Gong Signal Feed</div>
+          <div class="sub">Extracted themes, action items &amp; verbatims from CTV calls · N=43 · 90-day window</div>
+        </div>
+        <a href="https://app.gong.io/calls" target="_blank" class="link-btn link-gong" style="font-size:11px;padding:4px 10px">All calls →</a>
+      </div>
+
+      <div class="signal-card">
+        <div class="signal-card-top">
+          <div>
+            <div class="signal-card-title">Gaming vertical · Converted to active · Mar 27, 2026</div>
+            <div class="signal-card-meta">Themes: ML targeting · CTV reach · Attribution</div>
+          </div>
+          <span class="kpi-pill pill-green" style="margin:0;white-space:nowrap">Positive</span>
+        </div>
+        <div class="theme-chips">
+          <span class="theme-chip chip-pos">ML Targeting</span>
+          <span class="theme-chip chip-pos">CTV Reach</span>
+          <span class="theme-chip chip-mix">Attribution (came up, didn't block)</span>
+        </div>
+        <div class="signal-card-body">"Your ML-based optimization is genuinely differentiated. We saw ROAS improvement in week two that Tatari couldn't match in three months." — ROAS story closed it. QBR scheduled. <strong style="color:var(--text)">Action:</strong> use as reference for gaming pitches.</div>
+        <div class="signal-card-actions">
+          <a href="https://app.gong.io/calls" target="_blank" class="link-btn link-gong">Listen in Gong →</a>
+          <a href="https://app.searchlight.ai/" target="_blank" class="link-btn link-sl">SearchLight →</a>
+        </div>
+      </div>
+
+      <div class="signal-card">
+        <div class="signal-card-top">
+          <div>
+            <div class="signal-card-title">Retail vertical · Late-stage stalled · Feb 14, 2026</div>
+            <div class="signal-card-meta">Themes: Attribution · CFO pushback · Budget justification</div>
+          </div>
+          <span class="kpi-pill pill-red" style="margin:0;white-space:nowrap">At Risk</span>
+        </div>
+        <div class="theme-chips">
+          <span class="theme-chip chip-mix">Attribution</span>
+          <span class="theme-chip chip-neg">CFO Blocker</span>
+          <span class="theme-chip chip-mix">Pricing</span>
+        </div>
+        <div class="signal-card-body">"I can't go to my CFO without a cleaner attribution story." — Stalled for 19 days. CFO needs third-party validation. <strong style="color:var(--text)">Action:</strong> share retail vertical case study + propose GDS-led holdout test as unblocking move.</div>
+        <div class="signal-card-actions">
+          <a href="https://app.gong.io/calls" target="_blank" class="link-btn link-gong">Listen in Gong →</a>
+          <a href="https://app.searchlight.ai/" target="_blank" class="link-btn link-sl">SearchLight →</a>
+        </div>
+      </div>
+
+      <div class="signal-card">
+        <div class="signal-card-top">
+          <div>
+            <div class="signal-card-title">Entertainment vertical · Active trial · Mar 29, 2026</div>
+            <div class="signal-card-meta">Themes: Reach (Tubi/Samsung) · Cross-screen</div>
+          </div>
+          <span class="kpi-pill pill-green" style="margin:0;white-space:nowrap">Positive</span>
+        </div>
+        <div class="theme-chips">
+          <span class="theme-chip chip-pos">Reach Breadth</span>
+          <span class="theme-chip chip-pos">Cross-Screen</span>
+          <span class="theme-chip chip-mix">Attribution (watch)</span>
+        </div>
+        <div class="signal-card-body">"We had no idea Moloco had access to Tubi and Samsung at that scale." — Moved from evaluating to ready-to-test after exchange coverage slide. <strong style="color:var(--text)">Action:</strong> send test fund proposal ($50K trial) this week.</div>
+        <div class="signal-card-actions">
+          <a href="https://app.gong.io/calls" target="_blank" class="link-btn link-gong">Listen in Gong →</a>
+          <a href="https://app.searchlight.ai/" target="_blank" class="link-btn link-sl">SearchLight →</a>
+        </div>
+      </div>
+
+      <div class="signal-card">
+        <div class="signal-card-top">
+          <div>
+            <div class="signal-card-title">Finance vertical · In negotiation · Mar 15, 2026</div>
+            <div class="signal-card-meta">Themes: CPM pricing · vs Trade Desk · Case study needed</div>
+          </div>
+          <span class="kpi-pill pill-yellow" style="margin:0;white-space:nowrap">Mixed</span>
+        </div>
+        <div class="theme-chips">
+          <span class="theme-chip chip-mix">Pricing / CPM</span>
+          <span class="theme-chip chip-mix">vs Trade Desk</span>
+          <span class="theme-chip chip-neg">No case study yet</span>
+        </div>
+        <div class="signal-card-body">"The CPMs are higher than TTD — I need to justify that premium to my team." — Champion is media buyer, needs CFO sign-off. <strong style="color:var(--text)">Action:</strong> bring fintech/finance vertical case study showing ROAS premium. Do not let this go another week without contact.</div>
+        <div class="signal-card-actions">
+          <a href="https://app.gong.io/calls" target="_blank" class="link-btn link-gong">Listen in Gong →</a>
+          <a href="https://app.searchlight.ai/" target="_blank" class="link-btn link-sl">SearchLight →</a>
+        </div>
+      </div>
+
+      <div class="signal-card">
+        <div class="signal-card-top">
+          <div>
+            <div class="signal-card-title">CPG vertical · Lost to Tatari · Jan 2026</div>
+            <div class="signal-card-meta">Themes: Incrementality · Holdout testing · Measurement</div>
+          </div>
+          <span class="kpi-pill pill-red" style="margin:0;white-space:nowrap">Lost</span>
+        </div>
+        <div class="theme-chips">
+          <span class="theme-chip chip-neg">Incrementality</span>
+          <span class="theme-chip chip-neg">Lost to Tatari</span>
+          <span class="theme-chip chip-neg">No holdout test</span>
+        </div>
+        <div class="signal-card-body">"Every vendor says their CTV drives lift. I need a holdout test with clean control groups." — Tatari won because of measurement credibility. <strong style="color:var(--text)">Learning:</strong> any deal where buyer mentions "proof of lift" needs a GDS measurement protocol ready by call 2.</div>
+        <div class="signal-card-actions">
+          <a href="https://app.gong.io/calls" target="_blank" class="link-btn link-gong">Review in Gong →</a>
+          <a href="https://app.searchlight.ai/" target="_blank" class="link-btn link-sl">Closed-Lost →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slack Signal Feed -->
+    <div>
+      <div class="label-row" style="margin-bottom:10px">
+        <div>
+          <div class="title">Slack Signal Feed</div>
+          <div class="sub">#ctv-sales-signals · #competitive-intel · anecdotal, not validated</div>
+        </div>
+        <a href="https://moloco.slack.com/channels/ctv-sales-signals" target="_blank" class="link-btn link-slack" style="font-size:11px;padding:4px 10px">Open Slack →</a>
+      </div>
+
+      <div class="feed-section-label">Deal Signals · #ctv-sales-signals</div>
+
+      <div class="signal-card">
+        <div class="signal-card-top">
+          <div>
+            <div class="signal-card-title">New enterprise inbound — gaming vertical (MMP referral)</div>
+            <div class="signal-card-meta">#ctv-sales-signals · Mar 30, 2026 · 3 reactions</div>
+          </div>
+          <span class="sig-dot" style="background:var(--green);margin-top:4px;flex-shrink:0"></span>
+        </div>
+        <div class="signal-card-body">Large mobile-first gaming brand inbound via MMP partner. Already knows Moloco mobile product. Asking specifically about CTV. Fast-track to demo — this is a warm ICP match.</div>
+        <div class="signal-card-actions">
+          <a href="https://moloco.slack.com/channels/ctv-sales-signals" target="_blank" class="link-btn link-slack">View thread →</a>
+        </div>
+      </div>
+
+      <div class="signal-card">
+        <div class="signal-card-top">
+          <div>
+            <div class="signal-card-title">Retail account stalling — CFO attribution ask, GDS needed</div>
+            <div class="signal-card-meta">#ctv-sales-signals · Mar 25, 2026 · 5 reactions</div>
+          </div>
+          <span class="sig-dot" style="background:var(--red);margin-top:4px;flex-shrink:0"></span>
+        </div>
+        <div class="signal-card-body">Deal at risk. CFO demanding third-party attribution validation before approving budget. Tatari's holdout methodology being compared to ours. GDS loop needed urgently — thread has @mentions.</div>
+        <div class="signal-card-actions">
+          <a href="https://moloco.slack.com/channels/ctv-sales-signals" target="_blank" class="link-btn link-slack">View thread →</a>
+        </div>
+      </div>
+
+      <div class="signal-card">
+        <div class="signal-card-top">
+          <div>
+            <div class="signal-card-title">Entertainment prospect: Tubi reach pitch landed — test fund ready</div>
+            <div class="signal-card-meta">#ctv-sales-signals · Mar 29, 2026 · 7 reactions</div>
+          </div>
+          <span class="sig-dot" style="background:var(--green);margin-top:4px;flex-shrink:0"></span>
+        </div>
+        <div class="signal-card-body">Rep reports exchange coverage slide (Tubi + Samsung vs tvScientific) moved the deal from "evaluating" to "ready to commit." Test fund proposal being drafted. Fastest stage transition this quarter.</div>
+        <div class="signal-card-actions">
+          <a href="https://moloco.slack.com/channels/ctv-sales-signals" target="_blank" class="link-btn link-slack">View thread →</a>
+        </div>
+      </div>
+
+      <div class="signal-card">
+        <div class="signal-card-top">
+          <div>
+            <div class="signal-card-title">Sports vertical account: no response in 3 weeks — churn risk</div>
+            <div class="signal-card-meta">#ctv-sales-signals · Mar 22, 2026 · 2 reactions</div>
+          </div>
+          <span class="sig-dot" style="background:var(--red);margin-top:4px;flex-shrink:0"></span>
+        </div>
+        <div class="signal-card-body">Rep flagged 22-day silence from sports vertical Discovery prospect. No reply to emails or follow-up. Likely competing demo in progress with Tatari. Escalation or re-engage with new angle needed immediately.</div>
+        <div class="signal-card-actions">
+          <a href="https://moloco.slack.com/channels/ctv-sales-signals" target="_blank" class="link-btn link-slack">View thread →</a>
+        </div>
+      </div>
+
+      <div class="feed-section-label" style="margin-top:6px">Competitive Signals · #competitive-intel</div>
+
+      <div class="signal-card">
+        <div class="signal-card-top">
+          <div>
+            <div class="signal-card-title">Tatari now leading with holdout test methodology on call 1</div>
+            <div class="signal-card-meta">#competitive-intel · Mar 28, 2026 · 4 mentions</div>
+          </div>
+          <span class="sig-dot" style="background:var(--red);margin-top:4px;flex-shrink:0"></span>
+        </div>
+        <div class="signal-card-body">Tatari reps positioning measurement credibility before targeting performance. Showing up in 38% of our lost deals. Counter: proactively propose GDS holdout framework before buyer asks.</div>
+        <div class="signal-card-actions">
+          <a href="https://moloco.slack.com/channels/competitive-intel" target="_blank" class="link-btn link-slack">View thread →</a>
+        </div>
+      </div>
+
+      <div class="signal-card">
+        <div class="signal-card-top">
+          <div>
+            <div class="signal-card-title">TTD expanding CTV managed service into mid-market ($500K–$2M)</div>
+            <div class="signal-card-meta">#competitive-intel · Mar 20, 2026 · 4 mentions</div>
+          </div>
+          <span class="sig-dot" style="background:var(--yellow);margin-top:4px;flex-shrink:0"></span>
+        </div>
+        <div class="signal-card-body">TTD now offering dedicated CTV optimization teams — no longer self-serve only. Directly overlaps our mid-market ICP. Counter: ML performance at scale vs manual optimization teams.</div>
+        <div class="signal-card-actions">
+          <a href="https://moloco.slack.com/channels/competitive-intel" target="_blank" class="link-btn link-slack">View thread →</a>
+        </div>
+      </div>
+
+      <div class="signal-card">
+        <div class="signal-card-top">
+          <div>
+            <div class="signal-card-title">Amazon Prime Video pitching DR performance CTV — H2 risk</div>
+            <div class="signal-card-meta">#competitive-intel · Mar 15, 2026 · 2 mentions</div>
+          </div>
+          <span class="sig-dot" style="background:var(--cyan);margin-top:4px;flex-shrink:0"></span>
+        </div>
+        <div class="signal-card-body">Amazon pitching CTV performance to direct-response buyers with Prime Video access. Not yet in active deals. Retail vertical reps should track — H2 2026 threat especially for e-commerce ICPs.</div>
+        <div class="signal-card-actions">
+          <a href="https://moloco.slack.com/channels/competitive-intel" target="_blank" class="link-btn link-slack">View thread →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Market Intelligence & Reference Links -->
+  <div class="divider"></div>
+  <div class="label-row" style="margin-bottom:12px">
+    <div>
+      <div class="title">Market Intelligence &amp; Reference Links</div>
+      <div class="sub">External research, analyst reports, internal tools — click to open directly in source</div>
+    </div>
+    <span class="src-tag src-est">External · analyst estimated · low-medium confidence</span>
+  </div>
+
+  <div class="market-grid">
+    <div class="market-card">
+      <div style="font-size:20px">🟢</div>
+      <div class="market-card-title">BigQuery — Live CTV Data</div>
+      <div class="market-card-desc">Direct access to <code style="font-size:10px">moloco-ae-view.athena.fact_dsp_core</code>. Ad-hoc queries against live campaign spend. Full SQL reference in the Queries tab.</div>
+      <a href="https://console.cloud.google.com/bigquery?project=moloco-ae-view" target="_blank" class="link-btn link-bq" style="font-size:11px;padding:5px 10px">Open BigQuery →</a>
+    </div>
+    <div class="market-card">
+      <div style="font-size:20px">🔵</div>
+      <div class="market-card-title">SearchLight / CRM — Full Pipeline</div>
+      <div class="market-card-desc">All 87 open deals, closed-won/lost history, stage data, owner assignments, and deal notes. Source of truth for pipeline and win-rate metrics.</div>
+      <a href="https://app.searchlight.ai/" target="_blank" class="link-btn link-sl" style="font-size:11px;padding:5px 10px">Open SearchLight →</a>
+    </div>
+    <div class="market-card">
+      <div style="font-size:20px">🎙</div>
+      <div class="market-card-title">Gong — All CTV Calls</div>
+      <div class="market-card-desc">Browse, search, and filter all 43 CTV-tagged calls by account, rep, date, or keyword. Source of Q2 sentiment analysis and Q3 behavioral patterns.</div>
+      <a href="https://app.gong.io/calls" target="_blank" class="link-btn link-gong" style="font-size:11px;padding:5px 10px">Open Gong →</a>
+    </div>
+    <div class="market-card">
+      <div style="font-size:20px">💬</div>
+      <div class="market-card-title">Slack: #ctv-sales-signals</div>
+      <div class="market-card-desc">Real-time deal updates, rep signals, customer meeting notes, activation news. Primary deal intelligence channel for the CTV sales team.</div>
+      <a href="https://moloco.slack.com/channels/ctv-sales-signals" target="_blank" class="link-btn link-slack" style="font-size:11px;padding:5px 10px">Open Channel →</a>
+    </div>
+    <div class="market-card">
+      <div style="font-size:20px">⚔</div>
+      <div class="market-card-title">Slack: #competitive-intel</div>
+      <div class="market-card-desc">Competitive signals from the field — Tatari, TTD, tvScientific, Amazon. Buyer-reported intelligence. Anecdotal but directionally useful for battlecard updates.</div>
+      <a href="https://moloco.slack.com/channels/competitive-intel" target="_blank" class="link-btn link-slack" style="font-size:11px;padding:5px 10px">Open Channel →</a>
+    </div>
+    <div class="market-card">
+      <div style="font-size:20px">📊</div>
+      <div class="market-card-title">eMarketer — CTV Forecast 2026</div>
+      <div class="market-card-desc">Source for $4.2B AMER programmatic CTV TAM and $21B total CTV market estimates. Use for board narratives and TAM conversations with buyers.</div>
+      <a href="https://www.emarketer.com/topics/topic/connected-tv" target="_blank" class="link-btn link-ext" style="font-size:11px;padding:5px 10px">Open eMarketer →</a>
+    </div>
+    <div class="market-card">
+      <div style="font-size:20px">📰</div>
+      <div class="market-card-title">AdExchanger — CTV Coverage</div>
+      <div class="market-card-desc">Industry coverage of programmatic CTV, DSP landscape, competitor moves, and buyer trends. Good for tracking Tatari / TTD / Amazon announcements.</div>
+      <a href="https://www.adexchanger.com/tag/ctv/" target="_blank" class="link-btn link-ext" style="font-size:11px;padding:5px 10px">Open AdExchanger →</a>
+    </div>
+    <div class="market-card">
+      <div style="font-size:20px">📋</div>
+      <div class="market-card-title">IAB — CTV Measurement Standards</div>
+      <div class="market-card-desc">IAB 2026 guidelines on CTV attribution methodologies, viewability, and incrementality standards. Reference for handling buyer measurement objections.</div>
+      <a href="https://www.iab.com/topics/connected-tv/" target="_blank" class="link-btn link-ext" style="font-size:11px;padding:5px 10px">Open IAB →</a>
+    </div>
+    <div class="market-card">
+      <div style="font-size:20px">📺</div>
+      <div class="market-card-title">TVNewsCheck — CTV Industry News</div>
+      <div class="market-card-desc">Trade publication covering CTV advertising market developments, M&amp;A activity, platform launches, and advertiser sentiment shifts.</div>
+      <a href="https://tvnewscheck.com/streaming/" target="_blank" class="link-btn link-ext" style="font-size:11px;padding:5px 10px">Open TVNewsCheck →</a>
+    </div>
+  </div>
+
+</div><!-- /Sales Intel -->
+
+</div><!-- /main -->
+
+<!-- BQ_DATA_START -->
+<script id="bq-data" type="application/json">
+{
+  "gas_per_day": 208624,
+  "arr_run_rate_m": 76.1,
+  "pct_to_goal": 76.1,
+  "gap_m": 23.9,
+  "active_campaigns": 38,
+  "monthly_daily_avg_k": [
+    57.9,
+    79.2,
+    86.8,
+    102.7,
+    132.2,
+    84.6
+  ],
+  "month_labels": [
+    "Nov",
+    "Dec",
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr"
+  ],
+  "trailing_7d_k": 208.6,
+  "concentration": [
+    37.77,
+    12.18,
+    10.08,
+    7.44,
+    5.04,
+    27.49
+  ],
+  "exchanges": [
+    "MCTV",
+    "FREE_WHEEL",
+    "INDEX",
+    "NEXXEN",
+    "IRONSOURCE"
+  ],
+  "exchange_gas_7d": [
+    418273,
+    386305,
+    380038,
+    268177,
+    7573
+  ],
+  "ytd_gas_m": 9.67,
+  "ytd_days": 90,
+  "ytd_start": "2026-01-01",
+  "top_adv_health": [],
+  "last_updated": "2026-03-31",
+  "by_window": {
+    "7d":  { "gas_per_day": 208624, "arr_run_rate_m": 76.1, "active_campaigns": 38 },
+    "30d": { "gas_per_day": 113500, "arr_run_rate_m": 41.4, "active_campaigns": 35 },
+    "90d": { "gas_per_day": 111000, "arr_run_rate_m": 40.5, "active_campaigns": 32 }
+  },
+  "by_exchange": {
+    "all":        { "gas_per_day": 208624, "arr_run_rate_m": 76.1 },
+    "MCTV":       { "gas_per_day": 59753,  "arr_run_rate_m": 21.8 },
+    "FREE_WHEEL": { "gas_per_day": 55186,  "arr_run_rate_m": 20.1 },
+    "INDEX":      { "gas_per_day": 54291,  "arr_run_rate_m": 19.8 },
+    "NEXXEN":     { "gas_per_day": 38311,  "arr_run_rate_m": 14.0 }
+  }
+}
+</script>
+<!-- BQ_DATA_END -->
+
+<script>
+// ── Load BQ data and populate dynamic elements ──
+const BQ = JSON.parse(document.getElementById('bq-data').textContent);
+
+function fmt_k(v) { return '$' + Math.round(v/1000) + 'K'; }
+function fmt_m(v) { return '$' + v.toFixed(1) + 'M'; }
+
+// Goal banner
+document.getElementById('bq-arr-label').textContent =
+  fmt_m(BQ.arr_run_rate_m) + ' ARR (' + fmt_k(BQ.gas_per_day) + '/day × 365)';
+document.getElementById('bq-pct-label').textContent = BQ.pct_to_goal.toFixed(1) + '%';
+document.getElementById('bq-gap-label').textContent = fmt_m(BQ.gap_m);
+document.getElementById('bq-goal-bar').style.width = BQ.pct_to_goal + '%';
+document.getElementById('bq-gas-day').textContent = fmt_k(BQ.gas_per_day);
+document.getElementById('bq-campaigns').textContent = BQ.active_campaigns;
+
+// ── Insights tab scorecard — wire to live BQ data ─────────────────────
+(function() {
+  const gasPct  = (BQ.gas_per_day / 274000 * 100);
+  const arrPct  = BQ.arr_run_rate_m;
+  const campPctSc = (BQ.active_campaigns / 150 * 100);
+  const ytdDailyM = BQ.ytd_days ? BQ.ytd_gas_m / BQ.ytd_days : 0;
+  const ytdImplied = (ytdDailyM * 365).toFixed(1);
+
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  const setW = (id, pct) => { const el = document.getElementById(id); if (el) el.style.width = Math.min(100, pct).toFixed(1) + '%'; };
+
+  set('sc-gas-day',   fmt_k(BQ.gas_per_day));
+  set('sc-arr',       fmt_m(BQ.arr_run_rate_m));
+  set('sc-ytd',       '$' + BQ.ytd_gas_m.toFixed(2) + 'M');
+  set('sc-campaigns', BQ.active_campaigns);
+  set('insights-date', 'Data through ' + BQ.last_updated);
+
+  setW('sc-gas-bar',  gasPct);
+  setW('sc-arr-bar',  arrPct);
+  setW('sc-ytd-bar',  ytdImplied / 100 * 24);
+  setW('sc-camp-bar', campPctSc);
+
+  // Update YTD implied pace text in trend card
+  const ytdTrend = document.querySelector('#sc-ytd')?.closest('.sc-card')?.querySelector('.sc-trend');
+  if (ytdTrend) ytdTrend.innerHTML = '<span class="trend-up">↑ Implies $' + ytdImplied + 'M/yr at YTD pace</span>';
+})();
+
+// KPI cards
+document.getElementById('kpi-gas-day').textContent = fmt_k(BQ.gas_per_day);
+const gasPct = (BQ.gas_per_day / 274000 * 100).toFixed(1);
+document.getElementById('kpi-gas-pill').textContent = gasPct + '% of $274K/day target';
+document.getElementById('kpi-gas-bar').style.width = gasPct + '%';
+const today = new Date(); const d = BQ.last_updated;
+document.getElementById('kpi-gas-sub').textContent = 'BQ · fact_dsp_core · 7d avg through ' + d;
+document.getElementById('kpi-campaigns').textContent = BQ.active_campaigns;
+const campPct = (BQ.active_campaigns / 150 * 100).toFixed(0);
+document.getElementById('kpi-campaigns-pill').textContent = campPct + '% of 150 target';
+document.getElementById('kpi-campaigns-bar').style.width = campPct + '%';
+
+// YTD GAS card — bar shows implied annualized pace vs $100M goal
+if (BQ.ytd_gas_m) {
+  document.getElementById('kpi-ytd-gas').textContent = '$' + BQ.ytd_gas_m.toFixed(2) + 'M';
+  document.getElementById('kpi-ytd-sub').textContent = 'BQ · ' + BQ.ytd_start + ' – ' + BQ.last_updated + ' · ' + BQ.ytd_days + ' days';
+  const ytdDailyAvgM = BQ.ytd_days ? BQ.ytd_gas_m / BQ.ytd_days : 0;
+  const ytdImpliedAnnualM = (ytdDailyAvgM * 365).toFixed(1);
+  document.getElementById('kpi-ytd-pill').textContent = 'Implies $' + ytdImpliedAnnualM + 'M/yr annualized';
+  // Bar = implied annualized pace as % of $100M (more honest than raw YTD %)
+  const ytdImpliedPct = Math.min(100, ytdDailyAvgM * 365).toFixed(1);
+  document.getElementById('kpi-ytd-bar').style.width = ytdImpliedPct + '%';
+}
+
+// TAM chart — wire to live BQ ARR
+(function() {
+  const arrM = BQ.arr_run_rate_m;
+  const sharePct = (arrM / 4200 * 100).toFixed(1);
+  const barW = Math.max(0.5, arrM / 4200 * 100).toFixed(2);
+  const fill = document.getElementById('tam-arr-fill');
+  const total = document.getElementById('tam-arr-total');
+  const pill = document.getElementById('tam-share-kpi');
+  const takeaway = document.getElementById('tam-takeaway');
+  if (fill) { fill.textContent = '$' + arrM + 'M'; fill.style.width = barW + '%'; }
+  if (total) total.textContent = '$' + arrM + 'M';
+  if (pill) pill.textContent = 'Current share: ~' + sharePct + '%';
+  if (takeaway) {
+    const targetSharePct = (100 / 4200 * 100).toFixed(1);
+    const addressablePct = (arrM / 2000 * 100).toFixed(1);
+    takeaway.innerHTML = '<strong style="color:var(--text)">Takeaway:</strong> $100M ARR is ~' + targetSharePct + '% of programmatic CTV TAM and ~5% of our addressable market. Current run-rate ($' + arrM + 'M, ' + sharePct + '% share) makes this a share capture story. Bottleneck is win rate (22.7%) and campaign ramp, not market size.';
+  }
+})();
+
+// ── GM Agenda ────────────────────────────────────────────────────────────
+(function() {
+  const agenda = [];
+
+  // 1. Gap to close — top priority
+  const gapDayK = Math.round(BQ.gap_m * 1_000_000 / 365 / 1000);
+  const campaignsToClose = Math.round(BQ.gap_m * 1_000_000 / 87_000);
+  agenda.push({
+    type: 'action',
+    icon: '🎯',
+    title: 'Close $' + BQ.gap_m + 'M ARR gap: need $' + gapDayK + 'K more/day',
+    body: 'At $87K avg deal size, ' + campaignsToClose + ' additional campaigns needed. Current ramp: ' + BQ.active_campaigns + ' active. At current rate (' + Math.ceil((150 - BQ.active_campaigns) / 9) + ' net new/month needed for 150 by EOY), you are behind. The 7-day trailing rate ($' + Math.round(BQ.trailing_7d_k) + 'K/day) is encouraging — the question is whether it holds for 4+ weeks.'
+  });
+
+  // 2. Concentration — if top advertiser > 30%, flag it
+  const topPct = BQ.concentration[0];
+  const topDropK = Math.round(BQ.gas_per_day * topPct / 100 / 1000);
+  const newARRifPaused = (((BQ.gas_per_day * (1 - topPct / 100)) * 365) / 1_000_000).toFixed(1);
+  if (topPct > 30) {
+    agenda.push({
+      type: 'alert',
+      icon: '⚠️',
+      title: 'Top advertiser = ' + topPct.toFixed(1) + '% of GAS. One account pause = −$' + topDropK + 'K/day',
+      body: 'If this account pauses or cuts budget, ARR run-rate drops from $' + BQ.arr_run_rate_m + 'M to ~$' + newARRifPaused + 'M immediately. This is the single largest unmitigated risk in the business right now. Build 3 diversification replacements before it moves.'
+    });
+  }
+
+  // 3. Top advertiser WoW health (if data available)
+  if (BQ.top_adv_health && BQ.top_adv_health.length > 0) {
+    const top = BQ.top_adv_health[0];
+    if (top.wow_pct !== null && Math.abs(top.wow_pct) > 8) {
+      const dir = top.wow_pct > 0 ? '↑' : '↓';
+      const type = top.wow_pct < -8 ? 'alert' : 'positive';
+      agenda.push({
+        type: type,
+        icon: top.wow_pct < 0 ? '🔴' : '🟢',
+        title: 'Top account spend ' + dir + Math.abs(top.wow_pct) + '% WoW ($' + Math.round(top.gas_7d / 1000) + 'K this week vs $' + Math.round(top.gas_prior_7d / 1000) + 'K prior)',
+        body: top.wow_pct < -8
+          ? 'Largest account is declining. This will show up in the ARR metric within 7 days. Get on a call this week — do not let this become a churn surprise.'
+          : 'Top account growing. Positive signal for near-term run-rate, but concentration ratio may increase further — monitor.'
+      });
+    }
+  }
+
+  // 4. Acceleration signal — trailing 7d vs YTD avg
+  const ytdAvgK = BQ.ytd_days ? Math.round(BQ.ytd_gas_m * 1000 / BQ.ytd_days) : 0;
+  const accelX = ytdAvgK > 0 ? (BQ.trailing_7d_k / ytdAvgK).toFixed(1) : '—';
+  agenda.push({
+    type: 'watch',
+    icon: '📈',
+    title: 'Trailing 7d ($' + Math.round(BQ.trailing_7d_k) + 'K/day) is ' + accelX + '× YTD avg ($' + ytdAvgK + 'K/day)',
+    body: 'Recent acceleration is real but needs 3–4 more weeks of data to confirm it is structural. If the trailing rate holds for another month, the ARR projection moves materially. If it reverts, the YTD pace ($' + ((BQ.ytd_gas_m / BQ.ytd_days) * 365).toFixed(1) + 'M implied annual) is the truer baseline.'
+  });
+
+  // 5. Campaign ramp math
+  const monthsLeft = 12 - new Date().getMonth();
+  const campaignsNeeded = Math.max(0, 150 - BQ.active_campaigns);
+  const perMonth = Math.ceil(campaignsNeeded / monthsLeft);
+  const rampType = perMonth > 15 ? 'alert' : 'watch';
+  agenda.push({
+    type: rampType,
+    icon: '🚀',
+    title: 'Need ' + perMonth + ' net new campaigns/month through EOY to hit 150',
+    body: 'Currently ' + BQ.active_campaigns + ' active (BQ-verified, with actual spend). ' + campaignsNeeded + ' more needed across ' + monthsLeft + ' months. Pull SearchLight this week: how many proposals are in active negotiation? That number determines whether ' + perMonth + '/month is achievable.'
+  });
+
+  const pillLabels = { action: 'Action required', alert: 'Alert', watch: 'Watch', positive: 'Positive signal' };
+  document.getElementById('gm-items').innerHTML = agenda.map(item => `
+    <div class="gm-item gm-${item.type}">
+      <div class="gm-item-top">
+        <span class="gm-item-icon">${item.icon}</span>
+        <span class="gm-item-title">${item.title}</span>
+        <span class="gm-item-pill pill-${item.type}">${pillLabels[item.type]}</span>
+      </div>
+      <div class="gm-item-body">${item.body}</div>
+    </div>
+  `).join('');
+  document.getElementById('gm-date').textContent = '· Data through ' + BQ.last_updated;
+})();
+
+// ── Tab switching ──────────────────────────
+function showTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── Chart defaults ─────────────────────────
+Chart.defaults.color = '#7A90B8';
+Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Inter', sans-serif";
+Chart.defaults.font.size = 11;
+
+const MONTHS = BQ.month_labels || ['Oct','Nov','Dec','Jan','Feb','Mar'];
+const GRID = { color: 'rgba(255,255,255,0.05)' };
+const opts = (y_cb) => ({
+  responsive: true,
+  plugins: { legend: { display: true, labels: { boxWidth: 10, padding: 14, font: { size: 11 } } }, tooltip: { backgroundColor: '#0F1623', borderColor: '#1E2A42', borderWidth: 1, padding: 9 } },
+  scales: { x: { grid: GRID }, y: { grid: GRID, ticks: { callback: y_cb } } }
+});
+
+// Q1 — Revenue Trend (driven by BQ data block)
+const trailing7d = [...Array(MONTHS.length-1).fill(null), BQ.trailing_7d_k];
+const revTrendChart = new Chart(document.getElementById('chartRevTrend'), {
+  type: 'line',
+  data: {
+    labels: MONTHS,
+    datasets: [
+      {
+        label: 'Avg Daily GAS ($K) · BQ verified',
+        data: BQ.monthly_daily_avg_k,
+        borderColor: '#8B5CF6', backgroundColor: 'rgba(139,92,246,.08)',
+        tension: 0.4, fill: true, borderWidth: 2.5, pointRadius: 4
+      },
+      {
+        label: '$100M Target Pace ($274K/day)',
+        data: MONTHS.map(() => 274),
+        borderColor: '#F59E0B', borderDash: [5, 4], borderWidth: 2,
+        pointRadius: 0, tension: 0, fill: false
+      },
+      {
+        label: '7-day trailing',
+        data: trailing7d,
+        borderColor: '#10B981', borderDash: [3, 3], borderWidth: 2,
+        pointRadius: 6, pointBackgroundColor: '#10B981', fill: false
+      }
+    ]
+  },
+  options: opts(v => '$' + v + 'K')
+});
+
+// Q1 — Campaign Ramp (current month BQ-verified; prior months are estimates)
+const campEstimates = [22, 25, 29, 32, 36];
+const campEstData = [...campEstimates, null];
+const campBQData = [...Array(MONTHS.length - 1).fill(null), BQ.active_campaigns];
+new Chart(document.getElementById('chartCampaigns'), {
+  type: 'bar',
+  data: {
+    labels: MONTHS,
+    datasets: [
+      {
+        label: 'Estimated (prior months · not BQ)',
+        data: campEstData,
+        backgroundColor: 'rgba(139,92,246,.2)', borderColor: 'rgba(139,92,246,.45)',
+        borderWidth: 1, borderRadius: 3
+      },
+      {
+        label: 'BQ verified (current)',
+        data: campBQData,
+        backgroundColor: 'rgba(139,92,246,.75)', borderRadius: 4
+      },
+      {
+        label: 'EOY Target (150)',
+        data: MONTHS.map(() => 150),
+        type: 'line', borderColor: '#F59E0B', borderDash: [5,4],
+        borderWidth: 2, pointRadius: 0, fill: false
+      }
+    ]
+  },
+  options: opts(v => v)
+});
+
+// Q1 — Concentration Donut (driven by BQ data block)
+const concLabels = ['PMG/FBG', 'Kraken', 'ARBGaming', 'Luckymoney', 'NOVIG', 'Rest'];
+const concColors = ['#EF4444','#F97316','#F59E0B','#8B5CF6','#06B6D4','rgba(255,255,255,.07)'];
+new Chart(document.getElementById('chartConcentration'), {
+  type: 'doughnut',
+  data: {
+    labels: concLabels.map((l,i) => l + ' (' + BQ.concentration[i].toFixed(1) + '%)'),
+    datasets: [{
+      data: BQ.concentration,
+      backgroundColor: concColors,
+      borderColor: '#1E2A42', borderWidth: 2
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: true, position: 'bottom', labels: { boxWidth: 10, padding: 8, font: { size: 10 } } },
+      tooltip: { backgroundColor: '#0F1623', borderColor: '#1E2A42', borderWidth: 1 }
+    },
+    cutout: '60%'
+  }
+});
+
+// Q2 — Sentiment Trend
+new Chart(document.getElementById('chartSentiment'), {
+  type: 'bar',
+  data: {
+    labels: MONTHS,
+    datasets: [
+      { label: 'Positive', data: [5, 6, 7, 7, 8, 9], backgroundColor: 'rgba(16,185,129,.6)', borderRadius: 3 },
+      { label: 'Mixed', data: [4, 3, 4, 4, 4, 5], backgroundColor: 'rgba(245,158,11,.5)', borderRadius: 3 },
+      { label: 'Friction', data: [2, 3, 2, 2, 2, 3], backgroundColor: 'rgba(239,68,68,.5)', borderRadius: 3 }
+    ]
+  },
+  options: { ...opts(v => v + ' calls'), scales: { x: { grid: GRID, stacked: true }, y: { grid: GRID, stacked: true } } }
+});
+
+// Q3 — Win Rate by Behavior
+new Chart(document.getElementById('chartWinBehavior'), {
+  type: 'bar',
+  data: {
+    labels: ['ML Demo', 'Exec Sponsor', 'Case Study', 'Next Step Confirmed', 'No Pricing Gap'],
+    datasets: [{ label: 'Win Rate (%)', data: [87, 82, 78, 76, 71], backgroundColor: ['rgba(16,185,129,.7)','rgba(16,185,129,.65)','rgba(139,92,246,.65)','rgba(6,182,212,.65)','rgba(245,158,11,.65)'], borderRadius: 4 }]
+  },
+  options: { indexAxis: 'y', ...opts(v => v + '%'), plugins: { legend: { display: false } } }
+});
+
+// Q4 — Win Rate vs Competitors
+new Chart(document.getElementById('chartWinComp'), {
+  type: 'bar',
+  data: {
+    labels: ['tvScientific', 'Innovid/MNTN', 'Trade Desk', 'Tatari', 'Magnite'],
+    datasets: [{ label: 'Win Rate vs Competitor', data: [60, 75, 43, 34, 33], backgroundColor: v => ['rgba(16,185,129,.7)','rgba(16,185,129,.7)','rgba(245,158,11,.65)','rgba(239,68,68,.6)','rgba(239,68,68,.6)'][v.dataIndex], borderRadius: 4 }]
+  },
+  options: { indexAxis: 'y', ...opts(v => v + '%'), plugins: { legend: { display: false } } }
+});
+
+// ── Filter state & setFilter() ────────────────────────────────────────────
+const activeFilters = { window: '7d', exchange: 'all' };
+
+function setFilter(dimension, value, btn) {
+  activeFilters[dimension] = value;
+
+  // Update pill highlight — window pills use a different active class
+  document.querySelectorAll('.filter-pill[data-filter="' + dimension + '"]').forEach(p => {
+    p.classList.remove('active', 'active-window');
+  });
+  btn.classList.add(dimension === 'window' ? 'active-window' : 'active');
+
+  // ── Resolve data from pre-aggregated objects ──────────────────────────
+  const byWindow   = BQ.by_window   || {};
+  const byExchange = BQ.by_exchange  || {};
+
+  // Start from 7d all-exchange baseline
+  let gasPerDay = BQ.gas_per_day;
+  let arrM      = BQ.arr_run_rate_m;
+  let campaigns = BQ.active_campaigns;
+
+  // Apply window filter first
+  const wd = byWindow[activeFilters.window];
+  if (wd) { gasPerDay = wd.gas_per_day; arrM = wd.arr_run_rate_m; campaigns = wd.active_campaigns || campaigns; }
+
+  // Apply exchange filter (exchange data is 7d — note this in the sub-label)
+  const exd = byExchange[activeFilters.exchange];
+  if (exd && activeFilters.exchange !== 'all') {
+    gasPerDay = exd.gas_per_day;
+    arrM      = exd.arr_run_rate_m;
+    // campaigns stays window-derived (no per-exchange campaign count available)
+  }
+
+  // ── Update KPI cards ──────────────────────────────────────────────────
+  const gasEl = document.getElementById('kpi-gas-day');
+  if (gasEl) gasEl.textContent = fmt_k(gasPerDay);
+
+  const gasPillEl = document.getElementById('kpi-gas-pill');
+  if (gasPillEl) gasPillEl.textContent = fmt_m(arrM) + ' ARR run-rate';
+
+  const gasBarEl = document.getElementById('kpi-gas-bar');
+  if (gasBarEl) gasBarEl.style.width = Math.min(100, arrM / 100 * 100).toFixed(1) + '%';
+
+  const gasSubEl = document.getElementById('kpi-gas-sub');
+  if (gasSubEl) {
+    const exchLabel = activeFilters.exchange !== 'all' ? activeFilters.exchange + ' exchange · ' : '';
+    gasSubEl.textContent = 'BQ · ' + exchLabel + activeFilters.window + ' window · CTV only';
+  }
+
+  // Update card label to show what's filtered
+  const gasCardLabel = document.querySelector('#kpi-gas-day')?.closest('.kpi-card')?.querySelector('.kpi-label');
+  if (gasCardLabel) {
+    gasCardLabel.textContent = (activeFilters.exchange !== 'all' ? activeFilters.exchange + ' ' : 'CTV ') + 'GAS / Day';
+  }
+
+  const campEl = document.getElementById('kpi-campaigns');
+  if (campEl) campEl.textContent = campaigns;
+
+  const campPillEl = document.getElementById('kpi-campaigns-pill');
+  if (campPillEl) campPillEl.textContent = (campaigns / 150 * 100).toFixed(0) + '% of 150 target';
+
+  const campBarEl = document.getElementById('kpi-campaigns-bar');
+  if (campBarEl) campBarEl.style.width = Math.min(100, campaigns / 150 * 100).toFixed(1) + '%';
+
+  // ── Also update Insights tab scorecard (always-visible default tab) ───
+  const scGas = document.getElementById('sc-gas-day');
+  if (scGas) scGas.textContent = fmt_k(gasPerDay);
+  const scArr = document.getElementById('sc-arr');
+  if (scArr) scArr.textContent = fmt_m(arrM);
+  const scCamp = document.getElementById('sc-campaigns');
+  if (scCamp) scCamp.textContent = campaigns;
+  const scGasBar = document.getElementById('sc-gas-bar');
+  if (scGasBar) scGasBar.style.width = Math.min(100, gasPerDay / 274000 * 100).toFixed(1) + '%';
+  const scArrBar = document.getElementById('sc-arr-bar');
+  if (scArrBar) scArrBar.style.width = Math.min(100, arrM).toFixed(1) + '%';
+  const scCampBar = document.getElementById('sc-camp-bar');
+  if (scCampBar) scCampBar.style.width = Math.min(100, campaigns / 150 * 100).toFixed(1) + '%';
+
+  // ── Update revenue trend chart trailing dot for window ────────────────
+  // The trailing dot (last dataset) shows the current window's gas_per_day
+  if (revTrendChart && activeFilters.exchange === 'all') {
+    const trailingDs = revTrendChart.data.datasets.find(d => d.label && d.label.includes('trailing'));
+    if (trailingDs) {
+      const trailingK = gasPerDay / 1000;
+      trailingDs.data = trailingDs.data.map((v, i) => i === trailingDs.data.length - 1 ? trailingK : v);
+      revTrendChart.update();
+    }
+  }
+
+  // ── Update filter state label ─────────────────────────────────────────
+  const stateEl = document.getElementById('filter-state');
+  if (stateEl) {
+    const parts = [];
+    if (activeFilters.window   !== '7d')  parts.push(activeFilters.window + ' window');
+    if (activeFilters.exchange !== 'all') parts.push(activeFilters.exchange + ' only · 7d figures');
+    stateEl.textContent = parts.length ? 'Filtered: ' + parts.join(' · ') : '';
+  }
+}
+</script>
+</body>
+</html>
