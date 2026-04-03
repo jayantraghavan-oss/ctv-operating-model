@@ -10,7 +10,7 @@ import { motion } from "framer-motion";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 
 const DASHBOARD_CDN_URL =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310519663459898851/Wr22fCMnjpJGgmtKZSL2hG/moloco_ctv_dashboard_0c8cfa39.html";
+  "https://d2xsxph8kpxj0f.cloudfront.net/310519663459898851/Wr22fCMnjpJGgmtKZSL2hG/moloco_ctv_dashboard_f535a370.html";
 
 export default function CTVIntelligence() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
