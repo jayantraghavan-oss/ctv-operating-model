@@ -30,6 +30,7 @@ const ConvictionDashboard = lazy(() => import("./pages/ConvictionDashboard"));
 const LearningLoops = lazy(() => import("./pages/LearningLoops"));
 const DataExplorer = lazy(() => import("./pages/DataExplorer"));
 const Reporting = lazy(() => import("./pages/Reporting"));
+const CTVIntelligence = lazy(() => import("./pages/CTVIntelligence"));
 
 
 function PageLoader() {
@@ -76,6 +77,7 @@ function Router() {
           <Route path="/learning-loops" component={LearningLoops} />
           <Route path="/data-explorer" component={DataExplorer} />
           <Route path="/reporting" component={Reporting} />
+          <Route path="/ctv-intelligence" component={CTVIntelligence} />
 
 
           {/* Aliases */}

@@ -21,6 +21,7 @@ import {
   Calendar,
   Target,
   GitBranch,
+  Zap,
 } from "lucide-react";
 import { modules, clusters } from "@/lib/data";
 import { useAgent } from "@/contexts/AgentContext";
@@ -36,6 +37,7 @@ const agenticItems = [
   { href: "/weekly-prep", label: "Weekly Prep", icon: Calendar },
   { href: "/conviction", label: "Conviction Score", icon: Target },
   { href: "/learning-loops", label: "Learning Loops", icon: GitBranch },
+  { href: "/ctv-intelligence", label: "CTV Intelligence", icon: Zap },
 ];
 
 const moduleIcons = [Radar, Megaphone, Users, BarChart3];

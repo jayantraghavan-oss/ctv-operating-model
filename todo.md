@@ -991,3 +991,51 @@
 - [x] Export all Salesforce data to CSV (98 opps, 795 curated intel, 1 BQ snapshot, 50 Gong calls from DB)
 - [x] Export all Slack data to CSV — Slack MCP server not available this session; channels return empty
 - [x] Test and checkpoint
+
+## Phase 76: Upgrade Competitive Intel & Industry Landscape Agents
+- [ ] Audit current competitive intel agent prompts and output structure
+- [ ] Enforce last-90-days recency filter on all competitive/industry research
+- [ ] Rewrite agent system prompts with pyramid structure (BLUF → evidence → detail)
+- [ ] Make agents much smarter — inject richer context (Gong competitive mentions, SFDC win/loss, market data)
+- [ ] Increase output depth — 3-5x more detail, specific data points, named sources
+- [ ] Add date-stamped evidence requirements (no undated claims)
+- [ ] Upgrade server-side agent execution context injection
+- [ ] Update competitive landscape curated data with recency metadata
+- [ ] Test all upgraded agents end-to-end
+- [ ] Save checkpoint
+
+## Phase 76b: Fix Deep Verification Panel — All Sources Showing Unavailable
+- [ ] Diagnose why Gong, Salesforce, Sensor Tower, Speedboat all show "No data returned"
+- [ ] Fix health check endpoints to properly detect and connect to each source
+- [ ] Verify all 4 sources show as connected after fix
+
+## Phase 77: Wire All Connectors — Gong, Salesforce, Sensor Tower, Speedboat
+- [ ] Test Gong connector live (GongClient from gong_helper.py)
+- [ ] Test Salesforce connector live (SalesforceConnector from sf_connector.py)
+- [ ] Test Sensor Tower connector live (SensorTower from sensor_tower_api.py)
+- [ ] Test Speedboat MCP connector
+- [ ] Rewrite server/scripts/sf_connector_bridge.py to use SalesforceConnector properly
+- [ ] Rewrite server/scripts/ Gong bridge to use GongClient from skill
+- [ ] Create server/scripts/sensor_tower_bridge.py using SensorTower from skill
+- [ ] Build multi-call data sync — pull all Gong calls into DB
+- [ ] Build multi-call data sync — pull all SFDC opportunities into DB
+- [ ] Build multi-call data sync — pull Sensor Tower app data into DB
+- [ ] Fix Deep Verification panel to show correct connector status
+- [ ] Add tRPC endpoints for retrieving synced data
+- [ ] Test end-to-end data flow
+- [ ] Save checkpoint
+
+## Phase 77b: Store HubSpot Credentials as Skill
+- [ ] Store HubSpot PAT token and client secret as environment variables
+- [ ] Update HubSpot skill with credentials
+- [ ] Test HubSpot connector live
+- [ ] Wire HubSpot into the app's data sync
+
+## Phase 78: Add CTV Intelligence Tab (Embedded Dashboard)
+- [x] Review uploaded moloco_ctv_dashboard.html content
+- [x] Upload HTML dashboard as CDN static asset
+- [x] Create CTV Intelligence page component with iframe embed (blob URL workaround for CDN content-type)
+- [x] Add "CTV Intelligence" to sidebar navigation (Layout.tsx AI Tools section)
+- [x] Register route in App.tsx
+- [x] Test the new tab renders correctly in browser
+- [ ] Save checkpoint

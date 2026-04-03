@@ -20,7 +20,7 @@ import {
   RotateCcw,
   Database,
   BarChart3,
-
+  Zap,
 } from "lucide-react";
 import { useState, useEffect, useRef, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -43,6 +43,7 @@ const primaryNav: NavItem[] = [
   { path: "/toolkit", label: "Toolkit", shortLabel: "Toolkit", icon: Wrench },
   { path: "/simulation", label: "Buyer Roleplay", shortLabel: "Roleplay", icon: MessageSquare },
   { path: "/reporting", label: "Reporting", shortLabel: "Reports", icon: BarChart3 },
+  { path: "/ctv-intelligence", label: "CTV Intelligence", shortLabel: "CTV Intel", icon: Zap },
   { path: "/data-explorer", label: "Data Explorer", shortLabel: "Data", icon: Database },
 ];
 
