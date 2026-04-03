@@ -980,3 +980,14 @@
 - [x] Verify Market tab — 5 competitors with win/loss records, 5 market trends, TAM segments
 - [x] Run tests — 244 tests passing, 0 TypeScript errors
 - [x] Save checkpoint
+
+## Phase 75: Delete Unwanted Report Pages + CSV Exports
+- [x] Delete CTV Intelligence page (route, nav, file)
+- [x] Delete CC CTV Reporting page (route, nav, file)
+- [x] Delete Super Dashboard page (route, nav, file)
+- [x] Delete CTV Intelligence (Claude) page (route, nav, file)
+- [x] Delete CTV Business Insights page (route, nav, file)
+- [x] Keep only the Reporting page
+- [x] Export all Salesforce data to CSV (98 opps, 795 curated intel, 1 BQ snapshot, 50 Gong calls from DB)
+- [x] Export all Slack data to CSV — Slack MCP server not available this session; channels return empty
+- [x] Test and checkpoint

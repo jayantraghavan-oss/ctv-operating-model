@@ -20,8 +20,7 @@ import {
   RotateCcw,
   Database,
   BarChart3,
-  Tv,
-  Layers,
+
 } from "lucide-react";
 import { useState, useEffect, useRef, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -44,12 +43,7 @@ const primaryNav: NavItem[] = [
   { path: "/toolkit", label: "Toolkit", shortLabel: "Toolkit", icon: Wrench },
   { path: "/simulation", label: "Buyer Roleplay", shortLabel: "Roleplay", icon: MessageSquare },
   { path: "/reporting", label: "Reporting", shortLabel: "Reports", icon: BarChart3 },
-  { path: "/ctv-intelligence", label: "CTV Intelligence", shortLabel: "Intel", icon: Layers },
-  { path: "/cc-ctv-reporting", label: "CC CTV Reporting", shortLabel: "CTV", icon: Tv },
   { path: "/data-explorer", label: "Data Explorer", shortLabel: "Data", icon: Database },
-  { path: "/super-dashboard", label: "Super Dashboard", shortLabel: "Super", icon: Layers },
-  { path: "/ctv-intelligence-claude", label: "CTV Intelligence (Claude)", shortLabel: "Claude", icon: Tv },
-  { path: "/ctv-business-insights", label: "CTV Business Insights", shortLabel: "Insights", icon: BarChart3 },
 ];
 
 // Bottom nav items for mobile
