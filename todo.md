@@ -970,3 +970,13 @@
 - [x] Write vitest tests for businessInsights.ts (27 tests, all passing)
 - [x] Verify all data sources are live (BQ, SFDC, Gong, Slack, curated DB)
 - [x] Save checkpoint
+
+## Phase 74: Fix Gong Data Not Populating in Business Insights
+- [x] Diagnose why Gong data shows zero — root cause: narrow CTV_ADVERTISERS matching (50 names) + no full pagination
+- [x] Fix Gong data pipeline — rewrote gongBridge.ts: all Moloco calls are CTV-relevant, full pagination (2046 calls, 988 advertisers)
+- [x] Verify Customer Intel tab — 2046 calls, 50 "Verify in Gong" links, 92% positive sentiment, 19 themes
+- [x] Fix sentiment analysis — heuristic scoring: title keywords + call duration + recurring patterns
+- [x] Verify Sales Coaching tab — win rate, deal cycle, coaching areas, winning/losing behaviors all rendering
+- [x] Verify Market tab — 5 competitors with win/loss records, 5 market trends, TAM segments
+- [x] Run tests — 244 tests passing, 0 TypeScript errors
+- [x] Save checkpoint

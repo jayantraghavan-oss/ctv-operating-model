@@ -573,15 +573,39 @@ function buildCustomerIntelSection(
   const signals: CustomerSignal[] = [];
   let sigId = 0;
 
-  // Gong calls as signals
+  // Gong calls as signals — with heuristic sentiment scoring
+  // Sentiment heuristics: longer calls (>30min) tend positive (deep engagement),
+  // recurring calls (Bi-weekly, Weekly) positive (retained), short calls (<10min) neutral,
+  // title keywords drive additional signals
+  const positiveKeywords = ["bi-weekly", "weekly", "sync", "strategy", "kickoff", "launch", "scaling", "expansion", "review"];
+  const negativeKeywords = ["issue", "concern", "churn", "cancel", "problem", "escalat", "troubleshoot"];
+  const mixedKeywords = ["competitive", "comparison", "pricing", "negotiat", "renewal"];
+
   if (gong?.matched_calls) {
     for (const call of gong.matched_calls.slice(0, 50)) {
+      const titleLower = (call.title || "").toLowerCase();
+      let sentiment: "positive" | "negative" | "neutral" | "mixed" = "neutral";
+
+      // Heuristic 1: title keywords
+      if (positiveKeywords.some(kw => titleLower.includes(kw))) sentiment = "positive";
+      else if (negativeKeywords.some(kw => titleLower.includes(kw))) sentiment = "negative";
+      else if (mixedKeywords.some(kw => titleLower.includes(kw))) sentiment = "mixed";
+
+      // Heuristic 2: call duration — long calls suggest deeper engagement
+      if (sentiment === "neutral" && call.duration_min > 30) sentiment = "positive";
+      if (sentiment === "neutral" && call.duration_min > 15) sentiment = "positive";
+
+      // Heuristic 3: recurring patterns suggest healthy relationship
+      if (titleLower.includes("bi-") || titleLower.includes("weekly") || titleLower.includes("monthly")) {
+        sentiment = "positive";
+      }
+
       signals.push({
         id: `sig-${++sigId}`,
         type: "gong_call",
         title: call.title,
         summary: `${call.advertiser} — ${call.duration_min}min call on ${call.date}`,
-        sentiment: "neutral",
+        sentiment,
         advertiser: call.advertiser,
         date: call.date,
         verifyUrl: call.url,
@@ -591,37 +615,71 @@ function buildCustomerIntelSection(
     }
   }
 
-  // Gong transcript-based themes
+  // Gong transcript-based themes — keyword matching against transcripts
   const themes: SentimentTheme[] = [];
-  if (gong?.transcript_samples && gong.transcript_samples.length > 0) {
-    // Extract themes from transcript content
-    const themeKeywords: Record<string, { sentiment: "positive" | "negative" | "neutral" | "mixed"; desc: string }> = {
-      "Attribution & Measurement": { sentiment: "mixed", desc: "Discussions about CTV-to-App attribution, MMP integration, and measurement methodology" },
-      "ML Performance": { sentiment: "positive", desc: "Conversations about Moloco's ML optimization, ROAS performance, and bidding efficiency" },
-      "CTV-to-Web": { sentiment: "negative", desc: "Questions and concerns about CTV-to-Web measurement capabilities and timeline" },
-      "Competitive Positioning": { sentiment: "mixed", desc: "Comparisons with TTD, Amazon DSP, tvScientific, and other CTV platforms" },
-      "Budget & Pricing": { sentiment: "neutral", desc: "CPM discussions, budget allocation, test fund structuring, and pricing negotiations" },
-      "Creative & Supply": { sentiment: "neutral", desc: "Creative optimization, FAST channel inventory, supply partnerships, and ad format discussions" },
-      "Scaling Success": { sentiment: "positive", desc: "Advertisers seeing strong results and expanding CTV budgets" },
-    };
+  const themeKeywords: Record<string, { keywords: string[]; sentiment: "positive" | "negative" | "neutral" | "mixed"; desc: string }> = {
+    "Attribution & Measurement": { keywords: ["attribution", "mmp", "measurement", "appsflyer", "adjust", "kochava", "postback"], sentiment: "mixed", desc: "Discussions about CTV-to-App attribution, MMP integration, and measurement methodology" },
+    "ML Performance": { keywords: ["ml", "machine learning", "roas", "optimization", "bidding", "performance"], sentiment: "positive", desc: "Conversations about Moloco's ML optimization, ROAS performance, and bidding efficiency" },
+    "CTV-to-Web": { keywords: ["ctv-to-web", "web measurement", "web attribution", "web conversion"], sentiment: "negative", desc: "Questions and concerns about CTV-to-Web measurement capabilities and timeline" },
+    "Competitive Positioning": { keywords: ["trade desk", "ttd", "amazon dsp", "tvscientific", "tatari", "competitor"], sentiment: "mixed", desc: "Comparisons with TTD, Amazon DSP, tvScientific, and other CTV platforms" },
+    "Budget & Pricing": { keywords: ["budget", "pricing", "cpm", "spend", "cost", "rate", "negotiat"], sentiment: "neutral", desc: "CPM discussions, budget allocation, test fund structuring, and pricing negotiations" },
+    "Creative & Supply": { keywords: ["creative", "fast channel", "supply", "inventory", "ad format", "video"], sentiment: "neutral", desc: "Creative optimization, FAST channel inventory, supply partnerships, and ad format discussions" },
+    "Scaling Success": { keywords: ["scale", "scaling", "expand", "growth", "increase", "ramp"], sentiment: "positive", desc: "Advertisers seeing strong results and expanding CTV budgets" },
+    "Onboarding & Integration": { keywords: ["onboard", "integration", "setup", "implement", "sdk", "pixel"], sentiment: "neutral", desc: "New advertiser onboarding, SDK integration, and technical setup discussions" },
+    "Retention & Engagement": { keywords: ["retention", "engagement", "churn", "lifetime", "ltv", "loyalty"], sentiment: "mixed", desc: "Customer retention metrics, engagement patterns, and lifetime value discussions" },
+    "Test & Learn": { keywords: ["test", "pilot", "trial", "experiment", "proof", "poc"], sentiment: "positive", desc: "Test campaigns, pilot programs, and proof-of-concept discussions" },
+    "Agency Partnerships": { keywords: ["agency", "partner", "managed", "dentsu", "publicis", "havas", "omnicom"], sentiment: "positive", desc: "Agency relationship management, partnership expansion, and managed service discussions" },
+    "Gaming & iGaming": { keywords: ["gaming", "igaming", "casino", "sportsbook", "bet", "wager", "fantasy"], sentiment: "positive", desc: "Gaming and iGaming vertical discussions — a key CTV growth segment" },
+    "Streaming & OTT": { keywords: ["streaming", "ott", "connected tv", "ctv", "linear", "cord-cut"], sentiment: "positive", desc: "Streaming platform discussions, OTT inventory, and CTV-specific topics" },
+    "Fintech & Finance": { keywords: ["fintech", "finance", "banking", "credit", "loan", "invest", "crypto"], sentiment: "neutral", desc: "Financial services and fintech advertiser discussions" },
+    "E-commerce & DTC": { keywords: ["ecommerce", "e-commerce", "dtc", "direct-to-consumer", "shopify", "retail"], sentiment: "positive", desc: "E-commerce and DTC brand discussions — emerging CTV vertical" },
+  };
 
+  if (gong?.transcript_samples && gong.transcript_samples.length > 0) {
     for (const [theme, meta] of Object.entries(themeKeywords)) {
       const matchingCalls = gong.transcript_samples.filter((t) =>
-        t.transcript_excerpt.toLowerCase().includes(theme.toLowerCase().split(" ")[0].toLowerCase())
+        meta.keywords.some(kw => t.transcript_excerpt.toLowerCase().includes(kw))
       );
-      themes.push({
-        theme,
-        count: Math.max(matchingCalls.length, Math.floor(Math.random() * 5) + 2),
-        sentiment: meta.sentiment,
-        trend: "flat",
-        description: meta.desc,
-        evidence: matchingCalls.slice(0, 3).map((t) => ({
-          advertiser: t.advertiser,
-          snippet: t.transcript_excerpt.slice(0, 200),
-          url: t.url,
-          date: t.date,
-        })),
-      });
+      if (matchingCalls.length > 0) {
+        themes.push({
+          theme,
+          count: matchingCalls.length,
+          sentiment: meta.sentiment,
+          trend: "flat",
+          description: meta.desc,
+          evidence: matchingCalls.slice(0, 3).map((t) => ({
+            advertiser: t.advertiser,
+            snippet: t.transcript_excerpt.slice(0, 200),
+            url: t.url,
+            date: t.date,
+          })),
+        });
+      }
+    }
+  }
+
+  // Also add themes from call title analysis (broader coverage)
+  if (gong?.matched_calls && themes.length < 5) {
+    for (const [theme, meta] of Object.entries(themeKeywords)) {
+      if (themes.find(t => t.theme === theme)) continue;
+      const titleMatches = gong.matched_calls.filter(c =>
+        meta.keywords.some(kw => (c.title || "").toLowerCase().includes(kw))
+      );
+      if (titleMatches.length >= 2) {
+        themes.push({
+          theme,
+          count: titleMatches.length,
+          sentiment: meta.sentiment,
+          trend: "flat",
+          description: meta.desc,
+          evidence: titleMatches.slice(0, 3).map(c => ({
+            advertiser: c.advertiser,
+            snippet: c.title,
+            url: c.url,
+            date: c.date,
+          })),
+        });
+      }
     }
   }
 
