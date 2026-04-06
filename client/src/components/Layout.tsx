@@ -38,6 +38,7 @@ const agenticItems = [
   { href: "/conviction", label: "Conviction Score", icon: Target },
   { href: "/learning-loops", label: "Learning Loops", icon: GitBranch },
   { href: "/ctv-intelligence", label: "CTV Intelligence", icon: Zap },
+  { href: "/ctv-exec-insights", label: "CTV Exec Insights", icon: BarChart3 },
 ];
 
 const moduleIcons = [Radar, Megaphone, Users, BarChart3];

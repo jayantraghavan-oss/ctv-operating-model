@@ -1039,3 +1039,11 @@
 - [x] Register route in App.tsx
 - [x] Test the new tab renders correctly in browser
 - [x] Save checkpoint (version 63e76905)
+
+## Phase 79: Add CTV Exec Insights Tab
+- [x] Upload moloco_ctv_exec_v4.html to CDN
+- [x] Create CTVExecInsights page component
+- [x] Add route in App.tsx
+- [x] Add sidebar nav entry (AI Tools section)
+- [x] Verify in browser
+- [ ] Save checkpoint

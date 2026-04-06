@@ -1,8 +1,7 @@
 /**
- * CTV Intelligence — Embedded strategic dashboard.
- * Fetches the Moloco CTV Strategic Dashboard HTML from CDN,
+ * CTV Exec Insights — Embedded executive intelligence dashboard.
+ * Fetches the Moloco CTV Exec v4 HTML from CDN,
  * creates a blob URL with correct text/html MIME type, and renders in an iframe.
- * This workaround is needed because the CDN serves with application/octet-stream.
  */
 import Layout from "@/components/Layout";
 import { useEffect, useRef, useState } from "react";
@@ -10,9 +9,9 @@ import { motion } from "framer-motion";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 
 const DASHBOARD_CDN_URL =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310519663459898851/Wr22fCMnjpJGgmtKZSL2hG/moloco_ctv_exec_031a3d91.html";
+  "https://d2xsxph8kpxj0f.cloudfront.net/310519663459898851/Wr22fCMnjpJGgmtKZSL2hG/moloco_ctv_exec_v4_f28f2c15.html";
 
-export default function CTVIntelligence() {
+export default function CTVExecInsights() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -59,7 +58,7 @@ export default function CTVIntelligence() {
             className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background z-10"
           >
             <Loader2 className="w-6 h-6 animate-spin text-primary" />
-            <span className="text-sm text-muted-foreground">Loading CTV Intelligence Dashboard...</span>
+            <span className="text-sm text-muted-foreground">Loading CTV Exec Insights...</span>
           </motion.div>
         )}
 
@@ -83,7 +82,7 @@ export default function CTVIntelligence() {
           <iframe
             ref={iframeRef}
             src={blobUrl}
-            title="CTV Strategic Intelligence Dashboard"
+            title="CTV Exec Insights Dashboard"
             className="w-full h-full border-0 rounded-lg"
             loading="eager"
           />

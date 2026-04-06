@@ -31,6 +31,7 @@ const LearningLoops = lazy(() => import("./pages/LearningLoops"));
 const DataExplorer = lazy(() => import("./pages/DataExplorer"));
 const Reporting = lazy(() => import("./pages/Reporting"));
 const CTVIntelligence = lazy(() => import("./pages/CTVIntelligence"));
+const CTVExecInsights = lazy(() => import("./pages/CTVExecInsights"));
 
 
 function PageLoader() {
@@ -78,6 +79,7 @@ function Router() {
           <Route path="/data-explorer" component={DataExplorer} />
           <Route path="/reporting" component={Reporting} />
           <Route path="/ctv-intelligence" component={CTVIntelligence} />
+          <Route path="/ctv-exec-insights" component={CTVExecInsights} />
 
 
           {/* Aliases */}
