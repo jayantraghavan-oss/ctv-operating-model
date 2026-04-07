@@ -44,6 +44,7 @@ const primaryNav: NavItem[] = [
   { path: "/simulation", label: "Buyer Roleplay", shortLabel: "Roleplay", icon: MessageSquare },
   { path: "/reporting", label: "Reporting", shortLabel: "Reports", icon: BarChart3 },
   { path: "/ctv-intelligence", label: "CTV Intelligence", shortLabel: "CTV Intel", icon: Zap },
+  { path: "/ctv-exec-insights", label: "CTV Exec Insights", shortLabel: "Exec Intel", icon: BarChart3 },
   { path: "/data-explorer", label: "Data Explorer", shortLabel: "Data", icon: Database },
 ];
 
