@@ -15,6 +15,7 @@ import { execFile, exec } from "child_process";
 import { promisify } from "util";
 import * as fs from "fs";
 import * as path from "path";
+import { fetchBQData, type BQAllData } from "./bqBridge";
 const execFileAsync = promisify(execFile);
 const execAsync = promisify(exec);
 
@@ -526,6 +527,7 @@ export interface LiveContext {
   salesforce: SalesforceContext | null;
   sensorTower: SensorTowerContext | null;
   speedboat: SpeedboatContext | null;
+  bigquery: BQAllData | null;
   enrichedAt: number;
   fallbackUsed: boolean;
 }
@@ -567,6 +569,8 @@ export async function enrichContext(
   if (allSources.includes("speedboat")) {
     fetchers.speedboat = getSpeedboatContext(accountName);
   }
+  // Always fetch BQ data — it's the revenue source of truth
+  fetchers.bigquery = fetchBQData();
 
   const results = await Promise.allSettled(Object.values(fetchers));
   const keys = Object.keys(fetchers);
@@ -577,6 +581,7 @@ export async function enrichContext(
     salesforce: null,
     sensorTower: null,
     speedboat: null,
+    bigquery: null,
     enrichedAt: Date.now(),
     fallbackUsed: false,
   };
@@ -622,7 +627,7 @@ export function formatContextForPrompt(liveContext: LiveContext): string {
     if (g.recentCalls.length > 0) {
       blocks.push("- Recent calls:");
       g.recentCalls.slice(0, 5).forEach(c => {
-        blocks.push(`  - ${c.date}: ${c.title} (${c.account}, ${c.duration}min)`);
+        blocks.push(`  - ${c.date}: ${c.title} (${c.account}, ${Math.round(c.duration / 60)}min)`);
       });
     }
     if (g.rawSummary) blocks.push(`- Summary: ${g.rawSummary}`);
@@ -696,6 +701,44 @@ export function formatContextForPrompt(liveContext: LiveContext): string {
       });
     }
     if (sb.rawSummary) blocks.push(`- Summary: ${sb.rawSummary}`);
+    blocks.push("");
+  }
+
+  if (liveContext.bigquery) {
+    const bq = liveContext.bigquery;
+    blocks.push("### BigQuery — CTV Revenue & Performance (Source of Truth)");
+    if (bq.summary && bq.summary.length > 0) {
+      const s = bq.summary[0];
+      blocks.push(`- **YTD Gross Ad Spend**: $${(s.total_gas / 1000000).toFixed(2)}M`);
+      blocks.push(`- **Avg Daily GAS**: $${Math.round(s.avg_daily_gas).toLocaleString()}`);
+      blocks.push(`- **Active Campaigns**: ${s.total_campaigns}`);
+      blocks.push(`- **Active Advertisers**: ${s.total_advertisers}`);
+      blocks.push(`- **Date Range**: ${s.min_date} to ${s.max_date} (${s.total_days} days)`);
+    }
+    if (bq.trailing_7d && bq.trailing_7d.length > 0) {
+      const t7 = bq.trailing_7d[0];
+      blocks.push(`- **Trailing 7d Daily GAS**: $${Math.round(t7.trailing_7d_daily).toLocaleString()}`);
+      blocks.push(`- **Trailing 7d Total**: $${Math.round(t7.trailing_7d_total).toLocaleString()}`);
+      blocks.push(`- **7d Active Campaigns**: ${t7.active_campaigns_7d} | **7d Active Advertisers**: ${t7.active_advertisers_7d}`);
+    }
+    if (bq.monthly && bq.monthly.length > 0) {
+      blocks.push("- **Monthly Trend**:");
+      bq.monthly.slice(-4).forEach(m => {
+        blocks.push(`  - ${m.month}: $${(m.monthly_gas / 1000).toFixed(0)}K GAS, $${Math.round(m.avg_daily_gas).toLocaleString()}/day, ${m.active_campaigns} campaigns`);
+      });
+    }
+    if (bq.top_advertisers && bq.top_advertisers.length > 0) {
+      blocks.push("- **Top Advertisers (by GAS)**:");
+      bq.top_advertisers.slice(0, 8).forEach(a => {
+        blocks.push(`  - ${a.advertiser}: $${Math.round(a.total_gas).toLocaleString()} (${a.campaigns} campaigns, active ${a.first_active} to ${a.last_active})`);
+      });
+    }
+    if (bq.concentration && bq.concentration.length > 0) {
+      const top3 = bq.concentration.slice(0, 3);
+      const top3Pct = top3.length > 0 ? top3[top3.length - 1].cumulative_pct : 0;
+      blocks.push(`- **Concentration**: Top 3 advertisers = ${top3Pct.toFixed(1)}% of total GAS`);
+    }
+    blocks.push(`- Data freshness: ${bq.fetched_at}`);
     blocks.push("");
   }
 

@@ -11,17 +11,24 @@ from datetime import datetime, timedelta
 
 sys.path.insert(0, "/home/ubuntu/skills/sensor-tower-api/scripts")
 
-# Key CTV/streaming competitor app IDs
+# Key CTV/streaming competitor app IDs with known display names
 CTV_APPS = {
-    "tubi": {"ios": "446613023", "android": "com.tubitv"},
-    "pluto_tv": {"ios": "751712884", "android": "tv.pluto.android"},
-    "roku": {"ios": "482066631", "android": "com.roku.remote"},
-    "peacock": {"ios": "1508186374", "android": "com.peacocktv.peacockandroid"},
-    "paramount_plus": {"ios": "685702757", "android": "com.cbs.app"},
-    "freevee": {"ios": "545519333", "android": "com.amazon.avod.thirdpartyclient"},
-    "samsung_tv_plus": {"android": "com.samsung.android.tvplus"},
-    "tiktok": {"ios": "835599320", "android": "com.zhiliaoapp.musically"},
+    "Tubi": {"ios": "446613023", "android": "com.tubitv"},
+    "Pluto TV": {"ios": "751712884", "android": "tv.pluto.android"},
+    "Roku": {"ios": "482066631", "android": "com.roku.remote"},
+    "Peacock": {"ios": "1508186374", "android": "com.peacocktv.peacockandroid"},
+    "Paramount+": {"ios": "685702757", "android": "com.cbs.app"},
+    "Freevee": {"ios": "545519333", "android": "com.amazon.avod.thirdpartyclient"},
+    "Samsung TV Plus": {"android": "com.samsung.android.tvplus"},
+    "TikTok": {"ios": "835599320", "android": "com.zhiliaoapp.musically"},
 }
+
+# Reverse lookup: app_id → display name
+APP_ID_TO_NAME = {}
+for name, ids in CTV_APPS.items():
+    for platform_id in ids.values():
+        APP_ID_TO_NAME[platform_id] = name
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -43,7 +50,7 @@ def main():
         if args.apps:
             target_apps = args.apps.split(",")
         else:
-            # Default: pull top CTV/streaming apps
+            # Default: pull top CTV/streaming apps (iOS IDs)
             for app_name, ids in list(CTV_APPS.items())[:5]:
                 if "ios" in ids:
                     target_apps.append(ids["ios"])
@@ -58,7 +65,7 @@ def main():
                     start_date=start_date,
                     end_date=end_date,
                 )
-                
+
                 downloads = 0
                 revenue = 0
                 if isinstance(history, dict):
@@ -72,18 +79,27 @@ def main():
                         downloads += entry.get("downloads", 0)
                         revenue += entry.get("revenue", 0)
 
-                # Search for app name
-                search_results = st.search(app_id)
-                app_name = app_id
+                # Use known name from our dictionary first, fall back to search
+                app_name = APP_ID_TO_NAME.get(app_id, None)
                 rating = 0
-                if isinstance(search_results, list) and len(search_results) > 0:
-                    app_name = search_results[0].get("name", app_id)
-                    rating = search_results[0].get("rating", 0)
-                elif isinstance(search_results, dict):
-                    results_list = search_results.get("results", [])
-                    if results_list:
-                        app_name = results_list[0].get("name", app_id)
-                        rating = results_list[0].get("rating", 0)
+
+                if not app_name:
+                    # Only search if we don't have a known name
+                    try:
+                        search_results = st.search(app_id)
+                        if isinstance(search_results, list) and len(search_results) > 0:
+                            app_name = search_results[0].get("name", app_id)
+                            rating = search_results[0].get("rating", 0)
+                        elif isinstance(search_results, dict):
+                            results_list = search_results.get("results", [])
+                            if results_list:
+                                app_name = results_list[0].get("name", app_id)
+                                rating = results_list[0].get("rating", 0)
+                    except Exception:
+                        pass
+
+                if not app_name:
+                    app_name = app_id  # Last resort
 
                 result["competitor_apps"].append({
                     "name": app_name,
@@ -91,7 +107,7 @@ def main():
                     "revenue": revenue,
                     "rating": round(rating, 1) if rating else 0,
                 })
-            except Exception as e:
+            except Exception:
                 continue
 
         # Market trends (top charts)
@@ -131,9 +147,9 @@ def main():
                 elif isinstance(sdk_data, dict):
                     sdk_list = sdk_data.get("sdks", sdk_data.get("installed_sdks", []))
                     sdks = [s.get("name", s.get("sdk_name", "Unknown")) for s in sdk_list[:10]]
-                
+
                 result["sdk_intel"].append({
-                    "appName": app_name.replace("_", " ").title(),
+                    "appName": app_name,
                     "sdks": sdks,
                 })
             except Exception:

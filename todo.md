@@ -1047,3 +1047,13 @@
 - [x] Add sidebar nav entry (AI Tools section)
 - [x] Verify in browser
 - [x] Save checkpoint (version 5c2c17d4)
+
+## Phase 80: Fix Industry Monitoring Agent Stale Data
+- [x] Update hardcoded 2024 market data in SECTION_CONTEXT to current 2026 numbers (eMarketer: $37.95B, +14.5% YoY)
+- [x] Update analyst-tracking section with current 2026 references (iSpot 18%, Nielsen upfronts, IAB 13.8%)
+- [x] Wire BQ bridge into enrichContext pipeline — agents now get $17.22M YTD GAS, trailing 7d, monthly trend, top advertisers, concentration
+- [x] Fix Gong duration display (seconds→minutes)
+- [x] Fix Sensor Tower app name resolution (IDs→names: Pluto TV, Roku, Peacock)
+- [x] Verify enrichContext returns 4 live sources: gong, salesforce, sensorTower, bigquery
+- [ ] Pull Gong data for download
+- [ ] Save checkpoint

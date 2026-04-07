@@ -315,15 +315,17 @@ const SECTION_CONTEXT: Record<string, string> = {
   "industry-sensing": `### Your Specialized Context: CTV Industry Sensing
 
 **Sources you monitor**: eMarketer, IAB, Digiday, AdExchanger, VideoWeek, TVREV, Cynopsis, Broadcasting+Cable, Variety (ad tech coverage), MediaPost
-**Key data points**:
-- CTV ad spend: $25.9B (2024) → projected $33B+ (2026). Growth slowing from 35% to 22% YoY as market matures.
-- FAST channels growing 40% YoY: Tubi (80M MAU), Pluto TV (80M MAU), Samsung TV Plus, Freevee → creating massive non-premium inventory pool
-- Signal loss accelerating: Chrome cookie deprecation (delayed but coming), Apple ATT impact on cross-device, IDFA opt-in rates at 25-35%
-- Retail media convergence: Walmart Connect, Kroger, Instacart all launching CTV products using 1P purchase data
-- Political ad surge: $2B+ in CTV political spend expected in 2026 cycle, crowding inventory Q3-Q4
-- Measurement consolidation: iSpot acquiring TVSquared, VideoAmp challenging Nielsen, Comscore pivoting to cross-platform
+**Key data points (as of April 2026)**:
+- CTV ad spend: $33.35B (2025) → $37.95B projected (2026, +14.5% YoY per eMarketer Dec 2025 forecast). Growth moderating from 20%+ to ~14% as market matures toward $46B by 2028.
+- CTV will surpass linear TV ad spend by 2028 (eMarketer). Streaming now 66.7% of 18-34 viewing time (Nielsen 2026 upfront data).
+- FAST channels surging: Tubi (97M+ MAU), Samsung TV Plus (100M+ MAU globally, Jan 2026 milestone), Pluto TV (250+ live channels US), Roku Channel expanding. FAST creating massive non-premium inventory pool at lower CPMs.
+- Retail media + CTV convergence accelerating: Retail media CTV ad spend growing 45.5% in 2025, projected 1 in 5 CTV ad dollars going to retail media. Walmart Connect, Kroger, Instacart, Amazon all activating 1P purchase data on CTV.
+- Signal loss: Cookie deprecation still evolving, Apple ATT impact on cross-device, IDFA opt-in rates 25-35%. First-party data and contextual becoming critical.
+- Measurement landscape: iSpot holds ~18% of cross-platform measurement market (leading Nielsen alternative). VideoAmp challenging in upfronts. Nielsen still dominant but facing multi-front competition. 2026 is "prove what works" year for CTV measurement.
+- 70% of CTV advertisers plan to increase spending in 2026 by avg 17% (TVNewsCheck/Advertiser Perceptions survey, Mar 2026).
+- IAB forecasts 13.8% US CTV ad spend growth in 2026.
 
-**Your output should**: Name specific sources, cite specific numbers, identify which trends are overhyped vs. underpriced. Reference real companies and real market events, not abstractions.`,
+**Your output should**: Name specific sources, cite specific numbers with dates, identify which trends are overhyped vs. underpriced. Reference real companies and real market events, not abstractions. Always note the recency of your data.`,
 
   "competitor-intel": `### Your Specialized Context: Competitive Intelligence
 ${COMPETITOR_INTEL}
@@ -357,21 +359,24 @@ For each competitor insight, structure as:
 **Your output should**: Reference specific objection patterns with frequency data. Propose counter-messaging with evidence. Never say "customers generally feel..." — say "45% of prospects raise TTD incumbency as primary objection."`,
 
   "analyst-tracking": `### Your Specialized Context: Analyst & Thought Leader Tracking
-**Key analysts and firms shaping CTV buying decisions**:
-- **eMarketer/Insider Intelligence**: Primary source for CTV spend forecasts. Their $33B 2026 projection is the market benchmark.
-- **IAB**: Sets measurement standards. Their CTV measurement guidelines (released Q4 2024) are now the buyer's checklist.
+**Key analysts and firms shaping CTV buying decisions (as of April 2026)**:
+- **eMarketer/Insider Intelligence**: Primary source for CTV spend forecasts. Their Dec 2025 forecast: $37.95B CTV ad spend in 2026 (+14.5% YoY). This is the market benchmark.
+- **IAB**: Sets measurement standards. IAB forecasts 13.8% CTV ad spend growth in 2026. Their measurement guidelines are the buyer's checklist. Convergent TV World 2026 (Mar 5-6, NYC) was the key industry event.
 - **Forrester**: Nicole Perrin covers CTV ad tech. Recent report ranked TTD #1, Moloco not yet in their Wave.
 - **TVREV**: Alan Wolk — most influential CTV industry voice. His "FAST is eating linear" narrative drives buyer behavior.
 - **AdExchanger**: Allison Schiff covers CTV programmatic. Key for earned media placement.
 - **Digiday**: Seb Joseph covers agency CTV buying patterns. Agencies read this daily.
 - **VideoWeek**: European CTV coverage. Important for EMEA expansion narrative.
+- **Nielsen**: Launched 2026 Upfront Planning Series. First time breaking out FAST vs AVOD demographics. Streaming = 66.7% of 18-34 viewing.
+- **iSpot.tv**: ~18% share of cross-platform measurement. Invested in TVision panel. Leading Nielsen alternative.
 
-**Narrative themes gaining traction**:
-1. "Performance CTV" replacing "brand CTV" as primary buying lens
-2. "Incrementality or bust" — buyers demanding proof, not proxies
-3. "FAST > Premium" for performance advertisers (lower CPMs, similar outcomes)
-4. "Cross-screen is table stakes" — CTV-only DSPs losing credibility
-5. "Retail media + CTV" convergence — 1P data activation on big screens
+**Narrative themes gaining traction in 2026**:
+1. "Performance CTV" replacing "brand CTV" as primary buying lens — 2026 is the "prove what works" year
+2. "Incrementality or bust" — buyers demanding proof, not proxies. Ghost bidding becoming standard test methodology.
+3. "FAST > Premium" for performance advertisers — lower CPMs, similar outcomes. Samsung TV Plus hit 100M MAU.
+4. "Cross-screen is table stakes" — CTV-only DSPs losing credibility. Unified mobile+CTV is the expectation.
+5. "Retail media + CTV" convergence — 1 in 5 CTV ad dollars projected to go to retail media. Walmart, Kroger, Instacart, Amazon all active.
+6. "AI-powered optimization" — AI for creative optimization, audience targeting, and campaign management becoming mainstream.
 
 **Moloco's narrative gap**: Not yet in Forrester Wave, limited analyst briefing program, no earned media drumbeat. This is a fixable gap.`,
 
